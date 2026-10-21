@@ -29,3 +29,12 @@ Audit schema version 1: `event_id`, `request_id`, `timestamp`, `actor_id` (nulla
 ## Future demo modes
 
 Only the protected implementation exists. A future vulnerable fixture must be enabled by administrator-controlled deployment configuration, in a separate isolated synthetic-data environment with restricted access. Never accept a mode, authorization override, or customer impersonation flag from a public request or assistant tool. Preserve decision/outcome logging in both modes. Agree on that fixture with the security owner before implementation.
+
+
+## Cloud adapter contract
+
+`backend/lambda_handler.py` adapts HTTP API v2 events and cookies to the same handler. Cloud startup requires Cognito configuration and an HTTPS origin. `backend/auth.py` validates credentials with Cognito/GetUser, maps the verified immutable subject through administrator-owned identity records, and issues the existing opaque store session. Request-supplied customer IDs remain ignored. Local demo credentials are available only through the local server/default provider, never the Lambda runtime. Cognito login failures never fall back to local authentication.
+
+`Storage.list_owned(collection, customer_id)` is now part of the storage protocol. Cart reads use a strongly consistent per-customer partition; order lists use the eventually consistent owner index and recheck ownership in the service. Direct order reads are strongly consistent. Session TTL cleanup is asynchronous; expiry remains checked synchronously.
+
+Cloud audit rows wrap the unmodified v1 event in `value`, with `request_id`, `event_id` and expiry as storage metadata. Dashboard adapters must extract `value` before v1 schema validation. The application role can write, but cannot read/delete, audit rows. See [deployment limitations](aws-deployment.md) for non-atomic audit writes and session revocation.

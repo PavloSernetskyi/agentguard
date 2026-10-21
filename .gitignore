@@ -62,3 +62,9 @@ test-results/
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Deployment tooling and generated artifacts
+.tools/
+artifacts/
+infra/plan*.json
+infra/plan*.txt

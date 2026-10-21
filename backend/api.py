@@ -8,7 +8,9 @@ from .service import ApiError
 ALLOWED_ORIGINS = {"http://127.0.0.1:5173", "http://localhost:5173"}
 
 
-def handle(service, method, url, headers, body=""):
+def handle(service, method, url, headers, body="", *, allowed_origins=None, secure_cookie=False):
+    allowed_origins = ALLOWED_ORIGINS if allowed_origins is None else allowed_origins
+    cookie_security = "; Secure" if secure_cookie else ""
     request_id = str(uuid.uuid4())
     response_headers = {"Content-Type": "application/json", "Cache-Control": "no-store", "X-Request-Id": request_id}
     headers = {k.lower(): v for k, v in headers.items()}
@@ -18,7 +20,7 @@ def handle(service, method, url, headers, body=""):
     try:
         cookie.load(headers.get("cookie", ""))
         token = cookie["demomart_session"].value if "demomart_session" in cookie else None
-        if method in ("POST", "PUT", "DELETE") and headers.get("origin") not in ALLOWED_ORIGINS:
+        if method in ("POST", "PUT", "DELETE") and headers.get("origin") not in allowed_origins:
             raise ApiError(403, "Untrusted request origin")
         data = json.loads(body) if body else {}
         if not isinstance(data, dict):
@@ -30,11 +32,11 @@ def handle(service, method, url, headers, body=""):
             result = service.product(path.split("/")[-1])
         elif path == "/api/session" and method == "POST":
             token, result = service.login(data.get("account"), data.get("password"), request_id, token)
-            response_headers["Set-Cookie"] = f"demomart_session={token}; HttpOnly; SameSite=Strict; Path=/api; Max-Age=3600"
+            response_headers["Set-Cookie"] = f"demomart_session={token}; HttpOnly; SameSite=Strict; Path=/api; Max-Age=3600{cookie_security}"
         elif path == "/api/session" and method == "DELETE":
             service.logout(token)
             result = {"ok": True}
-            response_headers["Set-Cookie"] = "demomart_session=; HttpOnly; SameSite=Strict; Path=/api; Max-Age=0"
+            response_headers["Set-Cookie"] = f"demomart_session=; HttpOnly; SameSite=Strict; Path=/api; Max-Age=0{cookie_security}"
         else:
             known = (method == "GET" and path in ("/api/session", "/api/orders", "/api/cart")) or (method == "GET" and path.startswith("/api/orders/")) or (method == "PUT" and path.startswith("/api/cart/"))
             if not known:

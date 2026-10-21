@@ -5,6 +5,7 @@ import uuid
 from datetime import datetime, timezone
 from .security import Principal, Decision, OwnershipAuthorizer
 from .storage import Storage, AuditSink
+from .auth import LocalDemoAuthenticator, AuthenticationUnavailable
 
 
 class ApiError(Exception):
@@ -13,23 +14,31 @@ class ApiError(Exception):
 
 
 class StoreService:
-    def __init__(self, storage: Storage, audit: AuditSink, authorizer=None):
+    def __init__(self, storage: Storage, audit: AuditSink, authorizer=None, authenticator=None):
         self.storage, self.audit = storage, audit
         self.authorizer = authorizer or OwnershipAuthorizer()
+        self.authenticator = authenticator or LocalDemoAuthenticator()
 
     def record(self, request_id, actor, action, resource, decision, execution):
         self.audit.emit(dict(schema_version=1, event_id=str(uuid.uuid4()), request_id=request_id, timestamp=datetime.now(timezone.utc).isoformat(), actor_id=actor, action=action, resource_id=resource, decision="allow" if decision.allowed else "deny", reason=decision.reason, execution=execution))
 
     def login(self, account, password, request_id, old_token=None):
-        valid = isinstance(account, str) and account in ("alice", "bob") and isinstance(password, str) and secrets.compare_digest(password, account + "-demo")
-        if not valid:
+        if not isinstance(account, str) or not isinstance(password, str) or not 1 <= len(account) <= 128 or not 1 <= len(password) <= 256:
+            customer_id = None
+        else:
+            try:
+                customer_id = self.authenticator.authenticate(account, password)
+            except AuthenticationUnavailable:
+                self.record(request_id, None, "session.create", "session", Decision(False, "identity_provider_unavailable"), "blocked")
+                raise ApiError(503, "Sign-in temporarily unavailable")
+        if not customer_id:
             self.record(request_id, None, "session.create", "session", Decision(False, "invalid_credentials"), "blocked")
-            raise ApiError(401, "Invalid demo credentials")
+            raise ApiError(401, "Invalid credentials or account setup incomplete")
         self.logout(old_token)
         token = secrets.token_urlsafe(32)
-        self.storage.put("sessions", self.digest(token), {"customer_id": account, "expires": time.time() + 3600})
-        self.record(request_id, account, "session.create", "session", Decision(True, "demo_credentials_valid"), "succeeded")
-        return token, self.storage.get("customers", account)
+        self.storage.put("sessions", self.digest(token), {"customer_id": customer_id, "expires": int(time.time()) + 3600})
+        self.record(request_id, customer_id, "session.create", "session", Decision(True, "credentials_valid"), "succeeded")
+        return token, self.storage.get("customers", customer_id)
 
     @staticmethod
     def digest(token):
@@ -74,7 +83,7 @@ class StoreService:
         return product
 
     def orders(self, principal, request_id):
-        return self.execute(principal, "orders.list", {"id": "orders", "customer_id": principal.customer_id}, request_id, lambda: [o for o in self.storage.list("orders") if o["customer_id"] == principal.customer_id])
+        return self.execute(principal, "orders.list", {"id": "orders", "customer_id": principal.customer_id}, request_id, lambda: [o for o in self.storage.list_owned("orders", principal.customer_id) if o["customer_id"] == principal.customer_id])
 
     def order(self, principal, oid, request_id):
         order = self.storage.get("orders", oid)
@@ -92,6 +101,6 @@ class StoreService:
                     self.storage.delete("cart", key)
                 else:
                     self.storage.put("cart", key, {"customer_id": principal.customer_id, "product_id": pid, "quantity": quantity})
-            items = [{"product": self.product(row["product_id"]), "quantity": row["quantity"]} for row in self.storage.list("cart") if row["customer_id"] == principal.customer_id]
+            items = [{"product": self.product(row["product_id"]), "quantity": row["quantity"]} for row in self.storage.list_owned("cart", principal.customer_id) if row["customer_id"] == principal.customer_id]
             return {"items": items, "total": sum(i["product"]["price"] * i["quantity"] for i in items)}
         return self.execute(principal, "cart.update" if pid else "cart.read", {"id": "cart:" + principal.customer_id, "customer_id": principal.customer_id}, request_id, operation)

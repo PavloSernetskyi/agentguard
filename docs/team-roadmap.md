@@ -1,5 +1,7 @@
 # Team roadmap and ownership
 
+Person 1 update: cloud adapters and Terraform are prepared and locally verified, but deployment is blocked by organization policy. See [deployment status](aws-deployment.md). Milestone 2 remains incomplete.
+
 This is the shared handoff plan. Milestone 1 is complete; milestones 2-4 are planned, not implemented. Changes to ownership or contracts should be agreed in a pull request.
 
 ## Milestone overview

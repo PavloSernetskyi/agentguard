@@ -1,3 +1,4 @@
+from __future__ import annotations
 import json
 import sqlite3
 from contextlib import contextmanager
@@ -9,6 +10,7 @@ class Storage(Protocol):
     def put(self, collection: str, key: str, value: dict): ...
     def delete(self, collection: str, key: str): ...
     def list(self, collection: str) -> list[dict]: ...
+    def list_owned(self, collection: str, customer_id: str) -> list[dict]: ...
 
 
 class AuditSink(Protocol):
@@ -46,6 +48,9 @@ class SQLiteStorage:
     def list(self, collection):
         with self.connect() as db:
             return [json.loads(row[0]) for row in db.execute("SELECT value FROM records WHERE collection=? ORDER BY key", (collection,))]
+
+    def list_owned(self, collection, customer_id):
+        return [v for v in self.list(collection) if v.get("customer_id") == customer_id]
 
     def emit(self, event):
         self.put("audit", event["event_id"], event)

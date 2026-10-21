@@ -1,16 +1,11 @@
-# Person 1: AWS infrastructure (milestone 2)
+# Person 1: DemoMart AWS infrastructure
 
-Milestone 1 works locally. AWS deployment and AWS MCP setup have not started. Follow the [AWS phase guide](../docs/aws-next-phase.md) and [team roadmap](../docs/team-roadmap.md).
+Terraform and backend cloud adapters are prepared, but **not deployed**. AWS MCP connects successfully; organization policy currently denies reads for the required services in `us-east-1`. See the [deployment runbook](../docs/aws-deployment.md) for the exact blocker, validation evidence, resource inventory, cost target and remaining steps.
 
-Next deliverables:
+The target is one serverless store with a $5/month budget target: private S3/CloudFront, HTTP API/Lambda, DynamoDB, Cognito, short-retention logs and budget alerts. This excludes AI inference and SOC hosting.
 
-1. Confirm the school account, region, budget and least-privilege access. Connect the selected AWS MCP tool for developer use and verify identity with read-only discovery.
-2. Write Terraform for frontend hosting/CDN, API Gateway, Python Lambda, DynamoDB and the agreed audit destination; document environment inputs and teardown.
-3. Implement/test the Lambda and DynamoDB adapters with the existing authorization invariants.
-4. Configure suitable authentication, HTTPS cookies, secrets, logs and rate limits for hosted use.
-5. Coordinate the Strands/Groq runtime with Person 2; evaluate Bedrock AgentCore separately from model inference.
-6. Deploy the store and assistant and repeat Alice/Bob checks through both paths.
+Build artifacts first with `scripts/prepare-cloud.ps1`, then run Terraform init, validate and test. Tests use a mocked AWS provider and create no cloud resources. A real authenticated plan and cost review must precede apply.
 
-In milestone 3, provide the isolated, restricted testing lab and reset fixtures. In milestone 4, host the operator-only SOC dashboard and finalize the demo/teardown runbook.
+Commit `.terraform.lock.hcl`. Never commit state, secret tfvars, generated plans, local tools, deployment artifacts or credentials. `terraform.tfvars.example` documents inputs without private values.
 
-Commit `.terraform.lock.hcl` when generated. Never commit Terraform state, secret tfvars, plan files or credentials. Use documented placeholders for required values. No infrastructure is created by these planning documents.
+Person 2 can implement the agent locally now using `StoreService`; a hosted handoff still requires resolving account access, applying the reviewed plan, provisioning private demo accounts, seeding synthetic data and passing hosted acceptance checks.

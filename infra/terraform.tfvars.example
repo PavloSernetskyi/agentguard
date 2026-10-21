@@ -1,0 +1,6 @@
+# Copy to terraform.tfvars (ignored). Never put passwords in this file.
+account_id   = "REPLACE_WITH_12_DIGIT_ACCOUNT_ID"
+budget_email = "you@example.com"
+region       = "us-east-1"
+# Keep -1 if the account has a low Lambda quota.
+lambda_reserved_concurrency = -1

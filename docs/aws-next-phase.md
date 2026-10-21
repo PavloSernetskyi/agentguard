@@ -1,6 +1,6 @@
 # Milestone 2: Person 1 AWS deployment phase
 
-Milestone 1 is complete. The next step for Person 1 is a guided AWS MCP connection and deployment workflow. No MCP setup, AWS resources or deployment have been performed yet. Persons 2 and 3 build the assistant locally in parallel; see the [team roadmap](team-roadmap.md).
+Milestone 1 is complete. The next step for Person 1 is a guided AWS MCP connection and deployment workflow. AWS MCP is now connected and cloud adapters/Terraform are prepared. No AWS resources have been provisioned: organization policy currently blocks service reads. See the [current deployment runbook](aws-deployment.md) before continuing. Persons 2 and 3 build the assistant locally in parallel; see the [team roadmap](team-roadmap.md).
 
 ## Connection session
 

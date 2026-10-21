@@ -19,7 +19,13 @@ Read the **[team roadmap and acceptance checks](docs/team-roadmap.md)** before s
 - **Person 2 (agent/security):** follow the [AgentGuard handoff](agentguard/README.md); own Strands agent backend, authorized store tools, enforcement and penetration-test scenarios.
 - **Person 3 (integration/SOC):** follow the [dashboard handoff](dashboard/README.md); help deliver the chat UI and telemetry in milestone 2, then own the SOC dashboard in milestone 4.
 
-Planned assistant architecture: **Strands + Groq inference**, with **Bedrock AgentCore evaluated as an AWS runtime**. A Groq API key does not power Bedrock-hosted inference; see the [architecture clarification and official references](docs/team-roadmap.md#architecture-clarification-strands-groq-and-bedrock). Keys remain server-side. No assistant or AWS resources have been implemented yet.
+Planned assistant architecture: **Strands + Groq inference**, with **Bedrock AgentCore evaluated as an AWS runtime**. A Groq API key does not power Bedrock-hosted inference; see the [architecture clarification and official references](docs/team-roadmap.md#architecture-clarification-strands-groq-and-bedrock). Keys remain server-side. No assistant is implemented and no AWS resources have been provisioned.
+
+## AWS deployment preparation status
+
+The Person 1 cloud implementation is prepared: Lambda adapter, owner-scoped DynamoDB storage, Cognito-backed sign-in, secure cookies, cloud frontend build and Terraform for the $5/month store target. **It is not deployed.** AWS MCP sign-in works, but an organization SCP denies read access to the required services in `us-east-1`.
+
+See the [deployment runbook](docs/aws-deployment.md) for the blocker, exact resource inventory, setup, cost controls and hosted acceptance checklist. Local verification now includes 19 Python tests and a mocked Terraform plan test; a real authenticated infrastructure plan remains pending. Person 2 can start agent work locally while account access is resolved.
 
 ## Start locally
 
@@ -77,6 +83,6 @@ Stop the API with Ctrl+C before `python -m seed.reset`, then restart it. This de
 
 `backend/api.py:handle` accepts ordinary request values and returns `(status, headers, JSON body)`. `backend/server.py` is the local HTTP adapter. A future API Gateway/Lambda adapter can normalize its event into this handler. All private operations get identity from a validated session. `StoreService` reuses product, order, and cart operations; future assistant tools must call these operations with server-derived principals, never model-provided customer IDs.
 
-`Storage` abstracts persistence. The SQLite adapter uses parameterized SQL and per-operation connections. Its collection scans are intentionally small-scale; a DynamoDB adapter should use owner indexes and pagination. Cart writes replace a product quantity; concurrent tabs use last-write-wins semantics. Audits are emitted after the operation and are not atomic with storage writes: an audit sink failure returns 500, but a completed mutation may already have persisted. A transactional outbox is deployment-phase work.
+`Storage` abstracts persistence. The SQLite adapter uses parameterized SQL and per-operation connections. SQLite collection scans are intentionally small-scale; the new DynamoDB adapter uses owner-scoped queries and pagination. Cart writes replace a product quantity; concurrent tabs use last-write-wins semantics. Audits are emitted after the operation and are not atomic with storage writes: an audit sink failure returns 500, but a completed mutation may already have persisted. A transactional outbox is deployment-phase work.
 
-No publicly accessible bypass, refunds, payment processing, checkout execution, Bedrock calls, AWS infrastructure, or AWS MCP configuration has been added. Future refund tools must introduce an explicitly authorized operation with an audit contract. [Next AWS phase](docs/aws-next-phase.md) covers Person 1's next steps; the [team roadmap](docs/team-roadmap.md) coordinates assistant integration, testing and SOC work. These are plans, not implemented cloud or AI features.
+No publicly accessible bypass, refunds, payment processing, checkout execution or Bedrock calls have been added. AWS infrastructure is defined in Terraform but not provisioned; AWS MCP is connected in the developer environment. Future refund tools must introduce an explicitly authorized operation with an audit contract. [Next AWS phase](docs/aws-next-phase.md) covers Person 1's next steps; the [team roadmap](docs/team-roadmap.md) coordinates assistant integration, testing and SOC work. These are plans, not implemented cloud or AI features.
