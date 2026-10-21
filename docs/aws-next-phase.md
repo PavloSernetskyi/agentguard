@@ -1,14 +1,24 @@
-# Separate AWS phase (not started)
+# Milestone 2: Person 1 AWS deployment phase
 
-The local milestone comes first. Nothing in this repository configures AWS MCP, provisions resources, or deploys the application.
+Milestone 1 is complete. The next step for Person 1 is a guided AWS MCP connection and deployment workflow. No MCP setup, AWS resources or deployment have been performed yet. Persons 2 and 3 build the assistant locally in parallel; see the [team roadmap](team-roadmap.md).
 
-In the next session:
+## Connection session
 
-1. Choose the school sandbox AWS account, region, spending limit, and approved access method. Use a dedicated role with least privilege; never paste access keys into chat or commit them.
-2. Identify the AWS MCP server and client integration your school intends to use. Verify its current official installation and authentication instructions before configuring it. Start with read-only account/resource discovery and confirm the account identity.
-3. Agree on a Terraform plan: static frontend hosting, API Gateway and Lambda, DynamoDB tables/indexes for customers, sessions, orders and carts, plus the teammate-approved audit destination. Keep Terraform in `infra/`.
-4. Add the Lambda adapter and DynamoDB implementation. Replace local demo sign-in for any public deployment, enable secure HTTPS cookies, and update the allowed origin configuration. Re-run the same authorization tests against the adapter.
-5. Review Terraform's concrete plan, estimated cost, logs, secret handling and teardown procedure before applying it.
-6. Deploy and repeat Alice/Bob acceptance checks. Bedrock with Strands, refund requests, and assistant review summaries remain a later milestone.
+1. Confirm the school sandbox account, region, spending limit, permitted services and access method. Use a dedicated least-privilege role and short-lived authentication where available. Never paste access keys into chat or commit them.
+2. Identify the actual AWS MCP server and the client where it will run. Follow its current official installation/authentication instructions; verify the tool publisher and requested permissions before connecting. There is no chosen server or checked-in MCP configuration yet.
+3. Begin with read-only tools. Verify account identity and region, inspect existing resources, and record the intended deployment scope. AWS MCP helps the developer manage infrastructure; the shopping assistant must not receive these tools.
 
-Coordinate administrator-controlled vulnerable fixtures with Person 2 using the constraints in `contracts.md`. Such fixtures must never be selectable through an HTTP parameter or assistant prompt.
+## Implementation and deployment
+
+4. Prepare a Terraform plan under `infra/`: static frontend hosting/CDN, API Gateway plus Python Lambda, DynamoDB indexes for customer-owned records and an agreed durable audit destination. Prefer a single browser origin with `/api` routed to the backend.
+5. Add Lambda and DynamoDB adapters; retain the same service authorization checks. Test session expiration/revocation, order ownership, cart isolation and audit behavior against the cloud adapters.
+6. Replace public local demo sign-in for hosted exposure with deployment-appropriate authentication or restrict the demo to approved participants. Add HTTPS/Secure cookies, allowed origins, request limits, secret handling, logs and a seed/reset procedure.
+7. With Person 2, decide how to host Strands using Groq inference. Evaluate Bedrock AgentCore as a runtime; confirm model/tool compatibility, costs and runtime identity before provisioning. Store the Groq key server-side in managed secrets. Bedrock-hosted inference would be a separate provider choice.
+8. Review the concrete Terraform plan, estimated cost and teardown procedure before applying it. Document outputs and configuration names without secret values.
+9. Deploy; give Persons 2 and 3 the service URL and authentication/event contracts. Integrate the real Ask DemoMart interface and run the milestone 2 acceptance checklist in the roadmap.
+
+## Completion and later phases
+
+Milestone 2 requires a working hosted store and real assistant, with own-order access and cross-account denials verified through both interfaces and recorded durably. Refund requests remain synthetic and require their own authorized/confirmed operation; payment processing and checkout remain deferred.
+
+Milestone 3 adds a separate restricted test lab, not a bypass on the public store. Milestone 4 adds operator-only SOC hosting and the final demo runbook. Coordinate any vulnerable fixture with Person 2 using [contracts](contracts.md); neither request parameters nor assistant prompts can activate it.

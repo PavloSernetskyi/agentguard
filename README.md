@@ -2,6 +2,25 @@
 
 A local, synthetic shopping platform for a three-person school project. Person 1 owns the store and deployment; Person 2 owns AgentGuard enforcement; Person 3 owns the SOC dashboard.
 
+## Project status and team plan
+
+**Milestone 1 is complete:** the store works locally; Alice can view her order, cannot retrieve Bob's order, and the backend records the decision. Nine backend tests, the frontend build and live HTTP/proxy checks passed. The project owner has also confirmed local use works.
+
+| Milestone | Status | Deliverable |
+| --- | --- | --- |
+| 1. Local DemoMart | Complete | Store, sessions, carts, owned orders and audit baseline |
+| 2. AWS deployment + real assistant | Next | Person 1 deploys; Persons 2 and 3 integrate Strands/Groq with Ask DemoMart |
+| 3. Controlled penetration-testing lab | Planned | Isolated fixtures, scoped security scenarios, enforcement and detection evidence |
+| 4. SOC dashboard + final demonstration | Planned | Operator dashboard, correlated alerts, findings and reproducible demo |
+
+Read the **[team roadmap and acceptance checks](docs/team-roadmap.md)** before starting a branch.
+
+- **Person 1 (store/AWS):** follow the [AWS MCP and deployment phase](docs/aws-next-phase.md); own Terraform, hosting, backend adapters, secrets and operational setup.
+- **Person 2 (agent/security):** follow the [AgentGuard handoff](agentguard/README.md); own Strands agent backend, authorized store tools, enforcement and penetration-test scenarios.
+- **Person 3 (integration/SOC):** follow the [dashboard handoff](dashboard/README.md); help deliver the chat UI and telemetry in milestone 2, then own the SOC dashboard in milestone 4.
+
+Planned assistant architecture: **Strands + Groq inference**, with **Bedrock AgentCore evaluated as an AWS runtime**. A Groq API key does not power Bedrock-hosted inference; see the [architecture clarification and official references](docs/team-roadmap.md#architecture-clarification-strands-groq-and-bedrock). Keys remain server-side. No assistant or AWS resources have been implemented yet.
+
 ## Start locally
 
 Requires Python 3.12+ and Node.js 22+. The backend uses only Python's standard library.
@@ -30,7 +49,7 @@ Open **http://127.0.0.1:5173**. Vite proxies `/api` to port 8000. Port 5173 is f
 
 These deliberately public credentials are for a loopback-only school demo. Sessions still require backend validation, expire after one hour, rotate on login, and are revoked on logout. The opaque cookie is HttpOnly and SameSite=Strict. Production authentication, rate limits, HTTPS/Secure cookies, and durable cloud storage are deployment-phase work.
 
-## Stages and checks
+## Local implementation stages and checks (milestone 1)
 
 1. **Structure and contracts:** see [API and teammate contracts](docs/contracts.md). `store/` contains React/TypeScript, `backend/` contains APIs and reusable operations, `seed/` contains synthetic fixtures, `tests/` contains security acceptance tests. `agentguard/`, `dashboard/`, and `infra/` provide teammate handoff notes.
 2. **Storefront:** start both servers; verify ten illustrated products, search, category filters, product details, and synthetic reviews. Original SVG product illustrations live in `store/src/Art.tsx`. Fonts use Google Fonts with local system fallbacks; no remote product assets are needed.
@@ -44,7 +63,7 @@ cd store
 npm run build
 ```
 
-## First acceptance milestone
+## Completed milestone 1: reproduce the acceptance check
 
 Sign in as Alice and open `http://127.0.0.1:5173/#/orders/ord-alice-001`: her synthetic order is visible. Change the URL to `http://127.0.0.1:5173/#/orders/ord-bob-001`: the API returns 403 and the UI displays Access denied without Bob's details.
 
@@ -60,4 +79,4 @@ Stop the API with Ctrl+C before `python -m seed.reset`, then restart it. This de
 
 `Storage` abstracts persistence. The SQLite adapter uses parameterized SQL and per-operation connections. Its collection scans are intentionally small-scale; a DynamoDB adapter should use owner indexes and pagination. Cart writes replace a product quantity; concurrent tabs use last-write-wins semantics. Audits are emitted after the operation and are not atomic with storage writes: an audit sink failure returns 500, but a completed mutation may already have persisted. A transactional outbox is deployment-phase work.
 
-No publicly accessible bypass, refunds, payment processing, checkout execution, Bedrock calls, AWS infrastructure, or AWS MCP configuration has been added. Future refund tools must introduce an explicitly authorized operation with an audit contract. [Next AWS phase](docs/aws-next-phase.md) describes the handoff without configuring services.
+No publicly accessible bypass, refunds, payment processing, checkout execution, Bedrock calls, AWS infrastructure, or AWS MCP configuration has been added. Future refund tools must introduce an explicitly authorized operation with an audit contract. [Next AWS phase](docs/aws-next-phase.md) covers Person 1's next steps; the [team roadmap](docs/team-roadmap.md) coordinates assistant integration, testing and SOC work. These are plans, not implemented cloud or AI features.
