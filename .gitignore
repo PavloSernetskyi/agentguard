@@ -1,0 +1,64 @@
+# Frontend dependencies, build output, and local caches
+node_modules/
+dist/
+.npm-cache/
+.vite/
+*.tsbuildinfo
+
+# Python environments and caches
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local store data: sessions, carts, and audit records
+backend/data/
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+
+# Local environment values and credentials
+.env
+.env.*
+!.env.example
+!.env.*.example
+.aws/
+*.pem
+*.key
+
+# Terraform local state, secrets, and generated plans
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+*.tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+# Keep .terraform.lock.hcl tracked when infrastructure is added.
+
+# Test reports and logs
+coverage/
+.coverage
+.coverage.*
+htmlcov/
+playwright-report/
+test-results/
+*.log
+
+# Machine-specific editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini

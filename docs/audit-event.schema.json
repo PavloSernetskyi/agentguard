@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://demomart.example/schemas/audit-event.v1.json",
+  "title": "DemoMart audit event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "event_id",
+    "request_id",
+    "timestamp",
+    "actor_id",
+    "action",
+    "resource_id",
+    "decision",
+    "reason",
+    "execution"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "request_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "actor_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "action": {
+      "type": "string"
+    },
+    "resource_id": {
+      "type": "string"
+    },
+    "decision": {
+      "enum": [
+        "allow",
+        "deny"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    },
+    "execution": {
+      "enum": [
+        "succeeded",
+        "blocked",
+        "failed"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "decision": {
+            "const": "deny"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "execution": {
+            "const": "blocked"
+          }
+        }
+      }
+    }
+  ]
+}
