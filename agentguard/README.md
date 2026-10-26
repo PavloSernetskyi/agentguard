@@ -19,4 +19,4 @@ Milestone 3: lead the threat model, scoped penetration-testing cases and protect
 
 Milestone 4: tune policy/detections with Person 3, retest findings and contribute evidence to the final SOC demonstration.
 
-First deliverable: a small PR proposing chat/tool contracts, dependencies, configuration names and tests. Person 3 can then build the UI against an agreed contract while Person 1 prepares AWS.
+First deliverable: a small PR proposing chat/tool contracts, dependencies, configuration names and tests. Person 3 can build the UI against the agreed contract; Person 1's hosted store is already deployed.

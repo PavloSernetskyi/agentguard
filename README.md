@@ -21,11 +21,11 @@ Read the **[team roadmap and acceptance checks](docs/team-roadmap.md)** before s
 
 Planned assistant architecture: **Strands + Groq inference**, with **Bedrock AgentCore evaluated as an AWS runtime**. A Groq API key does not power Bedrock-hosted inference; see the [architecture clarification and official references](docs/team-roadmap.md#architecture-clarification-strands-groq-and-bedrock). Keys remain server-side. No assistant is implemented yet.
 
-## AWS deployment preparation status
+## Hosted store status
 
 The Person 1 cloud store is deployed at **https://d16nqulwj27ltb.cloudfront.net** in Ohio (`us-east-2`): Lambda API, owner-scoped DynamoDB storage, Cognito-backed sign-in, secure cookies, private S3/CloudFront hosting and a $5/month alert budget. The account is on an active AWS Free plan. Synthetic catalog, customers and orders are seeded. Private Alice/Bob setup and hosted ownership acceptance passed in both directions; Person 1's hosted-store handoff is ready. The public brand is now **Daywell Market**; the original `demomart-*` AWS resource IDs remain stable to avoid replacing live infrastructure.
 
-See the [deployment runbook](docs/aws-deployment.md) for the current status, exact resource inventory, setup, cost controls and hosted acceptance checklist. Verification includes 19 Python tests, a real Terraform plan and apply, and public site/API checks. Person 2 can start agent work against the documented store interface while hosted acceptance finishes.
+See the [deployment runbook](docs/aws-deployment.md) for the current status, resource inventory, setup, cost controls and hosted acceptance evidence. Verification includes 19 Python tests, a real Terraform plan and apply, and hosted Alice/Bob isolation checks. Persons 2 and 3 can now work from the documented store and audit contracts.
 
 ## Start locally
 
@@ -53,7 +53,7 @@ Open **http://127.0.0.1:5173**. Vite proxies `/api` to port 8000. Port 5173 is f
 | Alice | alice | alice-demo | ord-alice-001 |
 | Bob | bob | bob-demo | ord-bob-001 |
 
-These deliberately public credentials are for a loopback-only school demo. Sessions still require backend validation, expire after one hour, rotate on login, and are revoked on logout. The opaque cookie is HttpOnly and SameSite=Strict. Production authentication, rate limits, HTTPS/Secure cookies, and durable cloud storage are deployment-phase work.
+These deliberately public credentials are for local development only; the hosted store uses separate private Cognito passwords. Sessions require backend validation, expire after one hour, rotate on login, and are revoked on logout. The opaque cookie is HttpOnly and SameSite=Strict. The hosted store also uses HTTPS/Secure cookies, rate limits and durable cloud storage.
 
 ## Local implementation stages and checks (milestone 1)
 
@@ -85,4 +85,4 @@ Stop the API with Ctrl+C before `python -m seed.reset`, then restart it. This de
 
 `Storage` abstracts persistence. The SQLite adapter uses parameterized SQL and per-operation connections. SQLite collection scans are intentionally small-scale; the new DynamoDB adapter uses owner-scoped queries and pagination. Cart writes replace a product quantity; concurrent tabs use last-write-wins semantics. Audits are emitted after the operation and are not atomic with storage writes: an audit sink failure returns 500, but a completed mutation may already have persisted. A transactional outbox is deployment-phase work.
 
-No publicly accessible bypass, refunds, payment processing, checkout execution or Bedrock calls have been added. AWS infrastructure is defined in Terraform but not provisioned; AWS MCP is connected in the developer environment. Future refund tools must introduce an explicitly authorized operation with an audit contract. [Next AWS phase](docs/aws-next-phase.md) covers Person 1's next steps; the [team roadmap](docs/team-roadmap.md) coordinates assistant integration, testing and SOC work. These are plans, not implemented cloud or AI features.
+No publicly accessible bypass, refunds, payment processing, checkout execution or Bedrock calls have been added. The store's AWS infrastructure is deployed from Terraform; the shopping assistant and SOC are not. Future refund tools must introduce an explicitly authorized operation with an audit contract. The [deployment runbook](docs/aws-deployment.md) covers Person 1's hosted store, and the [team roadmap](docs/team-roadmap.md) coordinates assistant integration, testing and SOC work.

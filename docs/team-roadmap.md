@@ -9,11 +9,18 @@ This is the shared handoff plan. Milestone 1 is complete; milestone 2 is in prog
 | Milestone | Person 1: store and AWS | Person 2: agent and security | Person 3: integration and SOC | Completion gate |
 | --- | --- | --- | --- | --- |
 | 1 - Local store (complete) | React store, Python API, storage, seed/reset, sessions and orders | Enforcement interface available for integration | Audit contract available for integration | Alice reads her order, cannot read Bob's, and the backend records the decision |
-| 2 - AWS store and real assistant (next) | Connect AWS MCP, Terraform, deploy store/API/storage, manage runtime and secrets | Strands agent with Groq, authorized store tools, enforcement and tool tests | Ask Daywell chat UI, API integration, telemetry consumption and contract tests | Hosted store and real assistant work; both preserve Alice/Bob isolation |
+| 2 - AWS store and real assistant (in progress) | Hosted store complete; own assistant deployment, runtime secrets and cost checks | Strands agent with Groq, authorized store tools, enforcement and tool tests | Ask Daywell chat UI, API integration, telemetry consumption and contract tests | Hosted store and real assistant work; both preserve Alice/Bob isolation |
 | 3 - Controlled penetration-testing lab | Isolated AWS lab, reset/teardown, scope and deployment evidence | Threat model, attack scenarios, protected policies and regression tests | Event collection, detection rules and labeled test fixtures | Repeatable scoped tests produce correlated decisions and execution evidence |
 | 4 - SOC dashboard and final demo | Stable demo deployment, runbook, cost/teardown checks | Tune enforcement, rerun attacks, document findings | Build SOC dashboard, alerts, filters and event drill-down | Demonstrate request -> decision -> execution -> SOC evidence end to end |
 
-Milestone 2 has parallel deployment and assistant tracks. Persons 2 and 3 can integrate locally while Person 1 prepares AWS; milestone 2 is complete only when both tracks work together in the hosted environment. Everyone helps with testing in milestones 3 and 4.
+Person 1's hosted store is complete. Persons 2 and 3 can start on `master` in separate small branches, agreeing the chat and event contracts before overlapping API/UI changes. Milestone 2 is complete only when the real assistant works in the hosted environment without breaking Alice/Bob isolation. Everyone helps with testing in milestones 3 and 4.
+
+Immediate handoff:
+
+1. **Persons 2 and 3 together:** propose the authenticated `POST /api/assistant/messages` request/response, conversation ownership rule, and a versioned tool-event contract in a small PR. Keep the existing v1 audit schema stable.
+2. **Person 2:** implement a local Strands + Groq vertical slice for product search and the signed-in customer's order lookup through `StoreService`. Add cross-account, provider-error and malicious-product-text tests. Add review summaries after those tests pass; leave refund requests unavailable initially.
+3. **Person 3:** build the Ask Daywell chat panel against a local/mock contract with loading, failure and account-switch states. Prepare audit-event fixtures and a consumer test; full SOC UI waits for milestone 4.
+4. **Person 1:** review the security/session boundary and deploy the integrated assistant only after local acceptance and a fresh cost review. Keep Groq keys server-side. Migrate Terraform state to a shared encrypted backend with locking before a teammate changes infrastructure; the current local state must not be recreated from a clean clone.
 
 ## Milestone 1: completed baseline
 
@@ -28,12 +35,10 @@ Milestone 2 has parallel deployment and assistant tracks. Persons 2 and 3 can in
 
 ### Person 1 - store and infrastructure lead
 
-1. Follow [AWS next phase](aws-next-phase.md): confirm school account, region, budget and access; connect the chosen AWS MCP tool with read-only discovery first.
-2. Add Terraform under `infra/` for static hosting/CDN, API Gateway, Python Lambda, DynamoDB and the agreed audit destination. Prefer a same-origin `/api` path for the browser.
-3. Implement the Lambda transport adapter and DynamoDB storage adapter. Preserve the existing service authorization boundary and add adapter tests.
-4. Add deployment-appropriate authentication/access restrictions, HTTPS cookies, rate limits, secret storage, logs and a reset/teardown runbook. Do not expose the public local demo passwords as production authentication.
-5. Agree the assistant runtime with Person 2. Assess Bedrock AgentCore for Strands hosting; verify region, cost, authentication and deployment compatibility before committing. Keep runtime selection separate from model provider selection.
-6. Deploy and rerun order isolation checks. Hand Persons 2 and 3 the service URL, authentication contract, environment variable names and audit sink details, never secret values.
+1. Completed: Terraform deployed static hosting/CDN, API Gateway, Python Lambda, DynamoDB, Cognito and the audit destination in `us-east-2`; the browser and API share an HTTPS origin.
+2. Completed: the Lambda/DynamoDB adapters, private sign-in, secure cookies, throttles, logs and hosted Alice/Bob ownership/audit checks passed. The public local passwords are not accepted in the cloud.
+3. Next: agree the assistant runtime with Person 2. Evaluate Bedrock AgentCore only after checking Free-plan access, region, cost and identity integration. Runtime choice is separate from model provider choice.
+4. Next: integrate and deploy the assistant behind the same session boundary, manage its Groq key server-side, verify the shared audit contract and repeat hosted order-isolation checks. Do not expose passwords, tokens or keys in the handoff.
 
 ### Person 2 - agent backend and enforcement lead
 
@@ -102,3 +107,5 @@ Strands is the agent framework and supports multiple model providers ([official 
 Amazon Bedrock AgentCore can host agents using models inside or outside Bedrock ([AWS FAQ](https://aws.amazon.com/bedrock/agentcore/faqs/)); it is a candidate runtime for this plan, not yet provisioned. If the course specifically requires inference through Amazon Bedrock, select a Bedrock model/provider and AWS permissions instead of claiming the Groq path satisfies that requirement. Confirm this distinction with the team before deployment.
 
 Keep `GROQ_API_KEY` server-side: ignored local configuration during development and managed secrets in AWS. Model choice and runtime configuration are deployment settings, not user-controlled request fields. AWS MCP is a developer provisioning tool; it is separate from the shopping agent's store tools and is never exposed to shoppers.
+
+Groq is billed separately from AWS credits. Start on Groq's Free tier and expect a 429 when its rate limit is reached ([Groq rate-limit docs](https://console.groq.com/docs/rate-limits), [billing FAQ](https://console.groq.com/docs/billing-faqs)). The project owner's no-personal-spend rule means no Groq paid-tier upgrade and no AWS Free-plan upgrade without a new explicit decision. AgentCore is a later deployment evaluation, not a prerequisite for the local assistant slice.
