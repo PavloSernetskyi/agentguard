@@ -1,11 +1,11 @@
 # Milestone 2: Person 1 AWS deployment phase
 
-Milestone 1 is complete. The next step for Person 1 is a guided AWS MCP connection and deployment workflow. AWS MCP is now connected and cloud adapters/Terraform are prepared. No AWS resources have been provisioned: organization policy currently blocks service reads. See the [current deployment runbook](aws-deployment.md) before continuing. Persons 2 and 3 build the assistant locally in parallel; see the [team roadmap](team-roadmap.md).
+Milestone 1 is complete. AWS MCP is connected and the DemoMart store infrastructure is deployed at **https://d16nqulwj27ltb.cloudfront.net** in the assigned Ohio region (`us-east-2`). Synthetic catalog and orders are seeded, and Person 1's hosted Alice/Bob ownership and audit acceptance passed. See the [current deployment runbook](aws-deployment.md). Persons 2 and 3 build the assistant and SOC integration next; see the [team roadmap](team-roadmap.md).
 
 ## Connection session
 
 1. Confirm the school sandbox account, region, spending limit, permitted services and access method. Use a dedicated least-privilege role and short-lived authentication where available. Never paste access keys into chat or commit them.
-2. Identify the actual AWS MCP server and the client where it will run. Follow its current official installation/authentication instructions; verify the tool publisher and requested permissions before connecting. There is no chosen server or checked-in MCP configuration yet.
+2. Identify the actual AWS MCP server and the client where it will run. Follow its current official installation/authentication instructions; verify the tool publisher and requested permissions before connecting. The official AWS MCP server is connected in the developer environment; no credentials or personal MCP configuration are committed.
 3. Begin with read-only tools. Verify account identity and region, inspect existing resources, and record the intended deployment scope. AWS MCP helps the developer manage infrastructure; the shopping assistant must not receive these tools.
 
 ## Implementation and deployment

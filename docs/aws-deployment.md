@@ -2,22 +2,31 @@
 
 ## Current status
 
-Local cloud preparation is implemented and tested. **The store is not deployed and milestone 2 is not complete.** No AWS resources have been created by this work.
+The DemoMart store is deployed at **https://d16nqulwj27ltb.cloudfront.net** in Ohio (`us-east-2`). **Person 1's hosted-store acceptance is complete:** private Alice/Bob passwords are set, both users can read their own orders, both are denied the other's order, and all four decisions were recorded in DynamoDB. The full milestone 2 remains incomplete because the real shopping assistant has not been integrated.
 
-AWS MCP authentication succeeded. However, the selected Happy Path account returned an explicit organization service-control-policy (SCP) denial for these read-only calls in `us-east-1`:
+AWS MCP authentication and read-only service checks succeeded on 2026-10-25 in the project's assigned region, **Ohio (`us-east-2`)**. Lambda, DynamoDB, Cognito and API Gateway returned empty resource lists. Lambda reported 400 total and 400 unreserved concurrent executions.
 
-- `lambda:GetAccountSettings` and `lambda:ListFunctions`
-- `dynamodb:ListTables`
-- `cognito-idp:ListUserPools`
-- `apigateway:GET` on `/apis`
+The earlier explicit SCP denials occurred in `us-east-1`, outside this simplified AWS project's assigned region. The user confirmed Ohio in AWS Settings. We are using that approved region; no organization policy was changed. See [AWS project-region documentation](https://docs.aws.amazon.com/accounts/latest/reference/project-regions.html).
 
-Policy ID reported: `p-r08ib3ie`. The full policy contents and cause have not been inspected. Do not assume this is a free-tier limitation or upgrade billing to fix it. Ask the account/organization administrator whether the selected account/project and region are approved for this architecture. Do not try alternate credentials or regions to evade the policy. No create/update calls were attempted.
+AWS MCP and the local AWS CLI profile are connected. Never send access keys or passwords in chat.
 
-A role named AccountFullAccessRole does not establish effective permissions. IAM allows cannot override an organization-level explicit deny.
+On 2026-10-25, a real authenticated Terraform plan for account `783582650755` and region `us-east-2` showed **26 create, 0 change, 0 destroy**. The reviewed plan was applied successfully: **26 added, 0 changed, 0 destroyed**. The plan, state, budget email and deployment inputs are ignored locally. The site returns HTTP 200, `/api/products` returns ten products, and an unauthenticated order request returns HTTP 401 with a matching `deny`/`blocked` DynamoDB audit event. Fourteen synthetic items (ten products, two customers, two orders) were seeded. Cognito users `alice` and `bob` and their immutable-sub identity mappings were created. The owner set private permanent passwords using the no-echo local script. That script reported own-order 200 and cross-order 403 for each user; independent AWS reads confirmed both Cognito users `CONFIRMED` and the four matching durable audit decisions. CloudFront status is `Deployed`; AWS Budgets reports the $5 monthly budget.
+
+Deployed inventory: one HTTP API, integration, two routes and stage; one $5 monthly account-wide budget with $1/$3/$5 actual-spend email notifications; one CloudFront distribution with S3 origin access control and API origin request policy; two seven-day log groups; one Cognito user pool and client; two on-demand DynamoDB tables; one Lambda role and policy, one 512 MB Lambda with five reserved concurrent executions and API invocation permission; one private encrypted S3 bucket, public-access block, bucket policy and three built site objects. Terraform showed deprecation warnings for DynamoDB `hash_key`/`range_key`, accepted by the pinned provider.
+
+To unblock local planning, install [AWS CLI v2 for Windows](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html), then use the [browser-based local development sign-in](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sign-in.html):
+
+```powershell
+aws login --profile agentguard --region us-east-2
+```
+
+Choose the existing AgentGuard project session. Keep credentials in the local AWS credential store, not chat or Git. After sign-in, run Terraform with `AWS_PROFILE=agentguard`; if the pinned provider cannot consume the login session directly, use the documented separate `credential_process` profile. Do not run credential export into terminal output. Review the resulting real plan before applying.
 
 ## Reviewed scope and cost target
 
-One demo environment in `us-east-1`, with a $5/month target for the store. This is not a spending cap. Planning estimate remains approximately $1-$5/month for 100,000 API requests, 512 MB Lambda at 300 ms average, 10 GB delivery, small DynamoDB tables and 0.5 GB logs; it is not a measured bill. AI inference, AgentCore, SOC hosting, taxes, domain registration and penetration-test load are excluded.
+On 2026-10-25 the AWS Free Tier `GetAccountPlanState` API reported account `783582650755` as `FREE`, `ACTIVE`, with `$100.00` initially and `$140.00` remaining after deployment, and expiration on 2027-04-18 UTC. AWS may grant additional credits for onboarding activities; the additional $40 is reported by AWS, not a payment. The user requires **no personal-money spend**. Keep the project on the Free plan; do not upgrade to Paid or activate features that automatically upgrade it. AWS says Free-plan usage is covered by credits and the account closes when the credits or six-month plan ends, whichever comes first. The $5 budget below is an early warning, **not** a hard cap. A Paid plan changes this protection and is outside the user's authorization. See [AWS account plan rules](https://docs.aws.amazon.com/us_en/awsaccountbilling/latest/aboutv2/free-tier-plans.html).
+
+One demo environment in `us-east-2`, with a $5/month target for the store. This is not a spending cap. Planning estimate remains approximately $1-$5/month for 100,000 API requests, 512 MB Lambda at 300 ms average, 10 GB delivery, small DynamoDB tables and 0.5 GB logs; it is not a measured bill. This estimate was initially based on Northern Virginia pricing; monitor actual Ohio usage against the budget. AI inference, AgentCore, SOC hosting, taxes, domain registration and penetration-test load are excluded.
 
 Sources: [API Gateway](https://aws.amazon.com/api-gateway/pricing/), [Lambda](https://aws.amazon.com/lambda/pricing/), [DynamoDB](https://aws.amazon.com/dynamodb/pricing/), [S3](https://aws.amazon.com/s3/pricing/), [CloudFront](https://aws.amazon.com/cloudfront/pricing/), [CloudWatch](https://aws.amazon.com/cloudwatch/pricing/), [Cognito](https://aws.amazon.com/cognito/pricing/).
 
@@ -34,7 +43,7 @@ Terraform declares:
 
 Throttles: API target 2 requests/second, burst 5; login 0.5 requests/second, burst 2. DynamoDB throughput maxima also limit capacity. These controls can return throttling errors and are not billing caps. Login may require a brief wait during rapid Alice/Bob switching.
 
-Lambda reserved concurrency is unset (`-1`) until the account quota is known; a reservation of 5 is supported by the configuration only if the quota permits it. The quota read was denied, so do not claim a concurrency limit has been configured.
+Lambda reserved concurrency is unset (`-1`) until the account quota is known; a reservation of 5 is supported by the configuration only if the quota permits it. The Ohio quota read succeeded (400 total/unreserved), so a reservation of 5 can be selected in the actual deployment inputs. No concurrency limit has been applied yet.
 
 ## Prepare and verify locally
 
@@ -56,11 +65,11 @@ terraform -chdir=infra test
 
 If using the downloaded local executable, substitute `.tools/terraform/terraform.exe` for `terraform`. The build produces ignored `artifacts/backend.zip`, `artifacts/store/` and `artifacts/seed-items.json`. The frontend build sets `VITE_AUTH_MODE=cognito`, removing the prefilled/public local demo passwords. The Lambda uses the AWS-runtime-provided boto3 SDK; local stdlib tests use mock clients, not live Cognito or DynamoDB.
 
-Validation completed: 19 Python tests, production cloud frontend build, Terraform validate, and one Terraform mocked plan test covering six infrastructure invariants. Terraform emits deprecation warnings for DynamoDB key arguments accepted by the pinned provider. The test provider is mocked: it cannot verify AWS permissions, quotas, service availability or an actual deployable account plan. **No authenticated Terraform plan has been produced.**
+Validation completed: 19 Python tests (rerun on 2026-10-25), production cloud frontend build, Terraform validate, one Terraform mocked plan test covering six infrastructure invariants, and the real authenticated plan described above. Terraform emits deprecation warnings for DynamoDB key arguments accepted by the pinned provider. A successful plan still does not prove create permissions or guarantee apply success.
 
 ## Unblock, plan and review
 
-1. Resolve the SCP restriction with the account administrator, then repeat read-only service checks through AWS MCP. Confirm account, region, service availability and Lambda quotas.
+1. Completed: verify the project account, Ohio region, core service read access and Lambda quota. Next check access to global services and confirm the remaining deployment permissions without changing organization policies.
 2. Provide the budget email privately. Copy `infra/terraform.tfvars.example` to ignored `infra/terraform.tfvars` and set the expected account ID and email. No passwords or API keys belong there.
 3. Terraform needs an approved credential source of its own. MCP OAuth sign-in does not automatically supply local Terraform credentials. Configure short-lived credentials using the approved AWS sign-in workflow; do not extract MCP tokens or commit credentials.
 4. Prepare the artifacts, then run an authenticated Terraform plan into ignored `infra/deploy.tfplan`. Review every resource, the account ID, cost assumptions and teardown scope. Do not apply a mock plan or bypass the account guard.
@@ -73,8 +82,8 @@ No implementation in this runbook disables or alters the SCP.
 The Lambda never auto-seeds on startup and has no HTTP reset/admin route.
 
 1. Use administrator AWS MCP operations to put the 14 generated AttributeValue records from `artifacts/seed-items.json` into the Terraform output `store_table`. The file contains only synthetic data. For first-time seeding, use `attribute_not_exists(pk)` conditions to avoid overwriting an existing project.
-2. Create Cognito usernames `alice` and `bob` in `cognito_pool_id`, suppress outbound invitations, and assign each a distinct private permanent password via a secure administrator workflow. Do not use the published local demo passwords, put passwords in Terraform, or print passwords into tool logs. This step remains manual until an approved secret-entry workflow is established.
-3. Read each created user's immutable Cognito `sub`. Add a store record with `pk=identities`, `sk=<sub>`, and `value={customer_id: alice}` or `bob`. This is an administrator-owned mapping; request bodies and agent prompts cannot set it.
+2. In an ignored virtual environment install `boto3` and `botocore[crt]` (the latter lets boto3 use AWS CLI browser login), then run `python scripts/provision_demo_users.py` in an interactive private terminal. The current `.venv` already has these dependencies. Add `--user bob` (or `alice`) to retry just one account. The script prompts without echo for distinct private permanent passwords, sets Cognito usernames without invitations, and never stores or prints passwords. Do not use the published local demo passwords or put passwords in Terraform, chat, or Git. This script is scoped to the current project account, pool, tables and website URL. It also checks each user's own-order 200, cross-order 403 and matching audit events.
+3. The script reads each user's immutable Cognito `sub` and conditionally adds `pk=identities`, `sk=<sub>`, `value={customer_id: alice|bob}`. This administrator-owned mapping cannot be set by request bodies or agent prompts.
 4. Users sign in through the store's `/api/session` route. The backend calls Cognito and GetUser, resolves the trusted `sub`, then issues an opaque hashed-store session. Cognito tokens are never returned to the browser. Cloud cookies are Secure, HttpOnly and SameSite=Strict.
 5. New-password/MFA challenges are currently rejected, not completed in the store UI; administrator provisioning must finish account setup before handoff. Store sessions last one hour and logout revokes them. Disabling a Cognito user alone does not immediately revoke an already-issued store session: an administrator must remove that customer's sessions or wait for expiry.
 

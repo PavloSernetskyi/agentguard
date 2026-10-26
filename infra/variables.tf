@@ -1,9 +1,9 @@
 variable "region" {
   type    = string
-  default = "us-east-1"
+  default = "us-east-2"
   validation {
-    condition     = var.region == "us-east-1"
-    error_message = "This reviewed demo targets us-east-1. Review costs before changing regions."
+    condition     = var.region == "us-east-2"
+    error_message = "This reviewed demo targets us-east-2. Review costs before changing regions."
   }
 }
 variable "account_id" {

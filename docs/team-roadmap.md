@@ -1,8 +1,8 @@
 # Team roadmap and ownership
 
-Person 1 update: cloud adapters and Terraform are prepared and locally verified, but deployment is blocked by organization policy. See [deployment status](aws-deployment.md). Milestone 2 remains incomplete.
+Person 1 update: the DemoMart store infrastructure and synthetic catalog are deployed in Ohio (`us-east-2`) at **https://d16nqulwj27ltb.cloudfront.net**. Hosted Alice/Bob ownership and audit verification passed, so Person 1's store handoff is ready. The real assistant and SOC integrations remain for Persons 2 and 3. See [deployment status](aws-deployment.md). Milestone 2 remains incomplete.
 
-This is the shared handoff plan. Milestone 1 is complete; milestones 2-4 are planned, not implemented. Changes to ownership or contracts should be agreed in a pull request.
+This is the shared handoff plan. Milestone 1 is complete; milestone 2 is in progress; milestones 3-4 are planned. Changes to ownership or contracts should be agreed in a pull request.
 
 ## Milestone overview
 
@@ -22,7 +22,7 @@ Milestone 2 has parallel deployment and assistant tracks. Persons 2 and 3 can in
 - Authorization interface and versioned audit events with separate decision/execution fields.
 - Nine backend tests, production frontend build and live HTTP/proxy checks passed.
 - The project owner has confirmed local use works. Automated visual browser checks have not been added.
-- No AWS deployment, working assistant, payment processing or checkout execution exists yet.
+- The AWS store is deployed; no working assistant, payment processing or checkout execution exists yet.
 
 ## Milestone 2: AWS deployment and Ask DemoMart
 

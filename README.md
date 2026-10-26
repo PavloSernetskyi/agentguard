@@ -9,7 +9,7 @@ A local, synthetic shopping platform for a three-person school project. Person 1
 | Milestone | Status | Deliverable |
 | --- | --- | --- |
 | 1. Local DemoMart | Complete | Store, sessions, carts, owned orders and audit baseline |
-| 2. AWS deployment + real assistant | Next | Person 1 deploys; Persons 2 and 3 integrate Strands/Groq with Ask DemoMart |
+| 2. AWS deployment + real assistant | In progress | Person 1's hosted store passed order-isolation acceptance; Persons 2 and 3 integrate Strands/Groq with Ask DemoMart |
 | 3. Controlled penetration-testing lab | Planned | Isolated fixtures, scoped security scenarios, enforcement and detection evidence |
 | 4. SOC dashboard + final demonstration | Planned | Operator dashboard, correlated alerts, findings and reproducible demo |
 
@@ -19,13 +19,13 @@ Read the **[team roadmap and acceptance checks](docs/team-roadmap.md)** before s
 - **Person 2 (agent/security):** follow the [AgentGuard handoff](agentguard/README.md); own Strands agent backend, authorized store tools, enforcement and penetration-test scenarios.
 - **Person 3 (integration/SOC):** follow the [dashboard handoff](dashboard/README.md); help deliver the chat UI and telemetry in milestone 2, then own the SOC dashboard in milestone 4.
 
-Planned assistant architecture: **Strands + Groq inference**, with **Bedrock AgentCore evaluated as an AWS runtime**. A Groq API key does not power Bedrock-hosted inference; see the [architecture clarification and official references](docs/team-roadmap.md#architecture-clarification-strands-groq-and-bedrock). Keys remain server-side. No assistant is implemented and no AWS resources have been provisioned.
+Planned assistant architecture: **Strands + Groq inference**, with **Bedrock AgentCore evaluated as an AWS runtime**. A Groq API key does not power Bedrock-hosted inference; see the [architecture clarification and official references](docs/team-roadmap.md#architecture-clarification-strands-groq-and-bedrock). Keys remain server-side. No assistant is implemented yet.
 
 ## AWS deployment preparation status
 
-The Person 1 cloud implementation is prepared: Lambda adapter, owner-scoped DynamoDB storage, Cognito-backed sign-in, secure cookies, cloud frontend build and Terraform for the $5/month store target. **It is not deployed.** AWS MCP sign-in works, but an organization SCP denies read access to the required services in `us-east-1`.
+The Person 1 cloud store is deployed at **https://d16nqulwj27ltb.cloudfront.net** in Ohio (`us-east-2`): Lambda API, owner-scoped DynamoDB storage, Cognito-backed sign-in, secure cookies, private S3/CloudFront hosting and a $5/month alert budget. The account is on an active AWS Free plan. Synthetic catalog, customers and orders are seeded. Private Alice/Bob setup and hosted ownership acceptance passed in both directions; Person 1's hosted-store handoff is ready.
 
-See the [deployment runbook](docs/aws-deployment.md) for the blocker, exact resource inventory, setup, cost controls and hosted acceptance checklist. Local verification now includes 19 Python tests and a mocked Terraform plan test; a real authenticated infrastructure plan remains pending. Person 2 can start agent work locally while account access is resolved.
+See the [deployment runbook](docs/aws-deployment.md) for the current status, exact resource inventory, setup, cost controls and hosted acceptance checklist. Verification includes 19 Python tests, a real Terraform plan and apply, and public site/API checks. Person 2 can start agent work against the documented store interface while hosted acceptance finishes.
 
 ## Start locally
 
