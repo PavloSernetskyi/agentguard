@@ -1,4 +1,4 @@
-# DemoMart / AgentGuard
+# Daywell Market / AgentGuard
 
 A local, synthetic shopping platform for a three-person school project. Person 1 owns the store and deployment; Person 2 owns AgentGuard enforcement; Person 3 owns the SOC dashboard.
 
@@ -8,8 +8,8 @@ A local, synthetic shopping platform for a three-person school project. Person 1
 
 | Milestone | Status | Deliverable |
 | --- | --- | --- |
-| 1. Local DemoMart | Complete | Store, sessions, carts, owned orders and audit baseline |
-| 2. AWS deployment + real assistant | In progress | Person 1's hosted store passed order-isolation acceptance; Persons 2 and 3 integrate Strands/Groq with Ask DemoMart |
+| 1. Local Daywell Market | Complete | Store, sessions, carts, owned orders and audit baseline |
+| 2. AWS deployment + real assistant | In progress | Person 1's hosted store passed order-isolation acceptance; Persons 2 and 3 integrate Strands/Groq with Ask Daywell |
 | 3. Controlled penetration-testing lab | Planned | Isolated fixtures, scoped security scenarios, enforcement and detection evidence |
 | 4. SOC dashboard + final demonstration | Planned | Operator dashboard, correlated alerts, findings and reproducible demo |
 
@@ -23,7 +23,7 @@ Planned assistant architecture: **Strands + Groq inference**, with **Bedrock Age
 
 ## AWS deployment preparation status
 
-The Person 1 cloud store is deployed at **https://d16nqulwj27ltb.cloudfront.net** in Ohio (`us-east-2`): Lambda API, owner-scoped DynamoDB storage, Cognito-backed sign-in, secure cookies, private S3/CloudFront hosting and a $5/month alert budget. The account is on an active AWS Free plan. Synthetic catalog, customers and orders are seeded. Private Alice/Bob setup and hosted ownership acceptance passed in both directions; Person 1's hosted-store handoff is ready.
+The Person 1 cloud store is deployed at **https://d16nqulwj27ltb.cloudfront.net** in Ohio (`us-east-2`): Lambda API, owner-scoped DynamoDB storage, Cognito-backed sign-in, secure cookies, private S3/CloudFront hosting and a $5/month alert budget. The account is on an active AWS Free plan. Synthetic catalog, customers and orders are seeded. Private Alice/Bob setup and hosted ownership acceptance passed in both directions; Person 1's hosted-store handoff is ready. The public brand is now **Daywell Market**; the original `demomart-*` AWS resource IDs remain stable to avoid replacing live infrastructure.
 
 See the [deployment runbook](docs/aws-deployment.md) for the current status, exact resource inventory, setup, cost controls and hosted acceptance checklist. Verification includes 19 Python tests, a real Terraform plan and apply, and public site/API checks. Person 2 can start agent work against the documented store interface while hosted acceptance finishes.
 
@@ -50,8 +50,8 @@ Open **http://127.0.0.1:5173**. Vite proxies `/api` to port 8000. Port 5173 is f
 
 | Shopper | Account | Password | Order |
 | --- | --- | --- | --- |
-| Alice Demo | alice | alice-demo | ord-alice-001 |
-| Bob Demo | bob | bob-demo | ord-bob-001 |
+| Alice | alice | alice-demo | ord-alice-001 |
+| Bob | bob | bob-demo | ord-bob-001 |
 
 These deliberately public credentials are for a loopback-only school demo. Sessions still require backend validation, expire after one hour, rotate on login, and are revoked on logout. The opaque cookie is HttpOnly and SameSite=Strict. Production authentication, rate limits, HTTPS/Secure cookies, and durable cloud storage are deployment-phase work.
 
@@ -59,7 +59,7 @@ These deliberately public credentials are for a loopback-only school demo. Sessi
 
 1. **Structure and contracts:** see [API and teammate contracts](docs/contracts.md). `store/` contains React/TypeScript, `backend/` contains APIs and reusable operations, `seed/` contains synthetic fixtures, `tests/` contains security acceptance tests. `agentguard/`, `dashboard/`, and `infra/` provide teammate handoff notes.
 2. **Storefront:** start both servers; verify ten illustrated products, search, category filters, product details, and synthetic reviews. Original SVG product illustrations live in `store/src/Art.tsx`. Fonts use Google Fonts with local system fallbacks; no remote product assets are needed.
-3. **Accounts, cart, orders, audit:** sign in as Alice; add a product, adjust quantities, refresh, and open My orders. Switch to Bob and confirm his cart and orders are separate. Checkout is disabled. Ask DemoMart is a coming-later panel, without AI behavior.
+3. **Accounts, cart, orders, audit:** sign in as Alice; add a product, adjust quantities, refresh, and open My orders. Switch to Bob and confirm his cart and orders are separate. Checkout is disabled. Ask Daywell is a coming-later panel, without AI behavior.
 4. **Verification:** run the commands below and the [manual checklist](docs/verification.md).
 
 ```powershell

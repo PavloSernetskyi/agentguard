@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://demomart.example/schemas/audit-event.v1.json",
-  "title": "DemoMart audit event v1",
+  "title": "Daywell Market audit event v1",
   "type": "object",
   "additionalProperties": false,
   "required": [

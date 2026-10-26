@@ -1,6 +1,6 @@
 # Team roadmap and ownership
 
-Person 1 update: the DemoMart store infrastructure and synthetic catalog are deployed in Ohio (`us-east-2`) at **https://d16nqulwj27ltb.cloudfront.net**. Hosted Alice/Bob ownership and audit verification passed, so Person 1's store handoff is ready. The real assistant and SOC integrations remain for Persons 2 and 3. See [deployment status](aws-deployment.md). Milestone 2 remains incomplete.
+Person 1 update: the Daywell Market store infrastructure and synthetic catalog are deployed in Ohio (`us-east-2`) at **https://d16nqulwj27ltb.cloudfront.net**. Hosted Alice/Bob ownership and audit verification passed, so Person 1's store handoff is ready. The real assistant and SOC integrations remain for Persons 2 and 3. See [deployment status](aws-deployment.md). Milestone 2 remains incomplete.
 
 This is the shared handoff plan. Milestone 1 is complete; milestone 2 is in progress; milestones 3-4 are planned. Changes to ownership or contracts should be agreed in a pull request.
 
@@ -9,7 +9,7 @@ This is the shared handoff plan. Milestone 1 is complete; milestone 2 is in prog
 | Milestone | Person 1: store and AWS | Person 2: agent and security | Person 3: integration and SOC | Completion gate |
 | --- | --- | --- | --- | --- |
 | 1 - Local store (complete) | React store, Python API, storage, seed/reset, sessions and orders | Enforcement interface available for integration | Audit contract available for integration | Alice reads her order, cannot read Bob's, and the backend records the decision |
-| 2 - AWS store and real assistant (next) | Connect AWS MCP, Terraform, deploy store/API/storage, manage runtime and secrets | Strands agent with Groq, authorized store tools, enforcement and tool tests | Ask DemoMart chat UI, API integration, telemetry consumption and contract tests | Hosted store and real assistant work; both preserve Alice/Bob isolation |
+| 2 - AWS store and real assistant (next) | Connect AWS MCP, Terraform, deploy store/API/storage, manage runtime and secrets | Strands agent with Groq, authorized store tools, enforcement and tool tests | Ask Daywell chat UI, API integration, telemetry consumption and contract tests | Hosted store and real assistant work; both preserve Alice/Bob isolation |
 | 3 - Controlled penetration-testing lab | Isolated AWS lab, reset/teardown, scope and deployment evidence | Threat model, attack scenarios, protected policies and regression tests | Event collection, detection rules and labeled test fixtures | Repeatable scoped tests produce correlated decisions and execution evidence |
 | 4 - SOC dashboard and final demo | Stable demo deployment, runbook, cost/teardown checks | Tune enforcement, rerun attacks, document findings | Build SOC dashboard, alerts, filters and event drill-down | Demonstrate request -> decision -> execution -> SOC evidence end to end |
 
@@ -24,7 +24,7 @@ Milestone 2 has parallel deployment and assistant tracks. Persons 2 and 3 can in
 - The project owner has confirmed local use works. Automated visual browser checks have not been added.
 - The AWS store is deployed; no working assistant, payment processing or checkout execution exists yet.
 
-## Milestone 2: AWS deployment and Ask DemoMart
+## Milestone 2: AWS deployment and Ask Daywell
 
 ### Person 1 - store and infrastructure lead
 
@@ -47,7 +47,7 @@ Milestone 2 has parallel deployment and assistant tracks. Persons 2 and 3 can in
 
 ### Person 3 - assistant integration and telemetry lead
 
-1. Turn the reserved Ask DemoMart panel into a real chat interface once Person 2's API works. Coordinate edits in `store/` with Person 1.
+1. Turn the reserved Ask Daywell panel into a real chat interface once Person 2's API works. Coordinate edits in `store/` with Person 1.
 2. Add pending, error, retry and signed-out states. Clear chat on account switch/logout; never carry Alice's history into Bob's session. Render model text safely and do not expose API keys in the browser.
 3. Integrate against a documented authenticated chat endpoint. A proposed `POST /api/assistant/messages` may accept a message and an opaque conversation ID; the backend must validate conversation ownership. No such endpoint exists today.
 4. Agree versioned event extensions for conversation ID, tool-call ID and tool name. Preserve the current audit schema; propose a v2 schema before adding fields because v1 rejects unknown fields.

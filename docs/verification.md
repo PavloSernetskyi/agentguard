@@ -29,6 +29,6 @@
 - Sign out; direct order URLs require sign-in. Check wrong password errors.
 - Inspect audit JSON with `python -m backend.audit`; no session tokens or passwords appear.
 - Check keyboard focus indicators, dialog dismissal with Escape, and controls at mobile width.
-- Confirm checkout is disabled and Ask DemoMart says coming later.
+- Confirm checkout is disabled and Ask Daywell says coming later.
 
 Browser visual/interaction checks were not automated in the initial implementation because the in-app browser runtime was unavailable. Build and API tests do not substitute for these visual checks.

@@ -2,7 +2,9 @@
 
 ## Current status
 
-The DemoMart store is deployed at **https://d16nqulwj27ltb.cloudfront.net** in Ohio (`us-east-2`). **Person 1's hosted-store acceptance is complete:** private Alice/Bob passwords are set, both users can read their own orders, both are denied the other's order, and all four decisions were recorded in DynamoDB. The full milestone 2 remains incomplete because the real shopping assistant has not been integrated.
+The Daywell Market store is deployed at **https://d16nqulwj27ltb.cloudfront.net** in Ohio (`us-east-2`). **Person 1's hosted-store acceptance is complete:** private Alice/Bob passwords are set, both users can read their own orders, both are denied the other's order, and all four decisions were recorded in DynamoDB. The full milestone 2 remains incomplete because the real shopping assistant has not been integrated.
+
+The storefront was renamed from its original project name to **Daywell Market**. The current cloud build and synthetic catalog use the new brand and show customers simply as Alice and Bob. Existing `demomart-*` AWS resource names, cookie name, order IDs and schema identifier are retained to avoid replacing live infrastructure or breaking the integration contract. The public URL did not change.
 
 AWS MCP authentication and read-only service checks succeeded on 2026-10-25 in the project's assigned region, **Ohio (`us-east-2`)**. Lambda, DynamoDB, Cognito and API Gateway returned empty resource lists. Lambda reported 400 total and 400 unreserved concurrent executions.
 

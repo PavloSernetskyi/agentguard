@@ -1,6 +1,6 @@
 # Milestone 2: Person 1 AWS deployment phase
 
-Milestone 1 is complete. AWS MCP is connected and the DemoMart store infrastructure is deployed at **https://d16nqulwj27ltb.cloudfront.net** in the assigned Ohio region (`us-east-2`). Synthetic catalog and orders are seeded, and Person 1's hosted Alice/Bob ownership and audit acceptance passed. See the [current deployment runbook](aws-deployment.md). Persons 2 and 3 build the assistant and SOC integration next; see the [team roadmap](team-roadmap.md).
+Milestone 1 is complete. AWS MCP is connected and the Daywell Market store infrastructure is deployed at **https://d16nqulwj27ltb.cloudfront.net** in the assigned Ohio region (`us-east-2`). Synthetic catalog and orders are seeded, and Person 1's hosted Alice/Bob ownership and audit acceptance passed. See the [current deployment runbook](aws-deployment.md). Persons 2 and 3 build the assistant and SOC integration next; see the [team roadmap](team-roadmap.md).
 
 ## Connection session
 
@@ -15,7 +15,7 @@ Milestone 1 is complete. AWS MCP is connected and the DemoMart store infrastruct
 6. Replace public local demo sign-in for hosted exposure with deployment-appropriate authentication or restrict the demo to approved participants. Add HTTPS/Secure cookies, allowed origins, request limits, secret handling, logs and a seed/reset procedure.
 7. With Person 2, decide how to host Strands using Groq inference. Evaluate Bedrock AgentCore as a runtime; confirm model/tool compatibility, costs and runtime identity before provisioning. Store the Groq key server-side in managed secrets. Bedrock-hosted inference would be a separate provider choice.
 8. Review the concrete Terraform plan, estimated cost and teardown procedure before applying it. Document outputs and configuration names without secret values.
-9. Deploy; give Persons 2 and 3 the service URL and authentication/event contracts. Integrate the real Ask DemoMart interface and run the milestone 2 acceptance checklist in the roadmap.
+9. Deploy; give Persons 2 and 3 the service URL and authentication/event contracts. Integrate the real Ask Daywell interface and run the milestone 2 acceptance checklist in the roadmap.
 
 ## Completion and later phases
 

@@ -1,4 +1,4 @@
-"""Reset only DemoMart's local database. Run: python -m seed.reset"""
+"""Reset only Daywell Market's local database. Run: python -m seed.reset"""
 from pathlib import Path
 from backend.storage import SQLiteStorage
 
@@ -19,10 +19,10 @@ CATALOG = [
 
 def seed(storage):
     for pid, name, category, price, illustration, color, description, rating in CATALOG:
-        storage.put("products", pid, dict(id=pid, name=name, category=category, price=price, illustration=illustration, color=color, description=description + " Designed for this fictional DemoMart catalog; specifications and reviews are synthetic.", rating=rating, reviews=[{"author": "Demo reviewer 01", "rating": 5, "text": "A useful addition to my everyday routine. A synthetic review for this demo."}, {"author": "Demo reviewer 02", "rating": 4, "text": "Simple design and a lovely finish. This review is fictional."}]))
+        storage.put("products", pid, dict(id=pid, name=name, category=category, price=price, illustration=illustration, color=color, description=description, rating=rating, reviews=[{"author": "Jordan P.", "rating": 5, "text": "A useful addition to my everyday routine."}, {"author": "Morgan L.", "rating": 4, "text": "Simple design and a lovely finish."}]))
     for account, product in [("alice", "p01"), ("bob", "p02")]:
-        storage.put("customers", account, {"id": account, "name": account.title() + " Demo"})
-        storage.put("orders", "ord-" + account + "-001", {"id": "ord-" + account + "-001", "customer_id": account, "date": "2026-10-12", "status": "Delivered", "address": account.title() + " Demo, 100 Example Lane, Fiction City, ZZ 00000", "items": [{"product_id": product, "name": storage.get("products", product)["name"], "quantity": 1, "unit_price": storage.get("products", product)["price"]}], "total": storage.get("products", product)["price"], "transaction": "synthetic-no-payment"})
+        storage.put("customers", account, {"id": account, "name": account.title()})
+        storage.put("orders", "ord-" + account + "-001", {"id": "ord-" + account + "-001", "customer_id": account, "date": "2026-10-12", "status": "Delivered", "address": account.title() + ", 100 Example Lane, Fiction City, ZZ 00000", "items": [{"product_id": product, "name": storage.get("products", product)["name"], "quantity": 1, "unit_price": storage.get("products", product)["price"]}], "total": storage.get("products", product)["price"], "transaction": "synthetic-no-payment"})
 
 
 if __name__ == "__main__":

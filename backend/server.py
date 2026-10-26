@@ -35,7 +35,7 @@ def main():
 
         do_GET = do_POST = do_PUT = do_DELETE = dispatch
 
-    print("DemoMart API: http://127.0.0.1:8000", flush=True)
+    print("Daywell Market API: http://127.0.0.1:8000", flush=True)
     ThreadingHTTPServer(("127.0.0.1", 8000), Handler).serve_forever()
 
 

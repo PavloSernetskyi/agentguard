@@ -1,4 +1,4 @@
-# DemoMart local contracts
+# Daywell Market local contracts
 
 All data is synthetic. Amounts are integer USD cents. All routes begin `/api`.
 
