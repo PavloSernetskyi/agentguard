@@ -1,6 +1,52 @@
 # Daywell Market / AgentGuard
 
-A local, synthetic shopping platform for a three-person school project. Person 1 owns the store and deployment; Person 2 owns AgentGuard enforcement; Person 3 owns the SOC dashboard.
+A deployed, synthetic shopping platform for a three-person school project. Person 1 owns the store and AWS deployment; Person 2 owns AgentGuard enforcement; Person 3 owns the assistant UI and SOC dashboard.
+
+**Live store:** https://d16nqulwj27ltb.cloudfront.net · **AWS region:** `us-east-2` (Ohio) · **Data:** synthetic only
+
+## Final deliverable checklist
+
+Use this checklist for the final project demonstration. Checked items are implemented and verified; unchecked items are planned team work.
+
+### AWS services in use — Person 1 complete
+
+| AWS service | How this project uses it | Evidence in this repository |
+| --- | --- | --- |
+| Amazon S3 | Private bucket stores the built React website | [Website infrastructure](infra/storage.tf) |
+| Amazon CloudFront | Serves the site over HTTPS and forwards `/api` to the backend | [Distribution and origins](infra/site.tf) |
+| Amazon API Gateway HTTP API | Receives browser API requests and invokes Lambda | [API routes](infra/api.tf) |
+| AWS Lambda | Runs the Python store API on demand | [Lambda handler](backend/lambda_handler.py) and [infrastructure](infra/api.tf) |
+| Amazon DynamoDB | Separate store and audit tables hold synthetic data, sessions and decisions | [Tables](infra/storage.tf) and [storage adapter](backend/dynamo.py) |
+| Amazon Cognito | Validates the private Alice and Bob accounts before store sessions are issued | [User pool](infra/auth.tf) and [authentication adapter](backend/auth.py) |
+| Amazon CloudWatch Logs | Records API and Lambda operational logs with seven-day retention | [Log configuration](infra/api.tf) |
+| AWS Identity and Access Management (IAM) | Gives Lambda scoped access to its tables and logs | [Application role](infra/api.tf) |
+| AWS Budgets | Sends monthly usage alerts at $1, $3 and $5 | [Budget configuration](infra/budget.tf) |
+
+- [x] Deploy the storefront and backend with Terraform; keep state, plans and credentials out of Git.
+- [x] Verify HTTPS storefront, ten synthetic products and the live API.
+- [x] Verify Alice sees her own order, receives 403 for Bob's order, and leaves allow/deny audit events; repeat as Bob.
+- [x] Confirm the AWS account remains on its Free plan and the $5 budget alerts are configured. The budget sends warnings; it is not a hard spending cap.
+- [ ] Before teammates change infrastructure, migrate the current local Terraform state to a shared encrypted backend with locking.
+
+AWS MCP helped with provisioning and verification; it is a developer tool, **not** a shopper-facing agent tool or an AWS service the website invokes. The [deployment runbook](docs/aws-deployment.md) records the resource inventory and hosted acceptance evidence. Existing `demomart-*` resource IDs are retained to avoid replacing the deployed stack after the Daywell Market rename.
+
+### Application and security
+
+- [x] React/TypeScript storefront with original branding, responsive catalog, search, categories, product details and synthetic reviews.
+- [x] Python API with a local SQLite adapter and deployed DynamoDB adapter behind the same storage interface.
+- [x] Cart quantities and totals, backend-validated Alice/Bob sessions, separate synthetic orders and a local seed/reset command.
+- [x] Enforce order ownership in backend operations and persist separate authorization decisions and execution outcomes.
+- [x] Keep checkout and payments disabled; no real customers, addresses, transactions or refunds.
+
+### Remaining group deliverables
+
+- [ ] **Person 2:** implement the real Strands/Groq shopping assistant using server-authorized product and own-order tools; test prompt injection, cross-account attempts and provider failure.
+- [ ] **Person 3:** connect the Ask Daywell chat UI, clear conversations on account switch and prepare versioned tool-event telemetry.
+- [ ] **Team:** run controlled security tests against an isolated vulnerable fixture and the protected store; document actual tool results and audit evidence.
+- [ ] **Person 3 leads:** build an operator-only SOC dashboard showing correlated requests, decisions, executions and alerts.
+- [ ] **Final demo:** show normal Alice/Bob use, a blocked cross-account agent request, an indirect prompt-injection attempt, a clearly labeled isolated vulnerable comparison, and the matching SOC timeline.
+
+The store is deployed; the assistant, vulnerable lab and SOC dashboard are not yet deployed. Groq inference is separate from AWS credits. Bedrock AgentCore remains an optional runtime to evaluate, and no Bedrock model inference is currently claimed. See the [team roadmap](docs/team-roadmap.md) for owners and acceptance criteria.
 
 ## Project status and team plan
 
@@ -81,7 +127,7 @@ Stop the API with Ctrl+C before `python -m seed.reset`, then restart it. This de
 
 ## Architecture and scope
 
-`backend/api.py:handle` accepts ordinary request values and returns `(status, headers, JSON body)`. `backend/server.py` is the local HTTP adapter. A future API Gateway/Lambda adapter can normalize its event into this handler. All private operations get identity from a validated session. `StoreService` reuses product, order, and cart operations; future assistant tools must call these operations with server-derived principals, never model-provided customer IDs.
+`backend/api.py:handle` accepts ordinary request values and returns `(status, headers, JSON body)`. `backend/server.py` is the local HTTP adapter; `backend/lambda_handler.py` adapts API Gateway events to the same handler in AWS. All private operations get identity from a validated session. `StoreService` reuses product, order, and cart operations; future assistant tools must call these operations with server-derived principals, never model-provided customer IDs.
 
 `Storage` abstracts persistence. The SQLite adapter uses parameterized SQL and per-operation connections. SQLite collection scans are intentionally small-scale; the new DynamoDB adapter uses owner-scoped queries and pagination. Cart writes replace a product quantity; concurrent tabs use last-write-wins semantics. Audits are emitted after the operation and are not atomic with storage writes: an audit sink failure returns 500, but a completed mutation may already have persisted. A transactional outbox is deployment-phase work.
 
