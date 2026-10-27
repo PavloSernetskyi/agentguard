@@ -6,10 +6,10 @@ Start with the [team roadmap](../docs/team-roadmap.md) and [API/security contrac
 
 - Lead a real Strands assistant using Groq inference. Put its service/tool adapters in proposed `backend/assistant/`; keep enforcement code here.
 - Define the authenticated chat API with Person 3 and runtime requirements with Person 1 before implementation.
-- Reuse `StoreService` operations for product search, order access and review summaries. Only backend-validated sessions supply identity.
+- Reuse `StoreService` operations for the 18-product archery catalog, beginner bow/draw-weight questions, owned order access and review summaries. Only backend-validated sessions supply identity; product and review text is untrusted.
 - Implement `Authorizer` in `backend/security.py`; inject the adapter into `StoreService`. The store's ownership invariant stays enforced and policy exceptions fail closed.
 - Add cross-account, conversation-isolation, malicious review, invalid argument and provider-failure tests. Coordinate versioned tool audit events with Person 3.
-- Define synthetic refund requests separately; require authorization, confirmation and idempotency before enabling. Never execute payments.
+- The website already supports customer-driven fictional checkout. If the agent later places a fictional order, show the trusted cart and total and require an explicit UI confirmation before calling `checkout.simulate`; model text cannot supply that confirmation. Define synthetic refund requests separately with ownership, confirmation and idempotency. Never execute payments.
 
 Groq is the model provider; Bedrock AgentCore is a possible AWS runtime. A Groq API key is not a Bedrock inference credential. Keep keys server-side and out of git.
 
@@ -19,4 +19,4 @@ Milestone 3: lead the threat model, scoped penetration-testing cases and protect
 
 Milestone 4: tune policy/detections with Person 3, retest findings and contribute evidence to the final SOC demonstration.
 
-First deliverable: a small PR proposing chat/tool contracts, dependencies, configuration names and tests. Person 3 can build the UI against the agreed contract; Person 1's hosted store is already deployed.
+First deliverable: a small PR proposing chat/tool contracts, dependencies, configuration names and tests. Person 3 can build the UI against the agreed contract; Person 1's Archery Pro store is already deployed at **https://d16nqulwj27ltb.cloudfront.net**.

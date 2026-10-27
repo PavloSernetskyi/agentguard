@@ -1,6 +1,6 @@
 # Team roadmap and ownership
 
-Person 1 update: the Daywell Market store infrastructure and synthetic catalog are deployed in Ohio (`us-east-2`) at **https://d16nqulwj27ltb.cloudfront.net**. Hosted Alice/Bob ownership and audit verification passed, so Person 1's store handoff is ready. The real assistant and SOC integrations remain for Persons 2 and 3. See [deployment status](aws-deployment.md). Milestone 2 remains incomplete.
+Person 1 update: **Archery Pro Shopping** is on `master` and deployed in Ohio (`us-east-2`) at **https://d16nqulwj27ltb.cloudfront.net**. The site has 18 synthetic archery products, a customer-driven fictional checkout and an **Ask Archery Pro** coming-later teaser. Hosted Alice/Bob ownership and audit verification passed before this catalog rollout; the new public catalog and an unauthenticated deny/audit were verified afterward. Repeat private Alice/Bob flows during assistant integration. The real assistant and SOC integrations remain for Persons 2 and 3. See [deployment status](aws-deployment.md). Milestone 2 remains incomplete.
 
 This is the shared handoff plan. Milestone 1 is complete; milestone 2 is in progress; milestones 3-4 are planned. Changes to ownership or contracts should be agreed in a pull request.
 
@@ -9,7 +9,7 @@ This is the shared handoff plan. Milestone 1 is complete; milestone 2 is in prog
 | Milestone | Person 1: store and AWS | Person 2: agent and security | Person 3: integration and SOC | Completion gate |
 | --- | --- | --- | --- | --- |
 | 1 - Local store (complete) | React store, Python API, storage, seed/reset, sessions and orders | Enforcement interface available for integration | Audit contract available for integration | Alice reads her order, cannot read Bob's, and the backend records the decision |
-| 2 - AWS store and real assistant (in progress) | Hosted store complete; own assistant deployment, runtime secrets and cost checks | Strands agent with Groq, authorized store tools, enforcement and tool tests | Ask Daywell chat UI, API integration, telemetry consumption and contract tests | Hosted store and real assistant work; both preserve Alice/Bob isolation |
+| 2 - AWS store and real assistant (in progress) | Hosted Archery Pro store; own assistant deployment, runtime secrets and cost checks | Strands agent with Groq, authorized store tools, enforcement and tool tests | Ask Archery Pro chat UI, API integration, telemetry consumption and contract tests | Hosted store and real assistant work; both preserve Alice/Bob isolation |
 | 3 - Controlled penetration-testing lab | Isolated AWS lab, reset/teardown, scope and deployment evidence | Threat model, attack scenarios, protected policies and regression tests | Event collection, detection rules and labeled test fixtures | Repeatable scoped tests produce correlated decisions and execution evidence |
 | 4 - SOC dashboard and final demo | Stable demo deployment, runbook, cost/teardown checks | Tune enforcement, rerun attacks, document findings | Build SOC dashboard, alerts, filters and event drill-down | Demonstrate request -> decision -> execution -> SOC evidence end to end |
 
@@ -19,19 +19,19 @@ Immediate handoff:
 
 1. **Persons 2 and 3 together:** propose the authenticated `POST /api/assistant/messages` request/response, conversation ownership rule, and a versioned tool-event contract in a small PR. Keep the existing v1 audit schema stable.
 2. **Person 2:** implement a local Strands + Groq vertical slice for product search and the signed-in customer's order lookup through `StoreService`. Add cross-account, provider-error and malicious-product-text tests. Add review summaries after those tests pass; leave refund requests unavailable initially.
-3. **Person 3:** build the Ask Daywell chat panel against a local/mock contract with loading, failure and account-switch states. Prepare audit-event fixtures and a consumer test; full SOC UI waits for milestone 4.
+3. **Person 3:** turn the existing Ask Archery Pro teaser into a chat panel against a local/mock contract with loading, failure and account-switch states. Prepare audit-event fixtures and a consumer test; full SOC UI waits for milestone 4.
 4. **Person 1:** review the security/session boundary and deploy the integrated assistant only after local acceptance and a fresh cost review. Keep Groq keys server-side. Migrate Terraform state to a shared encrypted backend with locking before a teammate changes infrastructure; the current local state must not be recreated from a clean clone.
 
 ## Milestone 1: completed baseline
 
-- Ten synthetic products, original illustrations, search/filtering, product pages and reviews.
+- Eighteen synthetic archery products, original generated images, search/filtering, product pages, draw weights and reviews.
 - Backend-validated Alice/Bob sessions, separate carts and orders, mandatory order ownership.
 - Authorization interface and versioned audit events with separate decision/execution fields.
-- Nine backend tests, production frontend build and live HTTP/proxy checks passed.
+- Twenty-one backend tests, production frontend build and hosted public catalog/asset checks passed.
 - The project owner has confirmed local use works. Automated visual browser checks have not been added.
-- The AWS store is deployed; no working assistant, payment processing or checkout execution exists yet.
+- The AWS store is deployed with customer-driven fictional order placement. No working assistant, real payment processing, cancellation or refund exists yet.
 
-## Milestone 2: AWS deployment and Ask Daywell
+## Milestone 2: AWS deployment and Ask Archery Pro
 
 ### Person 1 - store and infrastructure lead
 
@@ -44,15 +44,15 @@ Immediate handoff:
 
 1. Implement the Python Strands assistant in a proposed `backend/assistant/` package. Keep AgentGuard policy adapters under `agentguard/`.
 2. Use Groq as the initial inference provider, via a compatible Strands provider adapter. Verify the selected model's tool-calling support and pin tested dependencies; the exact model remains to be selected.
-3. Wrap existing store operations for product search, the signed-in customer's orders, and synthetic review summaries. Product/review text is untrusted data, never an instruction source.
+3. Wrap existing store operations for product search, beginner gear/draw-weight comparison, the signed-in customer's orders, and synthetic review summaries. Product/review text is untrusted data, never an instruction source. Do not invent a universal hunting draw-weight threshold.
 4. Derive identity from the validated backend session. The model must not choose a customer ID, supply a trusted principal, bypass authorization, or access storage directly.
 5. Keep the existing protected ownership behavior; implement additional policy checks through the authorization interface. Handle policy/provider failures without leaking other customers' data.
 6. Define the chat and tool-event contracts with Person 3 before UI integration. Add tests for successful tool use, cross-account attempts, malformed tool arguments, provider failure and conversation isolation.
-7. Refund scope is a synthetic refund-request operation, not money movement: define ownership, eligible order states, confirmation, idempotency and an audit event before implementing it. Enable it only after its tests pass. If deferred, leave it unavailable and record the deferral in the milestone PR.
+7. Keep agent-assisted fictional checkout unavailable until the agent can present the trusted cart and total and receive an explicit user confirmation before invoking `checkout.simulate`. A model message or product review cannot supply confirmation. Refund scope is a separate synthetic request operation, not money movement: define ownership, eligible states, confirmation, idempotency and audit before enabling it.
 
 ### Person 3 - assistant integration and telemetry lead
 
-1. Turn the reserved Ask Daywell panel into a real chat interface once Person 2's API works. Coordinate edits in `store/` with Person 1.
+1. Turn the existing Ask Archery Pro teaser (`store/src/main.tsx`) into a real chat interface once Person 2's API works. Coordinate edits in `store/` with Person 1; do not present the teaser as a working AI.
 2. Add pending, error, retry and signed-out states. Clear chat on account switch/logout; never carry Alice's history into Bob's session. Render model text safely and do not expose API keys in the browser.
 3. Integrate against a documented authenticated chat endpoint. A proposed `POST /api/assistant/messages` may accept a message and an opaque conversation ID; the backend must validate conversation ownership. No such endpoint exists today.
 4. Agree versioned event extensions for conversation ID, tool-call ID and tool name. Preserve the current audit schema; propose a v2 schema before adding fields because v1 rejects unknown fields.
@@ -65,7 +65,7 @@ Immediate handoff:
 - Assistant actually calls the configured Groq-backed tools for search/order lookup/review summaries. Missing credentials or provider failure produces an honest error, not a fabricated result.
 - Conversation/session ownership is enforced. API keys and session tokens do not appear in frontend bundles, logs or committed files.
 - Tool decisions and actual execution results are correlated in durable audit events; Person 3 can consume them.
-- Refund requests, if enabled, are synthetic, confirmed, authorized and idempotent. Payments and checkout execution remain out of scope.
+- Agent-assisted order placement, if enabled, uses the existing fictional checkout only after an explicit UI confirmation of items and total. Refund requests, if enabled, are synthetic, confirmed, authorized and idempotent. Payments remain out of scope.
 - Record test results, deployed components, model/runtime choice and known limitations in the milestone PR.
 
 ## Milestone 3: controlled penetration-testing preparation and execution
@@ -92,7 +92,7 @@ Completion: demonstrate a normal order lookup, a blocked cross-account attempt, 
 
 | Person | First branch/task | Main paths |
 | --- | --- | --- |
-| 1 | `feat/aws-foundation`: choose AWS MCP and write infrastructure plan | `store/` baseline, `backend/` transport/storage, `infra/`, `seed/` |
+| 1 | Maintain the deployed store and review assistant integration | `store/`, `backend/` transport/storage, `infra/`, `seed/` |
 | 2 | `feat/assistant-tools`: propose chat/tool contracts and a Groq-backed local agent | proposed `backend/assistant/`, `agentguard/`, agent/security tests |
 | 3 | `feat/assistant-chat`: propose chat UI states and sample event consumer | assistant UI in `store/`, `dashboard/`, event/UI tests |
 

@@ -1,6 +1,6 @@
 # Archery Pro Shopping / AgentGuard
 
-**Archery rollout branch:** `archery-store-preview` now powers the existing AWS demo URL with original generated product photography, 18 synthetic items and a fictional checkout. Review the live site before merging this branch to `master`. The [local guide](docs/archery-preview.md) remains available.
+**Current store:** Archery Pro Shopping is on `master` and powers the existing AWS demo URL with original generated product photography, 18 synthetic items and a fictional checkout. The [local guide](docs/archery-preview.md) remains available.
 
 A deployed, synthetic shopping platform for a three-person school project. Person 1 owns the store and AWS deployment; Person 2 owns AgentGuard enforcement; Person 3 owns the assistant UI and SOC dashboard.
 
@@ -57,7 +57,7 @@ The store is deployed; the assistant, vulnerable lab and SOC dashboard are not y
 | Milestone | Status | Deliverable |
 | --- | --- | --- |
 | 1. Local store | Complete | Store, sessions, carts, owned orders and audit baseline |
-| 2. AWS deployment + real assistant | In progress | Archery Pro store is deployed for review; Persons 2 and 3 integrate Strands/Groq with Ask Archery Pro |
+| 2. AWS deployment + real assistant | In progress | Archery Pro store is deployed; Persons 2 and 3 integrate Strands/Groq with Ask Archery Pro |
 | 3. Controlled penetration-testing lab | Planned | Isolated fixtures, scoped security scenarios, enforcement and detection evidence |
 | 4. SOC dashboard + final demonstration | Planned | Operator dashboard, correlated alerts, findings and reproducible demo |
 
@@ -71,9 +71,9 @@ Planned assistant architecture: **Strands + Groq inference**, with **Bedrock Age
 
 ## Hosted store status
 
-The Person 1 cloud store is deployed at **https://d16nqulwj27ltb.cloudfront.net** in Ohio (`us-east-2`): Lambda API, owner-scoped DynamoDB storage, Cognito-backed sign-in, secure cookies, private S3/CloudFront hosting and a $5/month alert budget. The public brand is now **Archery Pro Shopping**, with 18 synthetic products. The original `demomart-*` AWS resource IDs remain stable. Private Alice/Bob hosted ownership passed before this visual/catalog rollout; repeat the browser sign-in, own-order, cross-order and fictional checkout checks before final handoff.
+The Person 1 cloud store is deployed at **https://d16nqulwj27ltb.cloudfront.net** in Ohio (`us-east-2`): Lambda API, owner-scoped DynamoDB storage, Cognito-backed sign-in, secure cookies, private S3/CloudFront hosting and a $5/month alert budget. The public brand is now **Archery Pro Shopping**, with 18 synthetic products. The original `demomart-*` AWS resource IDs remain stable. Private Alice/Bob hosted ownership passed before this visual/catalog rollout; repeat the browser sign-in, own-order, cross-order and fictional checkout checks when integrating the assistant.
 
-See the [deployment runbook](docs/aws-deployment.md) for the current status, resource inventory, setup, cost controls and hosted acceptance evidence. This rollout passed 21 Python tests, a frontend build, a reviewed Terraform plan/apply, public catalog and asset checks, and an unauthenticated order denial with a matching audit event. Persons 2 and 3 can use the documented store and audit contracts after the rollout is accepted on `master`.
+See the [deployment runbook](docs/aws-deployment.md) for the current status, resource inventory, setup, cost controls and hosted acceptance evidence. This rollout passed 21 Python tests, a frontend build, a reviewed Terraform plan/apply, public catalog and asset checks, and an unauthenticated order denial with a matching audit event. Persons 2 and 3 can now branch from `master` and use the documented store and audit contracts.
 
 ## Start locally
 
