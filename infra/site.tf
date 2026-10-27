@@ -57,7 +57,7 @@ resource "aws_cloudfront_distribution" "site" {
   viewer_certificate { cloudfront_default_certificate = true }
 }
 locals {
-  mime_types = { html = "text/html", js = "application/javascript", css = "text/css", svg = "image/svg+xml", json = "application/json", ico = "image/x-icon" }
+  mime_types = { html = "text/html", js = "application/javascript", css = "text/css", svg = "image/svg+xml", json = "application/json", ico = "image/x-icon", webp = "image/webp" }
 }
 resource "aws_s3_object" "site" {
   for_each      = fileset("${path.module}/../artifacts/store", "**")

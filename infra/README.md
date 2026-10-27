@@ -1,4 +1,4 @@
-# Person 1: Daywell Market AWS infrastructure
+# Person 1: Archery Pro Shopping AWS infrastructure
 
 Terraform and backend cloud adapters are deployed in Ohio (`us-east-2`). The website is at **https://d16nqulwj27ltb.cloudfront.net**. The AWS account remains on its active Free plan. See the [deployment runbook](../docs/aws-deployment.md) for status, validation evidence, resource inventory, cost target and remaining steps.
 

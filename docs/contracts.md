@@ -1,4 +1,4 @@
-# Daywell Market local contracts
+# Archery Pro Shopping store contracts
 
 All data is synthetic. Amounts are integer USD cents. All routes begin `/api`.
 
@@ -13,8 +13,11 @@ All data is synthetic. Amounts are integer USD cents. All routes begin `/api`.
 | GET | /orders/{id} | Authorize ownership before returning details |
 | GET | /cart | Current customer's persisted cart |
 | PUT | /cart/{productId} | `{quantity: 0..99}`; zero removes item |
+| POST | /checkout | Empty body; authenticated fictional order from own cart, returns 201; no payment or client address fields |
 
 Responses are JSON. Errors use `{error: string, request_id: string}`. Authentication uses a random opaque session token, stored hashed with an expiration. Never accept a customer ID from request data as identity. Local mutations require an allowed Origin; frontend and API share an origin via Vite proxy. Production must use HTTPS and Secure cookies.
+
+The fictional checkout uses `checkout.simulate` through the same owner-scoped service and audit contract locally and in AWS. It rejects an empty cart and all client-supplied checkout details, writes a synthetic order, then clears the cart. The write and cart cleanup are not atomic; this is not a payment or inventory system.
 
 ## AgentGuard handoff
 

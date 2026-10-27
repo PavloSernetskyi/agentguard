@@ -18,17 +18,19 @@
 
 ## Manual browser checks
 
-- At desktop width, check header search/account/orders/cart, category navigation, hero, grid, product pages, and footer.
+- At desktop width, check header search/account/orders/cart, bow-style tiles, category navigation, hero, grid, product pages, and footer.
 - At 390px width, check no horizontal page overflow, scrolling category navigation, two-column product grid, and stacked product/cart pages.
-- Search for headphones; combine with Electronics; try an unmatched search and clear filters.
+- Search for recurve; combine with Recurve bows; try an unmatched search and clear filters.
 - Follow a product link, use browser back, and reload a deep link.
 - Add to cart while signed out: account dialog opens. Sign in and add again.
-- Alice: add two headphones, confirm $158.00, decrement, remove, refresh, and sign out/in.
+- Alice: add two Ridgeline recurve bows, confirm $378.00, decrement, remove, refresh, and sign out/in.
+- Add a beginner recurve, arrows and target; inspect fictional draw weights and use-case labels on the item pages.
+- From Alice's cart, review the demo address and items, place a fictional order, confirm the cart clears and the new order appears in My orders. No payment fields should appear.
 - Open Alice's order, then directly request Bob's order using the address bar. Confirm Access denied and no Bob address.
 - Switch to Bob: verify Bob's separate orders and cart.
 - Sign out; direct order URLs require sign-in. Check wrong password errors.
 - Inspect audit JSON with `python -m backend.audit`; no session tokens or passwords appear.
 - Check keyboard focus indicators, dialog dismissal with Escape, and controls at mobile width.
-- Confirm checkout is disabled and Ask Daywell says coming later.
+- Confirm real payments are absent and Ask Archery Pro says coming later.
 
 Browser visual/interaction checks were not automated in the initial implementation because the in-app browser runtime was unavailable. Build and API tests do not substitute for these visual checks.

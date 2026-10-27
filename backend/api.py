@@ -38,10 +38,10 @@ def handle(service, method, url, headers, body="", *, allowed_origins=None, secu
             result = {"ok": True}
             response_headers["Set-Cookie"] = f"demomart_session=; HttpOnly; SameSite=Strict; Path=/api; Max-Age=0{cookie_security}"
         else:
-            known = (method == "GET" and path in ("/api/session", "/api/orders", "/api/cart")) or (method == "GET" and path.startswith("/api/orders/")) or (method == "PUT" and path.startswith("/api/cart/"))
+            known = (method == "GET" and path in ("/api/session", "/api/orders", "/api/cart")) or (method == "GET" and path.startswith("/api/orders/")) or (method == "PUT" and path.startswith("/api/cart/")) or (method == "POST" and path == "/api/checkout")
             if not known:
                 raise ApiError(404, "Route not found")
-            action = "orders.read" if path.startswith("/api/orders/") else "orders.list" if path == "/api/orders" else "cart.update" if method == "PUT" else "cart.read" if path == "/api/cart" else "session.read"
+            action = "checkout.simulate" if path == "/api/checkout" else "orders.read" if path.startswith("/api/orders/") else "orders.list" if path == "/api/orders" else "cart.update" if method == "PUT" else "cart.read" if path == "/api/cart" else "session.read"
             principal = service.principal(token, request_id, action, path.split("/")[-1])
             if path == "/api/session":
                 result = service.storage.get("customers", principal.customer_id)
@@ -49,9 +49,11 @@ def handle(service, method, url, headers, body="", *, allowed_origins=None, secu
                 result = service.orders(principal, request_id)
             elif path.startswith("/api/orders/"):
                 result = service.order(principal, path.split("/")[-1], request_id)
+            elif path == "/api/checkout":
+                result = service.checkout(principal, request_id, data)
             else:
                 result = service.cart(principal, request_id, path.split("/")[-1] if method == "PUT" else None, data.get("quantity"))
-        return 200, response_headers, result
+        return 201 if path == "/api/checkout" else 200, response_headers, result
     except (json.JSONDecodeError, UnicodeError):
         return 400, response_headers, {"error": "Invalid JSON", "request_id": request_id}
     except ApiError as error:

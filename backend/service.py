@@ -74,7 +74,8 @@ class StoreService:
         return result
 
     def products(self, q="", category=""):
-        return [p for p in self.storage.list("products") if q.casefold() in p["name"].casefold() and (not category or p["category"] == category)]
+        needle = q.casefold()
+        return [p for p in self.storage.list("products") if (not category or p["category"] == category) and needle in " ".join((p["name"], p["category"], p["description"], p.get("use_case") or "")).casefold()]
 
     def product(self, pid):
         product = self.storage.get("products", pid)
@@ -104,3 +105,35 @@ class StoreService:
             items = [{"product": self.product(row["product_id"]), "quantity": row["quantity"]} for row in self.storage.list_owned("cart", principal.customer_id) if row["customer_id"] == principal.customer_id]
             return {"items": items, "total": sum(i["product"]["price"] * i["quantity"] for i in items)}
         return self.execute(principal, "cart.update" if pid else "cart.read", {"id": "cart:" + principal.customer_id, "customer_id": principal.customer_id}, request_id, operation)
+
+    def checkout(self, principal, request_id, data=None):
+        """Create a synthetic order from the trusted customer's cart; no payment occurs."""
+        def operation():
+            if data:
+                raise ApiError(400, "Fictional checkout accepts no payment or address details")
+            rows = [row for row in self.storage.list_owned("cart", principal.customer_id) if row["customer_id"] == principal.customer_id]
+            if not rows:
+                raise ApiError(400, "Your cart is empty")
+            items = []
+            for row in rows:
+                product = self.product(row["product_id"])
+                items.append({"product_id": product["id"], "name": product["name"], "quantity": row["quantity"], "unit_price": product["price"]})
+            customer = self.storage.get("customers", principal.customer_id)
+            if not customer:
+                raise ApiError(401, "Account not found")
+            order_id = "ord-" + principal.customer_id + "-" + uuid.uuid4().hex[:12]
+            order = {
+                "id": order_id,
+                "customer_id": principal.customer_id,
+                "date": datetime.now(timezone.utc).date().isoformat(),
+                "status": "Placed (fictional)",
+                "address": customer.get("address") or customer["name"] + ", 100 Example Lane, Fiction City, ZZ 00000",
+                "items": items,
+                "total": sum(item["unit_price"] * item["quantity"] for item in items),
+                "transaction": "synthetic-no-payment",
+            }
+            self.storage.put("orders", order_id, order)
+            for row in rows:
+                self.storage.delete("cart", principal.customer_id + ":" + row["product_id"])
+            return order
+        return self.execute(principal, "checkout.simulate", {"id": "checkout:" + principal.customer_id, "customer_id": principal.customer_id}, request_id, operation)

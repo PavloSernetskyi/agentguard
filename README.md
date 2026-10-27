@@ -1,4 +1,6 @@
-# Daywell Market / AgentGuard
+# Archery Pro Shopping / AgentGuard
+
+**Archery rollout branch:** `archery-store-preview` now powers the existing AWS demo URL with original generated product photography, 18 synthetic items and a fictional checkout. Review the live site before merging this branch to `master`. The [local guide](docs/archery-preview.md) remains available.
 
 A deployed, synthetic shopping platform for a three-person school project. Person 1 owns the store and AWS deployment; Person 2 owns AgentGuard enforcement; Person 3 owns the assistant UI and SOC dashboard.
 
@@ -23,12 +25,12 @@ Use this checklist for the final project demonstration. Checked items are implem
 | AWS Budgets | Sends monthly usage alerts at $1, $3 and $5 | [Budget configuration](infra/budget.tf) |
 
 - [x] Deploy the storefront and backend with Terraform; keep state, plans and credentials out of Git.
-- [x] Verify HTTPS storefront, ten synthetic products and the live API.
+- [x] Verify HTTPS storefront, 18 synthetic archery products and the live API.
 - [x] Verify Alice sees her own order, receives 403 for Bob's order, and leaves allow/deny audit events; repeat as Bob.
 - [x] Confirm the AWS account remains on its Free plan and the $5 budget alerts are configured. The budget sends warnings; it is not a hard spending cap.
 - [ ] Before teammates change infrastructure, migrate the current local Terraform state to a shared encrypted backend with locking.
 
-AWS MCP helped with provisioning and verification; it is a developer tool, **not** a shopper-facing agent tool or an AWS service the website invokes. The [deployment runbook](docs/aws-deployment.md) records the resource inventory and hosted acceptance evidence. Existing `demomart-*` resource IDs are retained to avoid replacing the deployed stack after the Daywell Market rename.
+AWS MCP helped with initial provisioning and verification; it is a developer tool, **not** a shopper-facing agent tool or an AWS service the website invokes. The [deployment runbook](docs/aws-deployment.md) records the resource inventory and hosted acceptance evidence. Existing `demomart-*` resource IDs remain stable through the Archery Pro rebrand.
 
 ### Application and security
 
@@ -36,12 +38,12 @@ AWS MCP helped with provisioning and verification; it is a developer tool, **not
 - [x] Python API with a local SQLite adapter and deployed DynamoDB adapter behind the same storage interface.
 - [x] Cart quantities and totals, backend-validated Alice/Bob sessions, separate synthetic orders and a local seed/reset command.
 - [x] Enforce order ownership in backend operations and persist separate authorization decisions and execution outcomes.
-- [x] Keep checkout and payments disabled; no real customers, addresses, transactions or refunds.
+- [x] Keep payment processing disabled; the synthetic checkout records only a fictional order. No real customers, addresses, charges or refunds.
 
 ### Remaining group deliverables
 
 - [ ] **Person 2:** implement the real Strands/Groq shopping assistant using server-authorized product and own-order tools; test prompt injection, cross-account attempts and provider failure.
-- [ ] **Person 3:** connect the Ask Daywell chat UI, clear conversations on account switch and prepare versioned tool-event telemetry.
+- [ ] **Person 3:** connect the Ask Archery Pro chat UI, clear conversations on account switch and prepare versioned tool-event telemetry.
 - [ ] **Team:** run controlled security tests against an isolated vulnerable fixture and the protected store; document actual tool results and audit evidence.
 - [ ] **Person 3 leads:** build an operator-only SOC dashboard showing correlated requests, decisions, executions and alerts.
 - [ ] **Final demo:** show normal Alice/Bob use, a blocked cross-account agent request, an indirect prompt-injection attempt, a clearly labeled isolated vulnerable comparison, and the matching SOC timeline.
@@ -50,12 +52,12 @@ The store is deployed; the assistant, vulnerable lab and SOC dashboard are not y
 
 ## Project status and team plan
 
-**Milestone 1 is complete:** the store works locally; Alice can view her order, cannot retrieve Bob's order, and the backend records the decision. Nine backend tests, the frontend build and live HTTP/proxy checks passed. The project owner has also confirmed local use works.
+**Milestone 1 is complete:** the store works locally; Alice can view her order, cannot retrieve Bob's order, and the backend records the decision. The current 21 Python tests and frontend build pass.
 
 | Milestone | Status | Deliverable |
 | --- | --- | --- |
-| 1. Local Daywell Market | Complete | Store, sessions, carts, owned orders and audit baseline |
-| 2. AWS deployment + real assistant | In progress | Person 1's hosted store passed order-isolation acceptance; Persons 2 and 3 integrate Strands/Groq with Ask Daywell |
+| 1. Local store | Complete | Store, sessions, carts, owned orders and audit baseline |
+| 2. AWS deployment + real assistant | In progress | Archery Pro store is deployed for review; Persons 2 and 3 integrate Strands/Groq with Ask Archery Pro |
 | 3. Controlled penetration-testing lab | Planned | Isolated fixtures, scoped security scenarios, enforcement and detection evidence |
 | 4. SOC dashboard + final demonstration | Planned | Operator dashboard, correlated alerts, findings and reproducible demo |
 
@@ -69,9 +71,9 @@ Planned assistant architecture: **Strands + Groq inference**, with **Bedrock Age
 
 ## Hosted store status
 
-The Person 1 cloud store is deployed at **https://d16nqulwj27ltb.cloudfront.net** in Ohio (`us-east-2`): Lambda API, owner-scoped DynamoDB storage, Cognito-backed sign-in, secure cookies, private S3/CloudFront hosting and a $5/month alert budget. The account is on an active AWS Free plan. Synthetic catalog, customers and orders are seeded. Private Alice/Bob setup and hosted ownership acceptance passed in both directions; Person 1's hosted-store handoff is ready. The public brand is now **Daywell Market**; the original `demomart-*` AWS resource IDs remain stable to avoid replacing live infrastructure.
+The Person 1 cloud store is deployed at **https://d16nqulwj27ltb.cloudfront.net** in Ohio (`us-east-2`): Lambda API, owner-scoped DynamoDB storage, Cognito-backed sign-in, secure cookies, private S3/CloudFront hosting and a $5/month alert budget. The public brand is now **Archery Pro Shopping**, with 18 synthetic products. The original `demomart-*` AWS resource IDs remain stable. Private Alice/Bob hosted ownership passed before this visual/catalog rollout; repeat the browser sign-in, own-order, cross-order and fictional checkout checks before final handoff.
 
-See the [deployment runbook](docs/aws-deployment.md) for the current status, resource inventory, setup, cost controls and hosted acceptance evidence. Verification includes 19 Python tests, a real Terraform plan and apply, and hosted Alice/Bob isolation checks. Persons 2 and 3 can now work from the documented store and audit contracts.
+See the [deployment runbook](docs/aws-deployment.md) for the current status, resource inventory, setup, cost controls and hosted acceptance evidence. This rollout passed 21 Python tests, a frontend build, a reviewed Terraform plan/apply, public catalog and asset checks, and an unauthenticated order denial with a matching audit event. Persons 2 and 3 can use the documented store and audit contracts after the rollout is accepted on `master`.
 
 ## Start locally
 
@@ -104,8 +106,8 @@ These deliberately public credentials are for local development only; the hosted
 ## Local implementation stages and checks (milestone 1)
 
 1. **Structure and contracts:** see [API and teammate contracts](docs/contracts.md). `store/` contains React/TypeScript, `backend/` contains APIs and reusable operations, `seed/` contains synthetic fixtures, `tests/` contains security acceptance tests. `agentguard/`, `dashboard/`, and `infra/` provide teammate handoff notes.
-2. **Storefront:** start both servers; verify ten illustrated products, search, category filters, product details, and synthetic reviews. Original SVG product illustrations live in `store/src/Art.tsx`. Fonts use Google Fonts with local system fallbacks; no remote product assets are needed.
-3. **Accounts, cart, orders, audit:** sign in as Alice; add a product, adjust quantities, refresh, and open My orders. Switch to Bob and confirm his cart and orders are separate. Checkout is disabled. Ask Daywell is a coming-later panel, without AI behavior.
+2. **Storefront:** start both servers; verify 18 archery products, bow-style sections, search, category filters, product details with fictional draw weights, and synthetic reviews. Original generated product images live in `store/public/images/`. Fonts use Google Fonts with local system fallbacks; no remote product assets are needed.
+3. **Accounts, cart, orders, audit:** sign in as Alice; add a product, adjust quantities, review the fictional checkout and record a synthetic order. Switch to Bob and confirm his cart and orders are separate. Ask Archery Pro is a coming-later panel, without AI behavior. The hosted checkout also creates only synthetic orders.
 4. **Verification:** run the commands below and the [manual checklist](docs/verification.md).
 
 ```powershell
@@ -131,4 +133,4 @@ Stop the API with Ctrl+C before `python -m seed.reset`, then restart it. This de
 
 `Storage` abstracts persistence. The SQLite adapter uses parameterized SQL and per-operation connections. SQLite collection scans are intentionally small-scale; the new DynamoDB adapter uses owner-scoped queries and pagination. Cart writes replace a product quantity; concurrent tabs use last-write-wins semantics. Audits are emitted after the operation and are not atomic with storage writes: an audit sink failure returns 500, but a completed mutation may already have persisted. A transactional outbox is deployment-phase work.
 
-No publicly accessible bypass, refunds, payment processing, checkout execution or Bedrock calls have been added. The store's AWS infrastructure is deployed from Terraform; the shopping assistant and SOC are not. Future refund tools must introduce an explicitly authorized operation with an audit contract. The [deployment runbook](docs/aws-deployment.md) covers Person 1's hosted store, and the [team roadmap](docs/team-roadmap.md) coordinates assistant integration, testing and SOC work.
+No publicly accessible bypass, refunds, payment processing or Bedrock calls have been added. Fictional order placement is available locally and in the deployed store. The store's AWS infrastructure is deployed from Terraform; the shopping assistant and SOC are not. Future refund tools must introduce an explicitly authorized operation with an audit contract. The [deployment runbook](docs/aws-deployment.md) covers Person 1's hosted store, and the [team roadmap](docs/team-roadmap.md) coordinates assistant integration, testing and SOC work.
