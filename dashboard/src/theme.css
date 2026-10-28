@@ -1,0 +1,88 @@
+/* Archery Pro family: forest, warm ivory and copper, with explicit SOC statuses. */
+:root {
+  --font-body: 'DM Sans Variable', 'DM Sans', 'Segoe UI', Arial, sans-serif;
+  --font-heading: 'Manrope Variable', Manrope, 'Segoe UI', Arial, sans-serif;
+  --forest: #182921;
+  --forest-raised: #294536;
+  --forest-border: #425847;
+  --sidebar-text: #e4e8db;
+  --sidebar-muted: #acb9a6;
+  --canvas: #f6f3ec;
+  --surface: #fffdf8;
+  --surface-subtle: #f2f0e8;
+  --ink: #253c30;
+  --text: #455a4a;
+  --muted: #687568;
+  --line: #dfdfd3;
+  --line-soft: #edede4;
+  --accent: #aa4f2e;
+  --accent-hover: #8c3e24;
+  --accent-soft: #f6e9dc;
+  --accent-border: #d5ae8a;
+  --focus: #ad6e3f;
+  --brand-highlight: #e8aa76;
+  --brand-highlight-soft: #f5dfb6;
+  --success-bg: #e6f2e9;
+  --success-text: #296346;
+  --deny-bg: #faeae4;
+  --deny-text: #983e30;
+  --failed-bg: #fcf1d9;
+  --failed-text: #7c5b1b;
+  --chart-success: #62866b;
+  --chart-blocked: #b96851;
+  --chart-failed: #c49b50;
+  --notice-bg: #fbf4e4;
+  --notice-border: #e3d3a9;
+  --notice-text: #765c28;
+}
+
+h1, h2, h3, .brand, .metric > strong {
+  font-family: var(--font-heading);
+}
+
+/* The operator navigation shares the store's dark forest header treatment. */
+.sidebar { color: var(--sidebar-muted); }
+.brand { color: var(--surface); }
+.brand-mark {
+  color: var(--brand-highlight-soft);
+  border-color: var(--accent-border);
+  background: var(--accent);
+}
+.brand small, .workspace small, .workspace > svg, .nav-label,
+.boundary p, .operator small { color: var(--sidebar-muted); }
+.workspace, .boundary { border-color: var(--forest-border); }
+.workspace, .boundary strong, .operator { color: var(--sidebar-text); }
+.workspace-icon, .operator > span, .nav-count { background: var(--forest-raised); }
+.boundary svg { color: var(--brand-highlight); }
+nav button { color: var(--sidebar-muted); }
+nav button:hover { color: var(--surface); background: var(--forest-raised); }
+nav button.active {
+  color: var(--surface);
+  background: var(--forest-raised);
+  box-shadow: inset 3px 0 var(--brand-highlight);
+}
+
+/* Color always accompanies labels and counts; it never supplies the meaning alone. */
+.allow, .succeeded { color: var(--success-text); background: var(--success-bg); }
+.deny, .blocked { color: var(--deny-text); background: var(--deny-bg); }
+.failed { color: var(--failed-text); background: var(--failed-bg); }
+.source-banner:not(.sample) .source-icon,
+.source-banner:not(.sample) strong { color: var(--ink); }
+.source-banner:not(.sample) small { color: var(--muted); }
+.button.primary { box-shadow: 0 2px 3px #78371f15; }
+
+/* Keep dense evidence legible alongside the storefront's warmer typography. */
+.button, .subtitle, .topbar { font-size: 12px; }
+h2 { font-size: 14px; }
+.metric > div { font-size: 12px; }
+.metric p, .panel-heading p, .panel-footnote { font-size: 11px; }
+.events td, .events strong, .event-time, .resource { font-size: 11px; }
+.events small { font-size: 10px; }
+.events thead { font-size: 10px; }
+.searchbox input { font-size: 12px; }
+.signal-icon { color: var(--ink); background: var(--success-bg); }
+@media (max-width: 540px) {
+  .button { font-size: 11px; }
+  .metric > div, .metric p { font-size: 10px; }
+  .metric > strong { font-size: 25px; }
+}

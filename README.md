@@ -134,3 +134,9 @@ Stop the API with Ctrl+C before `python -m seed.reset`, then restart it. This de
 `Storage` abstracts persistence. The SQLite adapter uses parameterized SQL and per-operation connections. SQLite collection scans are intentionally small-scale; the new DynamoDB adapter uses owner-scoped queries and pagination. Cart writes replace a product quantity; concurrent tabs use last-write-wins semantics. Audits are emitted after the operation and are not atomic with storage writes: an audit sink failure returns 500, but a completed mutation may already have persisted. A transactional outbox is deployment-phase work.
 
 No publicly accessible bypass, refunds, payment processing or Bedrock calls have been added. Fictional order placement is available locally and in the deployed store. The store's AWS infrastructure is deployed from Terraform; the shopping assistant and SOC are not. Future refund tools must introduce an explicitly authorized operation with an audit contract. The [deployment runbook](docs/aws-deployment.md) covers Person 1's hosted store, and the [team roadmap](docs/team-roadmap.md) coordinates assistant integration, testing and SOC work.
+
+## Person 3 SOC dashboard development
+
+A standalone SOC dashboard is now available locally in `dashboard/`. Run `npm ci` and `npm run dev` there, then open http://127.0.0.1:5174. Start with clearly labeled sample events, import a v1 audit snapshot, or connect the operator-token-protected local read-only feed with `python -m backend.soc`. See the [dashboard setup](dashboard/README.md) and [metrics and cloud release gates](docs/soc-dashboard.md).
+
+This contribution prioritizes the dashboard before assistant UI work. AI integration and probing are deferred. Operator cloud authentication, reporting infrastructure and hosted deployment remain team work; a working local dashboard does not imply a deployed SOC service.
