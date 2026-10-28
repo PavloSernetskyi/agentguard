@@ -3,9 +3,10 @@ import secrets
 import time
 import uuid
 from datetime import datetime, timezone
-from .security import Principal, Decision, OwnershipAuthorizer
+from .security import Principal, Decision
 from .storage import Storage, AuditSink
 from .auth import LocalDemoAuthenticator, AuthenticationUnavailable
+from agentguard.policy import AgentGuardAuthorizer
 
 
 class ApiError(Exception):
@@ -16,7 +17,7 @@ class ApiError(Exception):
 class StoreService:
     def __init__(self, storage: Storage, audit: AuditSink, authorizer=None, authenticator=None):
         self.storage, self.audit = storage, audit
-        self.authorizer = authorizer or OwnershipAuthorizer()
+        self.authorizer = authorizer or AgentGuardAuthorizer()
         self.authenticator = authenticator or LocalDemoAuthenticator()
 
     def record(self, request_id, actor, action, resource, decision, execution):
