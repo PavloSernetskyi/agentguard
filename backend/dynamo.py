@@ -33,6 +33,8 @@ class DynamoStorage:
             item["owner_pk"] = "orders#" + value["customer_id"]
         if collection == "sessions":
             item["expires"] = int(value["expires"])
+        if collection == "assistant_conversations":
+            item["expires"] = int(value["expires"])
         self.table.put_item(Item=item)
 
     def delete(self, collection, key):

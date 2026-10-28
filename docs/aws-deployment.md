@@ -2,7 +2,7 @@
 
 ## Current status
 
-**Archery Pro Shopping** is deployed at **https://d16nqulwj27ltb.cloudfront.net** in Ohio (`us-east-2`) and included in `master`. The previous hosted Alice/Bob ownership check passed in both directions and was audited. Repeat those browser checks and a fictional checkout while integrating the assistant; private passwords were not used in automated post-rollout checks. The full milestone 2 remains incomplete because the real shopping assistant has not been integrated.
+**Archery Pro Shopping** is deployed at **https://d16nqulwj27ltb.cloudfront.net** in Ohio (`us-east-2`). The assistant backend, storefront chat and documentation are now included in `master`, but this AWS deployment has not yet been updated to that build. The previous hosted Alice/Bob ownership check passed in both directions and was audited. After assistant deployment, repeat those browser checks and a fictional checkout; private passwords were not used in automated post-rollout checks. The full milestone 2 remains incomplete until hosted assistant acceptance passes.
 
 The storefront was previously named Daywell Market. The new cloud build uses **Archery Pro Shopping** and shows customers simply as Alice and Bob. Existing `demomart-*` AWS resource names, cookie name, order IDs and schema identifier are retained to avoid replacing live infrastructure or breaking the integration contract. The public URL did not change.
 

@@ -1,6 +1,6 @@
 # AgentGuard SOC dashboard
 
-Person 3 owns this standalone React/TypeScript dashboard. This branch builds SOC visibility first; assistant integration, model calls, attack probing, vulnerable fixtures, and admin write controls are deferred. The storefront and its authorization rules are unchanged.
+Person 3 owns this standalone React/TypeScript dashboard. This branch integrates the merged assistant and storefront with SOC visibility through the existing v1 audit contract. Attack probing, vulnerable fixtures, and admin write controls remain deferred. Read the [Person 2 handoff](../docs/person-3-handoff.md) before changing assistant behavior.
 
 ## First release
 

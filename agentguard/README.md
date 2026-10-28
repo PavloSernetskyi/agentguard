@@ -1,22 +1,27 @@
 # Person 2: assistant backend and AgentGuard enforcement
 
-Start with the [team roadmap](../docs/team-roadmap.md) and [API/security contracts](../docs/contracts.md). Milestone 1 is complete; this folder currently contains handoff documentation, not a completed security engine.
+Start with the [team roadmap](../docs/team-roadmap.md) and [API/security contracts](../docs/contracts.md). Milestone 1 is complete. This branch implements the local Strands/Groq assistant slice and AgentGuard action policy; hosted deployment and end-to-end acceptance still require team integration.
 
-## Next: milestone 2
+## Implemented in this branch
 
-- Lead a real Strands assistant using Groq inference. Put its service/tool adapters in proposed `backend/assistant/`; keep enforcement code here.
-- Define the authenticated chat API with Person 3 and runtime requirements with Person 1 before implementation.
-- Reuse `StoreService` operations for the 18-product archery catalog, beginner bow/draw-weight questions, owned order access and review summaries. Only backend-validated sessions supply identity; product and review text is untrusted.
-- Implement `Authorizer` in `backend/security.py`; inject the adapter into `StoreService`. The store's ownership invariant stays enforced and policy exceptions fail closed.
-- Add cross-account, conversation-isolation, malicious review, invalid argument and provider-failure tests. Coordinate versioned tool audit events with Person 3.
-- The website already supports customer-driven fictional checkout. If the agent later places a fictional order, show the trusted cart and total and require an explicit UI confirmation before calling `checkout.simulate`; model text cannot supply that confirmation. Define synthetic refund requests separately with ownership, confirmation and idempotency. Never execute payments.
+- `backend/assistant/` configures Strands with Groq and exposes product search, product navigation, own-cart/order reads, review summarization and explicitly requested cart additions.
+- `agentguard/policy.py` provides an allowlisted owner-scoped authorizer. Assistant tools call existing `StoreService` operations; the model never receives storage access or a customer ID.
+- `POST /api/assistant/messages` validates the session, scopes conversations to the account, retains only 12 messages for at most 24 hours, and returns constrained UI actions.
+- The storefront consumes product navigation and cart-refresh actions. It clears chat history when the account changes or signs out.
+- Tests cover account isolation, navigation, explicit cart changes, untrusted reviews, invalid arguments, origin checks, fail-closed policy behavior, audit minimization and provider failure. The [assistant threat model and acceptance matrix](../docs/assistant-security.md) records the local scope and remaining hosted acceptance boundary. Audit records remain schema v1 and do not contain conversation text.
 
-Groq is the model provider; Bedrock AgentCore is a possible AWS runtime. A Groq API key is not a Bedrock inference credential. Keep keys server-side and out of git.
+The assistant has no checkout or refund tool. Existing customer-controlled fictional checkout remains unchanged.
 
-## Later
+## Local configuration
 
-Milestone 3: lead the threat model, scoped penetration-testing cases and protected/vulnerable lab comparison design. No publicly selectable bypass and no weakening of normal store ownership checks.
+Install the optional, pinned provider dependencies with `python -m pip install -r requirements-assistant.txt`. Set `GROQ_API_KEY` in the backend process environment; `GROQ_MODEL` is optional and defaults to `openai/gpt-oss-20b` (verified with tool calling for the configured provider account). Without a key, the store works normally and the assistant endpoint responds with 503. Never place the key in frontend code, Git, or chat.
 
-Milestone 4: tune policy/detections with Person 3, retest findings and contribute evidence to the final SOC demonstration.
+For a Python 3.12 x86_64 Lambda archive with the assistant's pinned provider packages, run `python scripts/package_backend.py --with-assistant-deps`. Configure `GROQ_API_KEY` securely in the backend runtime; do not put it in Terraform source, browser code, or a request. Person 1 must review secret storage, Lambda/API timeout and inference cost before deployment. Hosted deployment and cost acceptance are not performed by this branch.
 
-First deliverable: a small PR proposing chat/tool contracts, dependencies, configuration names and tests. Person 3 can build the UI against the agreed contract; Person 1's Archery Pro store is already deployed at **https://d16nqulwj27ltb.cloudfront.net**.
+Groq is the model provider; Bedrock AgentCore is a possible AWS runtime. A Groq API key is not a Bedrock inference credential.
+
+## Handoff status
+
+Person 2's local assistant and defensive acceptance slice is implemented on this branch. Milestone 2 is not complete at the team level until the integrated assistant is deployed and Alice/Bob isolation is reverified in the hosted environment. No penetration test of shared infrastructure or vulnerable lab has been performed.
+
+Next: review this branch with Persons 1 and 3, agree any versioned telemetry extension without changing schema v1, and repeat integration checks after deployment. Milestone 4 policy/detection tuning and SOC demonstration remain joint follow-up work.

@@ -196,6 +196,34 @@ footer .brand{color:#294536}
 .assistant-preview-list{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
 .assistant-preview-list span{background:#eef2e8;border:1px solid #d9e2d5;border-radius:20px;padding:7px 10px;font-size:10px;color:#3f6048}
 .assistant-modal>small{margin-top:14px}
+.assistant-chat{width:min(560px,calc(100vw - 32px));max-height:calc(100vh - 40px);display:flex;flex-direction:column;overflow:hidden}
+.assistant-chat .assistant-modal-icon{flex-shrink:0}
+.assistant-chat h2{flex-shrink:0}
+.assistant-transcript{min-height:180px;max-height:42vh;overflow-y:auto;padding:14px;background:#fafbf7;border:1px solid #e2e8de;border-radius:7px;display:flex;flex-direction:column;gap:10px}
+.assistant-intro{font-size:12px;color:#627366;margin:auto 0;line-height:1.6}
+.assistant-message{max-width:88%;margin:0;padding:10px 12px;border-radius:10px;font-size:12px;line-height:1.55;white-space:pre-wrap;overflow-wrap:anywhere}
+.assistant-message>p{margin:0}
+.assistant-message.user{align-self:flex-end;background:#285b4d;color:#fff;border-bottom-right-radius:3px}
+.assistant-message.assistant{align-self:flex-start;background:#e9eee5;color:#2d4940;border-bottom-left-radius:3px}
+.assistant-message.assistant:has(.assistant-recommendations){max-width:100%;width:100%}
+.assistant-recommendations{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:9px;margin-top:12px}
+.assistant-product-card{display:flex;flex-direction:column;justify-content:space-between;gap:12px;background:#fff;border:1px solid #dfe6dc;border-radius:8px;padding:12px}
+.assistant-product-card>div:first-child{display:grid;gap:5px}
+.assistant-product-card .product-category{margin:0}
+.assistant-product-card strong{font-size:12px;line-height:1.4}
+.assistant-product-meta{font-size:10px;color:#6b7a70}
+.assistant-product-price{font-size:15px;font-weight:700;color:#285b4d}
+.assistant-product-actions{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.assistant-product-actions a,.assistant-product-actions button{font-size:10px;font-weight:600;color:#285b4d}
+.assistant-product-actions button{display:inline-flex;align-items:center;gap:4px;padding:7px 9px;border:1px solid #dce4da;border-radius:4px;background:#f9fbf7}
+.assistant-error{margin:8px 0 0;color:#a33d31;font-size:11px}
+.assistant-form{display:flex;gap:8px;margin-top:12px}
+.assistant-form input{width:auto;flex:1;min-width:0;border:1px solid #d7dfd4;border-radius:5px;padding:12px;color:#243d43}
+.assistant-form .primary{width:52px;flex:0 0 52px;margin-top:0;padding:10px 14px}
+.assistant-chat>small{margin-top:9px;color:#74817a}
+.assistant-sign-in{margin-top:8px}
+.assistant-sign-in p{font-size:12px;color:#687a70}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 @media(max-width:1100px){
   .header-inner{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"brand actions" "kicker search";gap:14px 20px;padding:19px 25px}
   .editorial-nav{display:none}
