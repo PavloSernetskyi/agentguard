@@ -206,8 +206,8 @@ footer .brand{color:#294536}
 .assistant-message.assistant{align-self:flex-start;background:#e9eee5;color:#2d4940;border-bottom-left-radius:3px}
 .assistant-error{margin:8px 0 0;color:#a33d31;font-size:11px}
 .assistant-form{display:flex;gap:8px;margin-top:12px}
-.assistant-form input{flex:1;min-width:0;border:1px solid #d7dfd4;border-radius:5px;padding:12px;color:#243d43}
-.assistant-form .primary{padding:10px 14px}
+.assistant-form input{width:auto;flex:1;min-width:0;border:1px solid #d7dfd4;border-radius:5px;padding:12px;color:#243d43}
+.assistant-form .primary{width:52px;flex:0 0 52px;margin-top:0;padding:10px 14px}
 .assistant-chat>small{margin-top:9px;color:#74817a}
 .assistant-sign-in{margin-top:8px}
 .assistant-sign-in p{font-size:12px;color:#687a70}
