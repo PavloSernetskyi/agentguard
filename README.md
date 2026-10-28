@@ -42,13 +42,15 @@ AWS MCP helped with initial provisioning and verification; it is a developer too
 
 ### Remaining group deliverables
 
-- [ ] **Person 2:** review and integrate the Strands/Groq assistant implementation on the Person 2 branch; run hosted security acceptance tests after deployment.
-- [ ] **Person 3:** coordinate versioned tool-event telemetry and lead the SOC dashboard; the storefront chat panel is available on the Person 2 branch.
+- [x] **Person 2 (branch scope):** implement the local Strands/Groq assistant, authorized store tools, storefront chat, security regressions and threat-model acceptance matrix on `person-2/assistant-agentguard`.
+- [ ] **Person 3:** review the chat/API integration on the Person 2 branch, validate UI states and add consumer/contract coverage. Follow [Person 3's handoff](docs/person-3-handoff.md).
+- [ ] **Person 1 + Person 2:** review production runtime, server-side Groq secret configuration, timeout and cost controls before any deployment.
+- [ ] **Person 1 + team:** integrate and deploy only after review; rerun hosted Alice/Bob security acceptance checks. The Person 2 branch is not merged and the live site does not yet include it.
 - [ ] **Team:** run controlled security tests against an isolated vulnerable fixture and the protected store; document actual tool results and audit evidence.
 - [ ] **Person 3 leads:** build an operator-only SOC dashboard showing correlated requests, decisions, executions and alerts.
 - [ ] **Final demo:** show normal Alice/Bob use, a blocked cross-account agent request, an indirect prompt-injection attempt, a clearly labeled isolated vulnerable comparison, and the matching SOC timeline.
 
-The store is deployed; the assistant implementation is available on the Person 2 branch but is not yet merged or deployed. The vulnerable lab and SOC dashboard are also not deployed. Groq inference is separate from AWS credits. Bedrock AgentCore remains an optional runtime to evaluate, and no Bedrock model inference is currently claimed. See the [team roadmap](docs/team-roadmap.md) for owners and acceptance criteria.
+The store is deployed; the assistant implementation and chat UI are available on the Person 2 branch but are not yet merged or deployed. Do not treat this branch's local tests as hosted acceptance. The vulnerable lab and SOC dashboard are also not deployed. Groq inference is separate from AWS credits. Bedrock AgentCore remains an optional runtime to evaluate, and no Bedrock model inference is currently claimed. See the [team roadmap](docs/team-roadmap.md) for owners and acceptance criteria.
 
 ## Project status and team plan
 
@@ -65,7 +67,7 @@ Read the **[team roadmap and acceptance checks](docs/team-roadmap.md)** before s
 
 - **Person 1 (store/AWS):** follow the [AWS MCP and deployment phase](docs/aws-next-phase.md); own Terraform, hosting, backend adapters, secrets and operational setup.
 - **Person 2 (agent/security):** follow the [AgentGuard handoff](agentguard/README.md); own Strands agent backend, authorized store tools, enforcement and penetration-test scenarios.
-- **Person 3 (integration/SOC):** follow the [dashboard handoff](dashboard/README.md); help deliver the chat UI and telemetry in milestone 2, then own the SOC dashboard in milestone 4.
+- **Person 3 (integration/SOC):** follow the [assistant integration handoff](docs/person-3-handoff.md) and [dashboard handoff](dashboard/README.md); review/integrate the chat UI and telemetry in milestone 2, then own the SOC dashboard in milestone 4.
 
 Assistant architecture: **Strands + Groq inference**, with **Bedrock AgentCore evaluated as an AWS runtime**. A Groq API key does not power Bedrock-hosted inference; see the [architecture clarification and official references](docs/team-roadmap.md#architecture-clarification-strands-groq-and-bedrock). Keys remain server-side. The branch implementation is documented in [agentguard/README.md](agentguard/README.md).
 
