@@ -13,13 +13,13 @@ This is the shared handoff plan. Milestone 1 is complete; milestone 2 is in prog
 | 3 - Controlled penetration-testing lab | Isolated AWS lab, reset/teardown, scope and deployment evidence | Local threat model, scoped defensive scenarios and protected-policy regression tests on this branch; hosted lab execution remains pending | Event collection, detection rules and labeled test fixtures | Repeatable scoped tests produce correlated decisions and execution evidence |
 | 4 - SOC dashboard and final demo | Stable demo deployment, runbook, cost/teardown checks | Tune enforcement, rerun attacks, document findings | Build SOC dashboard, alerts, filters and event drill-down | Demonstrate request -> decision -> execution -> SOC evidence end to end |
 
-Person 1's hosted store is complete. Persons 2 and 3 can start on `master` in separate small branches, agreeing the chat and event contracts before overlapping API/UI changes. Milestone 2 is complete only when the real assistant works in the hosted environment without breaking Alice/Bob isolation. Everyone helps with testing in milestones 3 and 4.
+Person 1's hosted store is complete. Person 3 can review the assistant UI on the Person 2 branch and start independent telemetry work from `master`; coordinate before overlapping API/UI files or changing shared contracts. Milestone 2 is complete only when the real assistant works in the hosted environment without breaking Alice/Bob isolation. Everyone helps with testing in milestones 3 and 4.
 
 Immediate handoff:
 
 1. **Persons 2 and 3 together:** review the authenticated `POST /api/assistant/messages` contract and agree the versioned tool-event extension before SOC ingestion. Keep the existing v1 audit schema stable.
-2. **Person 2:** the branch implements the local Strands + Groq vertical slice, product search/navigation, signed-in customer's cart/order tools, review summaries, targeted security regressions, and a local threat/acceptance matrix. Review the branch with the team; keep refund requests unavailable.
-3. **Person 3:** integrate/review the existing Ask Archery Pro chat panel against the authenticated API and coordinate with Person 1. Prepare audit-event fixtures and a consumer test; full SOC UI waits for milestone 4.
+2. **Person 2:** local Strands + Groq vertical slice, product search/navigation, signed-in customer's cart/order tools, review summaries, targeted security regressions, and a local threat/acceptance matrix are implemented on `person-2/assistant-agentguard`. Keep refund requests unavailable. The branch is not merged or hosted; coordinate production approval with Person 1.
+3. **Person 3:** review the implemented Ask Archery Pro chat panel and authenticated API on the Person 2 branch; validate the interaction states and add consumer/contract coverage rather than reimplementing the panel. Prepare audit-event fixtures and coordinate the versioned telemetry proposal with Persons 1 and 2. See [Person 3's handoff](person-3-handoff.md); full SOC UI waits for milestone 4.
 4. **Person 1:** review the security/session boundary and deploy the integrated assistant only after local acceptance and a fresh cost review. Keep Groq keys server-side. Migrate Terraform state to a shared encrypted backend with locking before a teammate changes infrastructure; the current local state must not be recreated from a clean clone.
 
 ## Milestone 1: completed baseline
@@ -51,11 +51,11 @@ Immediate handoff:
 
 ### Person 3 - assistant integration and telemetry lead
 
-1. Review and integrate the Ask Archery Pro chat interface in `store/` against the authenticated endpoint. Coordinate changes with Person 1; do not imply the hosted `master` site already has the assistant.
-2. Add pending, error, retry and signed-out states. Clear chat on account switch/logout; never carry Alice's history into Bob's session. Render model text safely and do not expose API keys in the browser.
-3. Integrate against the documented authenticated `POST /api/assistant/messages` endpoint. The Person 2 branch implements conversation ownership; verify it in the merged build.
-4. Agree versioned event extensions for conversation ID, tool-call ID and tool name. Preserve the current audit schema; propose a v2 schema before adding fields because v1 rejects unknown fields.
-5. Build sample event fixtures and a consumer/contract test now. Full SOC UI belongs to milestone 4, so do not block the assistant on building it.
+1. Review the Ask Archery Pro interface already implemented in `store/src/AssistantChat.tsx` on the Person 2 branch. Coordinate shared-file changes with Person 1; do not imply the hosted `master` site already has the assistant.
+2. Verify loading, error, session-expiry/sign-in and signed-out states; confirm account switches clear local conversation history. The component currently includes loading, error and signed-out handling; improve gaps found during review rather than duplicating existing functionality.
+3. Validate the authenticated `POST /api/assistant/messages` contract and conversation ownership against the merged build. The endpoint requires the validated session cookie and allowed Origin; see [API contracts](contracts.md).
+4. Preserve audit v1. Agree versioned event extensions for conversation ID, tool-call ID and tool name with Persons 1 and 2; v1 rejects unknown fields. Do not put prompts, review text, cookies, addresses or provider secrets into events.
+5. Build sample event fixtures and a consumer/contract test now. Full SOC UI belongs to milestone 4, so do not block assistant integration on it.
 
 ### Milestone 2 acceptance
 
