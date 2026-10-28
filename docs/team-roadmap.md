@@ -10,7 +10,7 @@ This is the shared handoff plan. Milestone 1 is complete; milestone 2 is in prog
 | --- | --- | --- | --- | --- |
 | 1 - Local store (complete) | React store, Python API, storage, seed/reset, sessions and orders | Enforcement interface available for integration | Audit contract available for integration | Alice reads her order, cannot read Bob's, and the backend records the decision |
 | 2 - AWS store and real assistant (in progress) | Hosted Archery Pro store; own assistant deployment, runtime secrets and cost checks | Strands agent with Groq, authorized store tools, enforcement and tool tests | Ask Archery Pro chat UI, API integration, telemetry consumption and contract tests | Hosted store and real assistant work; both preserve Alice/Bob isolation |
-| 3 - Controlled penetration-testing lab | Isolated AWS lab, reset/teardown, scope and deployment evidence | Threat model, attack scenarios, protected policies and regression tests | Event collection, detection rules and labeled test fixtures | Repeatable scoped tests produce correlated decisions and execution evidence |
+| 3 - Controlled penetration-testing lab | Isolated AWS lab, reset/teardown, scope and deployment evidence | Local threat model, scoped defensive scenarios and protected-policy regression tests on this branch; hosted lab execution remains pending | Event collection, detection rules and labeled test fixtures | Repeatable scoped tests produce correlated decisions and execution evidence |
 | 4 - SOC dashboard and final demo | Stable demo deployment, runbook, cost/teardown checks | Tune enforcement, rerun attacks, document findings | Build SOC dashboard, alerts, filters and event drill-down | Demonstrate request -> decision -> execution -> SOC evidence end to end |
 
 Person 1's hosted store is complete. Persons 2 and 3 can start on `master` in separate small branches, agreeing the chat and event contracts before overlapping API/UI changes. Milestone 2 is complete only when the real assistant works in the hosted environment without breaking Alice/Bob isolation. Everyone helps with testing in milestones 3 and 4.
@@ -18,7 +18,7 @@ Person 1's hosted store is complete. Persons 2 and 3 can start on `master` in se
 Immediate handoff:
 
 1. **Persons 2 and 3 together:** review the authenticated `POST /api/assistant/messages` contract and agree the versioned tool-event extension before SOC ingestion. Keep the existing v1 audit schema stable.
-2. **Person 2:** the branch implements the local Strands + Groq vertical slice, product search/navigation, signed-in customer's cart/order tools, review summaries, and targeted tests. Review the branch with the team; keep refund requests unavailable.
+2. **Person 2:** the branch implements the local Strands + Groq vertical slice, product search/navigation, signed-in customer's cart/order tools, review summaries, targeted security regressions, and a local threat/acceptance matrix. Review the branch with the team; keep refund requests unavailable.
 3. **Person 3:** integrate/review the existing Ask Archery Pro chat panel against the authenticated API and coordinate with Person 1. Prepare audit-event fixtures and a consumer test; full SOC UI waits for milestone 4.
 4. **Person 1:** review the security/session boundary and deploy the integrated assistant only after local acceptance and a fresh cost review. Keep Groq keys server-side. Migrate Terraform state to a shared encrypted backend with locking before a teammate changes infrastructure; the current local state must not be recreated from a clean clone.
 

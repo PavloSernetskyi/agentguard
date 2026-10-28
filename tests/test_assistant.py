@@ -42,8 +42,9 @@ class AssistantTests(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
-    def request(self, method, path, token=None, body=None, assistant=None):
-        headers = {"Origin": "http://127.0.0.1:5173"}
+    def request(self, method, path, token=None, body=None, assistant=None,
+                origin="http://127.0.0.1:5173"):
+        headers = {"Origin": origin}
         if token:
             headers["Cookie"] = token
         return handle(self.store, method, "/api" + path, headers,
@@ -157,11 +158,60 @@ class AssistantTests(unittest.TestCase):
         captured = []
         runner = FakeRunner(lambda tools: captured.append(tools["get_my_orders"]()))
         status, _, _ = self.request("POST", "/assistant/messages", token,
-                                    {"message": "Where is my order?"}, self.assistant(runner))
+                                    {"message": "Where is my order?", "customer_id": "bob"},
+                                    self.assistant(runner))
         self.assertEqual(status, 200)
         order_result = captured[0]
         self.assertEqual([order["id"] for order in order_result["orders"]], ["ord-alice-001"])
         self.assertNotIn("address", order_result["orders"][0])
+        self.assertNotIn("customer_id", order_result["orders"][0])
+
+    def test_assistant_rejects_untrusted_origin_before_provider_call(self):
+        token = self.login()
+        runner = FakeRunner()
+        status, _, response = self.request(
+            "POST", "/assistant/messages", token,
+            {"message": "Find a beginner bow"}, self.assistant(runner),
+            origin="https://untrusted.example")
+        self.assertEqual(status, 403)
+        self.assertEqual(runner.calls, 0)
+        self.assertEqual(response["error"], "Untrusted request origin")
+
+    def test_assistant_policy_failure_prevents_provider_and_side_effects(self):
+        token = self.login()
+        runner = FakeRunner()
+
+        class BrokenAuthorizer:
+            def authorize(self, *args):
+                raise RuntimeError("policy service unavailable")
+
+        original_authorizer = self.store.authorizer
+        self.store.authorizer = BrokenAuthorizer()
+        status, _, response = self.request(
+            "POST", "/assistant/messages", token,
+            {"message": "Add the First Flight bow to my cart."}, self.assistant(runner))
+        self.assertEqual(status, 403)
+        self.assertEqual(response["error"], "Access denied")
+        self.assertEqual(runner.calls, 0)
+        self.assertEqual(self.storage.list("assistant_conversations"), [])
+        self.store.authorizer = original_authorizer
+        self.assertEqual(self.request("GET", "/cart", token)[2]["items"], [])
+        event = next(e for e in self.storage.list("audit") if e["request_id"] == response["request_id"])
+        self.assertEqual((event["actor_id"], event["action"], event["decision"], event["execution"]),
+                         ("alice", "assistant.message", "deny", "blocked"))
+
+    def test_assistant_audit_does_not_store_prompt_or_customer_text(self):
+        token = self.login()
+        secret_like_prompt = "Please find a bow. My private note is do-not-log-this-text."
+        status, headers, _ = self.request(
+            "POST", "/assistant/messages", token,
+            {"message": secret_like_prompt}, self.assistant(FakeRunner()))
+        self.assertEqual(status, 200)
+        event = next(e for e in self.storage.list("audit") if e["request_id"] == headers["X-Request-Id"])
+        serialized = json.dumps(event)
+        self.assertNotIn("do-not-log-this-text", serialized)
+        self.assertNotIn(secret_like_prompt, serialized)
+
 
     def test_conversation_cannot_be_reused_by_another_account(self):
         alice, bob = self.login("alice"), self.login("bob")
@@ -249,6 +299,20 @@ class AssistantTests(unittest.TestCase):
             {"message": "Add the First Flight bow to my cart."}, self.assistant(quantity_runner))
         self.assertEqual(status, 200)
         self.assertEqual(self.request("GET", "/cart", token)[2]["items"], [])
+
+    def test_search_tool_rejects_malformed_and_oversized_arguments(self):
+        token = self.login()
+        captured = []
+        runner = FakeRunner(lambda tools: captured.extend([
+            tools["search_products"](query=["recurve"]),
+            tools["search_products"](query="x" * 161),
+            tools["search_products"](query="recurve", category="x" * 81),
+        ]))
+        status, _, _ = self.request(
+            "POST", "/assistant/messages", token,
+            {"message": "Find a recurve bow"}, self.assistant(runner))
+        self.assertEqual(status, 200)
+        self.assertTrue(all(result == {"error": "Invalid product search arguments"} for result in captured))
 
     def test_reviews_are_marked_untrusted_and_cannot_enable_cart_write(self):
         token = self.login()

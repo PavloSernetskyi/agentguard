@@ -16,6 +16,10 @@
 - Assistant conversations are account-owned and expire after 24 hours; provider errors do not persist a failed turn.
 - Assistant cart mutations require an explicit add-to-cart request and a named product or product ID; these are audited through the existing v1 event schema.
 - Product navigation actions are limited to validated product detail paths; checkout and refund tools are not exposed.
+- Assistant requests reject untrusted origins, ignore request-supplied customer identity, fail closed on policy errors, and avoid storing prompt text in audit events.
+- Malformed search arguments, instruction-like review text, cross-account conversation IDs, and provider failures cannot create unauthorized cart writes.
+
+The [assistant security matrix](assistant-security.md) defines these local checks and separates them from hosted deployment acceptance.
 
 `cd store; npm run build` checks TypeScript and produces the production static bundle.
 

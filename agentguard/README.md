@@ -8,7 +8,7 @@ Start with the [team roadmap](../docs/team-roadmap.md) and [API/security contrac
 - `agentguard/policy.py` provides an allowlisted owner-scoped authorizer. Assistant tools call existing `StoreService` operations; the model never receives storage access or a customer ID.
 - `POST /api/assistant/messages` validates the session, scopes conversations to the account, retains only 12 messages for at most 24 hours, and returns constrained UI actions.
 - The storefront consumes product navigation and cart-refresh actions. It clears chat history when the account changes or signs out.
-- Tests cover account isolation, navigation, explicit cart changes, untrusted reviews, invalid arguments and provider failure. Audit records remain schema v1 and do not contain conversation text.
+- Tests cover account isolation, navigation, explicit cart changes, untrusted reviews, invalid arguments, origin checks, fail-closed policy behavior, audit minimization and provider failure. The [assistant threat model and acceptance matrix](../docs/assistant-security.md) records the local scope and remaining hosted acceptance boundary. Audit records remain schema v1 and do not contain conversation text.
 
 The assistant has no checkout or refund tool. Existing customer-controlled fictional checkout remains unchanged.
 
@@ -20,10 +20,8 @@ For a Python 3.12 x86_64 Lambda archive with the assistant's pinned provider pac
 
 Groq is the model provider; Bedrock AgentCore is a possible AWS runtime. A Groq API key is not a Bedrock inference credential.
 
-## Later
+## Handoff status
 
-Milestone 3: lead the threat model, scoped penetration-testing cases and protected/vulnerable lab comparison design. No publicly selectable bypass and no weakening of normal store ownership checks.
+Person 2's local assistant and defensive acceptance slice is implemented on this branch. Milestone 2 is not complete at the team level until the integrated assistant is deployed and Alice/Bob isolation is reverified in the hosted environment. No penetration test of shared infrastructure or vulnerable lab has been performed.
 
-Milestone 4: tune policy/detections with Person 3, retest findings and contribute evidence to the final SOC demonstration.
-
-Next: coordinate event correlation and hosted runtime requirements with Persons 1 and 3, then demonstrate the local protected assistant and repeat Alice/Bob isolation checks after integration.
+Next: review this branch with Persons 1 and 3, agree any versioned telemetry extension without changing schema v1, and repeat integration checks after deployment. Milestone 4 policy/detection tuning and SOC demonstration remain joint follow-up work.
