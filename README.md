@@ -1,6 +1,6 @@
 # Archery Pro Shopping / AgentGuard
 
-**Current store:** Archery Pro Shopping is on `master` and powers the existing AWS demo URL with original generated product photography, 18 synthetic items and a fictional checkout. The [local guide](docs/archery-preview.md) remains available.
+**Current store:** Archery Pro Shopping is on `master` and powers the existing AWS demo URL with original generated product photography, 18 synthetic items and a fictional checkout. The assistant integration is also merged into `master`, but the live AWS deployment has not yet been updated to that build. The [local guide](docs/archery-preview.md) remains available.
 
 A deployed, synthetic shopping platform for a three-person school project. Person 1 owns the store and AWS deployment; Person 2 owns AgentGuard enforcement; Person 3 owns the assistant UI and SOC dashboard.
 
@@ -42,15 +42,15 @@ AWS MCP helped with initial provisioning and verification; it is a developer too
 
 ### Remaining group deliverables
 
-- [x] **Person 2 (branch scope):** implement the local Strands/Groq assistant, authorized store tools, storefront chat, security regressions and threat-model acceptance matrix on `person-2/assistant-agentguard`.
-- [ ] **Person 3:** review the chat/API integration on the Person 2 branch, validate UI states and add consumer/contract coverage. Follow [Person 3's handoff](docs/person-3-handoff.md).
+- [x] **Person 2:** implement and merge the Strands/Groq assistant, authorized store tools, storefront chat, security regressions and threat-model acceptance matrix to `master`.
+- [ ] **Person 3:** review the merged chat/API integration, validate UI states and add consumer/contract coverage. Follow [Person 3's handoff](docs/person-3-handoff.md).
 - [ ] **Person 1 + Person 2:** review production runtime, server-side Groq secret configuration, timeout and cost controls before any deployment.
-- [ ] **Person 1 + team:** integrate and deploy only after review; rerun hosted Alice/Bob security acceptance checks. The Person 2 branch is not merged and the live site does not yet include it.
+- [ ] **Person 1 + team:** deploy the current `master` build after review; configure the provider key server-side and rerun hosted Alice/Bob security acceptance checks. The live site currently serves an older build.
 - [ ] **Team:** run controlled security tests against an isolated vulnerable fixture and the protected store; document actual tool results and audit evidence.
 - [ ] **Person 3 leads:** build an operator-only SOC dashboard showing correlated requests, decisions, executions and alerts.
 - [ ] **Final demo:** show normal Alice/Bob use, a blocked cross-account agent request, an indirect prompt-injection attempt, a clearly labeled isolated vulnerable comparison, and the matching SOC timeline.
 
-The store is deployed; the assistant implementation and chat UI are available on the Person 2 branch but are not yet merged or deployed. Do not treat this branch's local tests as hosted acceptance. The vulnerable lab and SOC dashboard are also not deployed. Groq inference is separate from AWS credits. Bedrock AgentCore remains an optional runtime to evaluate, and no Bedrock model inference is currently claimed. See the [team roadmap](docs/team-roadmap.md) for owners and acceptance criteria.
+The store is deployed; the assistant implementation and chat UI are merged to `master` but not yet deployed to AWS. Do not treat local tests as hosted acceptance. The vulnerable lab and SOC dashboard are also not deployed. Groq inference is separate from AWS credits. Bedrock AgentCore remains an optional runtime to evaluate, and no Bedrock model inference is currently claimed. See the [team roadmap](docs/team-roadmap.md) for owners and acceptance criteria.
 
 ## Project status and team plan
 
@@ -59,7 +59,7 @@ The store is deployed; the assistant implementation and chat UI are available on
 | Milestone | Status | Deliverable |
 | --- | --- | --- |
 | 1. Local store | Complete | Store, sessions, carts, owned orders and audit baseline |
-| 2. AWS deployment + real assistant | In progress | Archery Pro store is deployed; Persons 2 and 3 integrate Strands/Groq with Ask Archery Pro |
+| 2. AWS deployment + real assistant | In progress | Assistant is integrated on `master`; AWS deployment and hosted Alice/Bob acceptance are pending |
 | 3. Controlled penetration-testing lab | Planned | Isolated fixtures, scoped security scenarios, enforcement and detection evidence |
 | 4. SOC dashboard + final demonstration | Planned | Operator dashboard, correlated alerts, findings and reproducible demo |
 
@@ -135,4 +135,4 @@ Stop the API with Ctrl+C before `python -m seed.reset`, then restart it. This de
 
 `Storage` abstracts persistence. The SQLite adapter uses parameterized SQL and per-operation connections. SQLite collection scans are intentionally small-scale; the new DynamoDB adapter uses owner-scoped queries and pagination. Cart writes replace a product quantity; concurrent tabs use last-write-wins semantics. Audits are emitted after the operation and are not atomic with storage writes: an audit sink failure returns 500, but a completed mutation may already have persisted. A transactional outbox is deployment-phase work.
 
-No publicly accessible bypass, refunds, payment processing or Bedrock calls have been added. Fictional order placement is available locally and in the deployed store. The store's AWS infrastructure is deployed from Terraform; the assistant implementation is on the Person 2 branch and is not yet hosted. Future refund tools must introduce an explicitly authorized operation with an audit contract. The [deployment runbook](docs/aws-deployment.md) covers Person 1's hosted store, and the [team roadmap](docs/team-roadmap.md) coordinates assistant integration, testing and SOC work.
+No publicly accessible bypass, refunds, payment processing or Bedrock calls have been added. Fictional order placement is available locally and in the deployed store. The store's AWS infrastructure is deployed from Terraform; the assistant implementation is merged to `master` but not yet hosted. Future refund tools must introduce an explicitly authorized operation with an audit contract. The [deployment runbook](docs/aws-deployment.md) covers Person 1's hosted store, and the [team roadmap](docs/team-roadmap.md) coordinates assistant deployment, testing and SOC work.

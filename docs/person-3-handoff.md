@@ -2,7 +2,7 @@
 
 ## Current state
 
-The local assistant backend and Ask Archery Pro chat UI are implemented on [`person-2/assistant-agentguard`](https://github.com/PavloSernetskyi/agentguard/tree/person-2/assistant-agentguard). The branch is pushed but **not merged to `master` or deployed**; the live site remains unchanged. Person 2's local verification passed 44 Python tests and the storefront TypeScript/production build. Automated visual/browser acceptance and hosted Alice/Bob verification remain outstanding.
+The assistant backend and Ask Archery Pro chat UI are merged to `master` from [`person-2/assistant-agentguard`](https://github.com/PavloSernetskyi/agentguard/tree/person-2/assistant-agentguard). They are **not yet deployed to AWS**; the live site still serves an older build. Person 2's local verification passed 44 Python tests and the storefront TypeScript/production build. Automated visual/browser acceptance and hosted Alice/Bob verification remain outstanding.
 
 The component is in `store/src/AssistantChat.tsx`. It already handles signed-out prompts, loading, request errors, session-expiry sign-in, product recommendation cards, navigation, cart refresh, and clearing local history when the customer changes. Please review these behaviors and address concrete gaps rather than rebuilding the chat panel.
 
@@ -19,12 +19,12 @@ Use `POST /api/assistant/messages` as documented in [contracts.md](contracts.md)
 
 ## Person 3 next steps
 
-1. Review the branch diff and exercise the chat in the local app, including signed-out use, expired session, provider failure, product results, navigation, cart refresh, logout, and Alice-to-Bob account switching.
+1. Review the merged code and exercise the chat in the local app, including signed-out use, expired session, provider failure, product results, navigation, cart refresh, logout, and Alice-to-Bob account switching.
 2. Run the existing test/build checks and add targeted UI/contract coverage for any gaps discovered. Include mobile layout, keyboard/focus behavior, safe text rendering, and accessible loading/error announcements in UI review.
 3. Build representative assistant/tool audit fixtures and a consumer/contract test. Keep audit schema v1 unchanged: `decision` and `execution` are distinct and must remain so.
 4. If SOC correlation needs conversation ID, tool-call ID, or tool name, propose a versioned extension and review it with Persons 1 and 2 before changing the schema or producer. Never add prompts, review text, credentials, cookies, addresses, or provider exceptions to audit data.
-5. Coordinate API/UI integration with Person 1 and the Person 2 branch owner before overlapping changes in shared files. Hosted deployment and production acceptance require Person 1's explicit review of runtime secrets, timeouts, cost, and hosted Alice/Bob isolation.
+5. Coordinate API/UI changes with Person 1 and Person 2 before overlapping changes in shared files. Hosted deployment and production acceptance require Person 1's explicit review of runtime secrets, timeouts, cost, and hosted Alice/Bob isolation.
 
 ## Acceptance boundary
 
-This handoff is for local review and integration. Do not merge to `master`, deploy the assistant, or change shared AWS resources based only on the local tests. The hosted assistant is accepted only after the deployment owner approves and the integrated site passes reciprocal Alice/Bob isolation and audit checks.
+This handoff is for local review and integration. The code is already on `master`, but local tests alone do not authorize deployment or changes to shared AWS resources. The hosted assistant is accepted only after the deployment owner completes deployment and the integrated site passes reciprocal Alice/Bob isolation and audit checks.
