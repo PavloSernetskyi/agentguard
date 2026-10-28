@@ -1,12 +1,25 @@
 import {FormEvent, useEffect, useRef, useState} from 'react';
-import {ArrowRight, Bot, X} from 'lucide-react';
-import {api, Cart, Customer} from './types';
+import {ArrowRight, Bot, ShoppingBag, X} from 'lucide-react';
+import {api, Cart, Customer, money} from './types';
 
-type ChatMessage = {role: 'user' | 'assistant'; text: string};
+type Recommendation = {
+  id: string;
+  name: string;
+  category: string;
+  price_cents: number;
+  description: string;
+  use_case?: string | null;
+  draw_weight_lb?: {min: number; max: number} | null;
+};
+type ChatMessage = {role: 'user' | 'assistant'; text: string; products?: Recommendation[]};
 type AssistantResponse = {
   conversation_id: string;
   reply: string;
-  ui_actions: ({type: 'navigate'; path: string} | {type: 'cart_updated'})[];
+  ui_actions: (
+    | {type: 'navigate'; path: string}
+    | {type: 'cart_updated'}
+    | {type: 'show_products'; products: Recommendation[]}
+  )[];
 };
 
 type Props = {
@@ -14,9 +27,10 @@ type Props = {
   onClose: () => void;
   onSignIn: () => void;
   onCartUpdated: (cart: Cart) => void;
+  onAddProduct: (productId: string) => void;
 };
 
-export function AssistantChat({customer, onClose, onSignIn, onCartUpdated}: Props) {
+export function AssistantChat({customer, onClose, onSignIn, onCartUpdated, onAddProduct}: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversationId, setConversationId] = useState<string>();
   const [draft, setDraft] = useState('');
@@ -54,7 +68,12 @@ export function AssistantChat({customer, onClose, onSignIn, onCartUpdated}: Prop
         ...(conversationId ? {conversation_id: conversationId} : {}),
       });
       setConversationId(response.conversation_id);
-      setMessages(current => [...current, {role: 'assistant', text: response.reply}]);
+      const recommendations = response.ui_actions.find(action => action.type === 'show_products');
+      setMessages(current => [...current, {
+        role: 'assistant',
+        text: response.reply,
+        products: recommendations?.type === 'show_products' ? recommendations.products : undefined,
+      }]);
       for (const action of response.ui_actions) {
         if (action.type === 'navigate' && /^\/products\/[A-Za-z0-9_-]{1,64}$/.test(action.path)) {
           location.hash = action.path;
@@ -97,7 +116,28 @@ export function AssistantChat({customer, onClose, onSignIn, onCartUpdated}: Prop
       </div> : <>
         <div className="assistant-transcript" ref={transcript} aria-live="polite" aria-label="Conversation">
           {!messages.length && <p className="assistant-intro">Ask about products, ask me to open a product page, or explicitly ask me to add an item to your cart. I can only see your account’s cart and orders.</p>}
-          {messages.map((message, index) => <p className={`assistant-message ${message.role}`} key={index}>{message.text}</p>)}
+          {messages.map((message, index) => <div className={`assistant-message ${message.role}`} key={index}>
+            <p>{message.text}</p>
+            {message.products?.length ? <div className="assistant-recommendations" aria-label="Product recommendations">
+              {message.products.map(product => <article className="assistant-product-card" key={product.id}>
+                <div>
+                  <span className="product-category">{product.category}</span>
+                  <strong>{product.name}</strong>
+                  <span className="assistant-product-meta">
+                    {product.draw_weight_lb && `Draw weight: ${product.draw_weight_lb.min === product.draw_weight_lb.max
+                      ? `${product.draw_weight_lb.min} lb`
+                      : `${product.draw_weight_lb.min}–${product.draw_weight_lb.max} lb`}`}
+                    {product.use_case && ` · ${product.use_case}`}
+                  </span>
+                  <span className="assistant-product-price">{money(product.price_cents)}</span>
+                </div>
+                <div className="assistant-product-actions">
+                  <a href={`#/products/${encodeURIComponent(product.id)}`} onClick={onClose}>View details</a>
+                  <button type="button" onClick={() => onAddProduct(product.id)}><ShoppingBag size={14}/> Add to cart</button>
+                </div>
+              </article>)}
+            </div> : null}
+          </div>)}
           {busy && <p className="assistant-message assistant" role="status">Looking that up…</p>}
         </div>
         {error && <p className="assistant-error" role="alert">{error}</p>}

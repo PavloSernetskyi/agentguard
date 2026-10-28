@@ -104,6 +104,28 @@ class AssistantTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(response["ui_actions"], [{"type": "navigate", "path": "/products/p11"}])
 
+    def test_product_search_returns_structured_recommendation_cards(self):
+        token = self.login()
+        captured = []
+        runner = FakeRunner(lambda tools: captured.append(tools["search_products"]("recurve")))
+        status, _, response = self.request(
+            "POST", "/assistant/messages", token,
+            {"message": "Find a beginner-friendly recurve bow."}, self.assistant(runner))
+        self.assertEqual(status, 200)
+        action = next(item for item in response["ui_actions"] if item["type"] == "show_products")
+        recommendations = action["products"]
+        self.assertEqual([item["id"] for item in recommendations], ["p01", "p11"])
+        self.assertEqual(recommendations[0]["price_cents"], 18900)
+        self.assertEqual(recommendations[1]["price_cents"], 12900)
+        self.assertEqual(captured[0]["products"], recommendations)
+
+    def test_assistant_prompt_asks_for_concise_fact_grounded_text(self):
+        prompt = AssistantService._prompt("Find a beginner bow", [])
+        self.assertIn("not markdown tables", prompt)
+        self.assertIn("do not invent", prompt)
+        self.assertIn("one-sentence introduction", prompt)
+        self.assertIn("one helpful follow-up question", prompt)
+
     def test_unknown_product_tool_arguments_do_not_create_ui_actions(self):
         token = self.login()
         captured = []
