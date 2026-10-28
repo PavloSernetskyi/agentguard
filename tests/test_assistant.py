@@ -121,10 +121,25 @@ class AssistantTests(unittest.TestCase):
 
     def test_assistant_prompt_asks_for_concise_fact_grounded_text(self):
         prompt = AssistantService._prompt("Find a beginner bow", [])
-        self.assertIn("not markdown tables", prompt)
+        self.assertIn("plain text only", prompt)
+        self.assertIn("Do not use markdown", prompt)
         self.assertIn("do not invent", prompt)
-        self.assertIn("one-sentence introduction", prompt)
         self.assertIn("one helpful follow-up question", prompt)
+
+    def test_assistant_response_converts_markdown_products_to_plain_text(self):
+        markdown = (
+            "Here are two options:\n\n"
+            "| Product | Price | Draw Weight | Use Case |\n"
+            "|---------|-------|-------------|----------|\n"
+            "| **First Flight recurve bow** | $129.00 | 10 lb | Beginner |\n"
+            "- **Ridgeline recurve bow** – $189.00"
+        )
+        plain = AssistantService._plain_text(markdown)
+        self.assertIn("First Flight recurve bow. Price: $129.00. Draw Weight: 10 lb. Use Case: Beginner.", plain)
+        self.assertIn("Ridgeline recurve bow, $189.00", plain)
+        self.assertNotRegex(plain, r"[*_`|•]")
+        self.assertNotRegex(plain, r"(?:^|\s)[–—](?:\s|$)")
+        self.assertNotRegex(plain, r"(?:^|\s)-\s")
 
     def test_unknown_product_tool_arguments_do_not_create_ui_actions(self):
         token = self.login()
