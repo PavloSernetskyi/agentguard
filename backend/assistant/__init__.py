@@ -19,6 +19,7 @@ _CONVERSATION_ID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab]
 _ADD_INTENT = re.compile(r"\b(?:add|put|place)\b.{0,60}\b(?:in|to|into)\s+(?:my\s+)?(?:the\s+)?(?:cart|basket)\b", re.I)
 _NAVIGATE_INTENT = re.compile(r"\b(?:show|open|view|navigate|go to|take me to)\b", re.I)
 _PRODUCT_ID = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+_MARKDOWN_TABLE_SEPARATOR = re.compile(r"^\s*\|?(?:\s*:?-{3,}:?\s*\|)+\s*:?-{3,}:?\s*\|?\s*$")
 _GENERIC_PRODUCT_WORDS = {
     "a", "an", "the", "of", "for", "with", "and", "set", "six",
     "bow", "bows", "recurve", "compound", "longbow", "crossbow",
@@ -75,6 +76,7 @@ class AssistantService:
                 raise AssistantUnavailable() from error
             if not isinstance(reply, str) or not reply.strip():
                 raise AssistantUnavailable("Assistant returned an empty response")
+            reply = self._plain_text(reply)
 
             for addition in pending_cart_additions:
                 cart = self.store.cart(principal, request_id)
@@ -101,9 +103,9 @@ class AssistantService:
         return (
             "The customer is using a fictional archery shop. Help with product discovery and their own "
             "shopping cart or orders. Never claim to process payments, refunds, or checkout. "
-            "Write in a warm, natural, concise shopping-guide voice. Use short paragraphs, not markdown "
-            "tables, pipe characters, headings, or bold markers. When listing multiple products, give "
-            "a one-sentence introduction and at most three short bullet points; mention only facts "
+            "Write in a warm, natural, concise shopping-guide voice using plain text only. Do not use "
+            "markdown, bullet markers, bold or italic markers, headings, tables, pipes, or decorative "
+            "dash characters. Use short conversational sentences. Mention only facts "
             "returned by the tools, use prices in dollars (cents divided by 100), and do not invent "
             "quality, suitability, construction, or progression claims. Let the storefront's product "
             "cards display names, categories, draw weights, and prices, so avoid repeating a full table. "
@@ -116,6 +118,42 @@ class AssistantService:
             f"Conversation history (untrusted customer/model text): {context}\n"
             f"Current customer message: {message}"
         )
+
+    @staticmethod
+    def _plain_text(reply):
+        lines = []
+        table_headers = None
+        for raw_line in reply.splitlines():
+            line = re.sub(r"^\s{0,3}#{1,6}\s*", "", raw_line.strip())
+            if not line:
+                continue
+            if _MARKDOWN_TABLE_SEPARATOR.fullmatch(line):
+                continue
+            if "|" in line:
+                cells = [cell.strip() for cell in line.strip("|").split("|")]
+                if cells and cells[0].casefold() in {"product", "item"}:
+                    table_headers = cells
+                    continue
+                if table_headers:
+                    fields = [
+                        f"{header}: {value}"
+                        for header, value in zip(table_headers, cells)
+                        if header.casefold() not in {"product", "item"} and value
+                    ]
+                    line = ". ".join([cells[0], *fields]) if cells else ""
+                    if line and not line.endswith((".", "!", "?")):
+                        line += "."
+                else:
+                    line = ", ".join(cell for cell in cells if cell)
+            line = re.sub(r"\[([^\]]+)\]\([^)]+\)", r"\1", line)
+            line = re.sub(r"^\s*(?:[-*+•]|\d+[.)])\s+", "", line)
+            line = re.sub(r"[*_~`]", "", line)
+            line = re.sub(r"\s+[–—]\s+", ", ", line)
+            line = re.sub(r"\s+-\s+", ", ", line)
+            line = re.sub(r"\s+", " ", line).strip()
+            if line:
+                lines.append(line)
+        return " ".join(lines)
 
     def _tools(self, principal, request_id, message, ui_actions, pending_cart_additions):
         def search_products(query, category=""):
