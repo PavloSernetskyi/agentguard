@@ -285,7 +285,7 @@ def build_assistant(store, storage, environ=None):
 
     environ = os.environ if environ is None else environ
     api_key = environ.get("GROQ_API_KEY", "").strip()
-    model_id = environ.get("GROQ_MODEL", "llama-3.3-70b-versatile").strip()
+    model_id = environ.get("GROQ_MODEL", "openai/gpt-oss-20b").strip()
     if not api_key or not model_id:
         return None
     try:

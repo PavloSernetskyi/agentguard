@@ -14,7 +14,7 @@ The assistant has no checkout or refund tool. Existing customer-controlled ficti
 
 ## Local configuration
 
-Install the optional, pinned provider dependencies with `python -m pip install -r requirements-assistant.txt`. Set `GROQ_API_KEY` in the backend process environment; `GROQ_MODEL` is optional and defaults to `llama-3.3-70b-versatile`. Without a key, the store works normally and the assistant endpoint responds with 503. Never place the key in frontend code, Git, or chat.
+Install the optional, pinned provider dependencies with `python -m pip install -r requirements-assistant.txt`. Set `GROQ_API_KEY` in the backend process environment; `GROQ_MODEL` is optional and defaults to `openai/gpt-oss-20b` (verified with tool calling for the configured provider account). Without a key, the store works normally and the assistant endpoint responds with 503. Never place the key in frontend code, Git, or chat.
 
 For a Python 3.12 x86_64 Lambda archive with the assistant's pinned provider packages, run `python scripts/package_backend.py --with-assistant-deps`. Configure `GROQ_API_KEY` securely in the backend runtime; do not put it in Terraform source, browser code, or a request. Person 1 must review secret storage, Lambda/API timeout and inference cost before deployment. Hosted deployment and cost acceptance are not performed by this branch.
 
