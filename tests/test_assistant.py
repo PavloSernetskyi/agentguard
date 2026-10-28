@@ -3,9 +3,10 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from backend.api import handle
-from backend.assistant import AssistantService
+from backend.assistant import AssistantService, build_assistant
 from backend.security import Principal
 from backend.service import StoreService
 from backend.storage import SQLiteStorage
@@ -243,6 +244,12 @@ class AssistantTests(unittest.TestCase):
         self.assertEqual((event["actor_id"], event["action"], event["decision"], event["execution"]),
                          ("alice", "assistant.message", "allow", "failed"))
         self.assertEqual(self.request("GET", "/products")[0], 200)
+
+    def test_default_model_is_the_verified_groq_tool_model(self):
+        with patch("backend.assistant.StrandsGroqRunner") as runner:
+            assistant = build_assistant(self.store, self.storage, {"GROQ_API_KEY": "test-key"})
+        self.assertIsNotNone(assistant)
+        runner.assert_called_once_with("test-key", "openai/gpt-oss-20b")
 
     def test_agentguard_rejects_actions_outside_its_allowlist(self):
         decision = self.store.authorizer.authorize(
