@@ -13,13 +13,24 @@ All data is synthetic. Amounts are integer USD cents. All routes begin `/api`.
 | GET | /orders/{id} | Authorize ownership before returning details |
 | GET | /cart | Current customer's persisted cart |
 | PUT | /cart/{productId} | `{quantity: 0..99}`; zero removes item |
+| POST | /assistant/messages | Authenticated shopping-assistant turn; see the assistant contract below |
 | POST | /checkout | Empty body; authenticated fictional order from own cart, returns 201; no payment or client address fields |
 
 Responses are JSON. Errors use `{error: string, request_id: string}`. Authentication uses a random opaque session token, stored hashed with an expiration. Never accept a customer ID from request data as identity. Local mutations require an allowed Origin; frontend and API share an origin via Vite proxy. Production must use HTTPS and Secure cookies.
 
 The fictional checkout uses `checkout.simulate` through the same owner-scoped service and audit contract locally and in AWS. It rejects an empty cart and all client-supplied checkout details, writes a synthetic order, then clears the cart. The write and cart cleanup are not atomic; this is not a payment or inventory system.
 
-## AgentGuard handoff
+## Assistant contract
+
+`POST /assistant/messages` requires the existing validated session cookie and an allowed same-origin `Origin`. The request is `{ "message": string, "conversation_id"?: uuid }`; messages are limited to 2,000 characters. The response is `{ "conversation_id": uuid, "reply": string, "ui_actions": [...] }`. A new conversation ID is generated when omitted. Conversations belong to the authenticated customer, store at most the latest 12 messages, and expire after 24 hours. Reusing another customer's conversation ID returns 403; identity is never accepted from the request or model.
+
+The assistant uses Strands with Groq's OpenAI-compatible API. Server configuration is `GROQ_API_KEY` and optional `GROQ_MODEL` (default `llama-3.3-70b-versatile`). Keep the key server-side; never include it in the browser bundle, Git, logs, or request body. Without provider configuration, the route returns 503 while the rest of the store remains available.
+
+The assistant can search the public catalog, request a constrained product-page navigation action, summarize reviews, read the current customer's cart and own-order summaries, and add products to that customer's cart only when the current message explicitly asks to add an item and names the product or its ID. The UI accepts only `/products/{id}` navigation actions and refreshes the cart after an add. Tools call `StoreService`; they do not access storage directly. No checkout or refund tool is provided. Product descriptions and review text are untrusted data and cannot grant tool permissions.
+
+Every assistant request and private tool operation uses the existing version 1 audit event shape. Assistant/tool events use the same HTTP `request_id`; no prompt, conversation text, review text, address, cookie, or provider exception is written to audit records. A provider failure returns 503 and does not persist the failed assistant turn. The frontend clears local conversation state when the signed-in customer changes or signs out.
+
+## AgentGuard enforcement
 
 `backend.security.Authorizer.authorize(principal, action, resource)` returns a Decision with `allowed` and `reason`. Resources carry trusted ownership loaded by the backend. An adapter may deny additional requests; store order ownership remains mandatory. Exceptions fail closed. Operations in `StoreService` are the shared entry points for future assistant tools, with a backend-validated Principal.
 

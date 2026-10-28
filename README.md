@@ -42,17 +42,17 @@ AWS MCP helped with initial provisioning and verification; it is a developer too
 
 ### Remaining group deliverables
 
-- [ ] **Person 2:** implement the real Strands/Groq shopping assistant using server-authorized product and own-order tools; test prompt injection, cross-account attempts and provider failure.
-- [ ] **Person 3:** connect the Ask Archery Pro chat UI, clear conversations on account switch and prepare versioned tool-event telemetry.
+- [ ] **Person 2:** review and integrate the Strands/Groq assistant implementation on the Person 2 branch; run hosted security acceptance tests after deployment.
+- [ ] **Person 3:** coordinate versioned tool-event telemetry and lead the SOC dashboard; the storefront chat panel is available on the Person 2 branch.
 - [ ] **Team:** run controlled security tests against an isolated vulnerable fixture and the protected store; document actual tool results and audit evidence.
 - [ ] **Person 3 leads:** build an operator-only SOC dashboard showing correlated requests, decisions, executions and alerts.
 - [ ] **Final demo:** show normal Alice/Bob use, a blocked cross-account agent request, an indirect prompt-injection attempt, a clearly labeled isolated vulnerable comparison, and the matching SOC timeline.
 
-The store is deployed; the assistant, vulnerable lab and SOC dashboard are not yet deployed. Groq inference is separate from AWS credits. Bedrock AgentCore remains an optional runtime to evaluate, and no Bedrock model inference is currently claimed. See the [team roadmap](docs/team-roadmap.md) for owners and acceptance criteria.
+The store is deployed; the assistant implementation is available on the Person 2 branch but is not yet merged or deployed. The vulnerable lab and SOC dashboard are also not deployed. Groq inference is separate from AWS credits. Bedrock AgentCore remains an optional runtime to evaluate, and no Bedrock model inference is currently claimed. See the [team roadmap](docs/team-roadmap.md) for owners and acceptance criteria.
 
 ## Project status and team plan
 
-**Milestone 1 is complete:** the store works locally; Alice can view her order, cannot retrieve Bob's order, and the backend records the decision. The current 21 Python tests and frontend build pass.
+**Milestone 1 is complete:** the store works locally; Alice can view her order, cannot retrieve Bob's order, and the backend records the decision. The original 21 baseline tests passed before assistant work; this branch adds assistant acceptance tests.
 
 | Milestone | Status | Deliverable |
 | --- | --- | --- |
@@ -67,7 +67,7 @@ Read the **[team roadmap and acceptance checks](docs/team-roadmap.md)** before s
 - **Person 2 (agent/security):** follow the [AgentGuard handoff](agentguard/README.md); own Strands agent backend, authorized store tools, enforcement and penetration-test scenarios.
 - **Person 3 (integration/SOC):** follow the [dashboard handoff](dashboard/README.md); help deliver the chat UI and telemetry in milestone 2, then own the SOC dashboard in milestone 4.
 
-Planned assistant architecture: **Strands + Groq inference**, with **Bedrock AgentCore evaluated as an AWS runtime**. A Groq API key does not power Bedrock-hosted inference; see the [architecture clarification and official references](docs/team-roadmap.md#architecture-clarification-strands-groq-and-bedrock). Keys remain server-side. No assistant is implemented yet.
+Assistant architecture: **Strands + Groq inference**, with **Bedrock AgentCore evaluated as an AWS runtime**. A Groq API key does not power Bedrock-hosted inference; see the [architecture clarification and official references](docs/team-roadmap.md#architecture-clarification-strands-groq-and-bedrock). Keys remain server-side. The branch implementation is documented in [agentguard/README.md](agentguard/README.md).
 
 ## Hosted store status
 
@@ -77,7 +77,7 @@ See the [deployment runbook](docs/aws-deployment.md) for the current status, res
 
 ## Start locally
 
-Requires Python 3.12+ and Node.js 22+. The backend uses only Python's standard library.
+Requires Python 3.12+ and Node.js 22+. The store API uses Python's standard library; the optional assistant dependencies are in [requirements-assistant.txt](requirements-assistant.txt).
 
 From the repository root, in terminal 1:
 
@@ -107,7 +107,7 @@ These deliberately public credentials are for local development only; the hosted
 
 1. **Structure and contracts:** see [API and teammate contracts](docs/contracts.md). `store/` contains React/TypeScript, `backend/` contains APIs and reusable operations, `seed/` contains synthetic fixtures, `tests/` contains security acceptance tests. `agentguard/`, `dashboard/`, and `infra/` provide teammate handoff notes.
 2. **Storefront:** start both servers; verify 18 archery products, bow-style sections, search, category filters, product details with fictional draw weights, and synthetic reviews. Original generated product images live in `store/public/images/`. Fonts use Google Fonts with local system fallbacks; no remote product assets are needed.
-3. **Accounts, cart, orders, audit:** sign in as Alice; add a product, adjust quantities, review the fictional checkout and record a synthetic order. Switch to Bob and confirm his cart and orders are separate. Ask Archery Pro is a coming-later panel, without AI behavior. The hosted checkout also creates only synthetic orders.
+3. **Accounts, cart, orders, audit:** sign in as Alice; add a product, adjust quantities, review the fictional checkout and record a synthetic order. Switch to Bob and confirm his cart and orders are separate. On the Person 2 branch, Ask Archery Pro uses the authenticated chat API when Groq is configured; without provider configuration, the rest of the store remains available. The hosted checkout also creates only synthetic orders.
 4. **Verification:** run the commands below and the [manual checklist](docs/verification.md).
 
 ```powershell
@@ -129,8 +129,8 @@ Stop the API with Ctrl+C before `python -m seed.reset`, then restart it. This de
 
 ## Architecture and scope
 
-`backend/api.py:handle` accepts ordinary request values and returns `(status, headers, JSON body)`. `backend/server.py` is the local HTTP adapter; `backend/lambda_handler.py` adapts API Gateway events to the same handler in AWS. All private operations get identity from a validated session. `StoreService` reuses product, order, and cart operations; future assistant tools must call these operations with server-derived principals, never model-provided customer IDs.
+`backend/api.py:handle` accepts ordinary request values and returns `(status, headers, JSON body)`. `backend/server.py` is the local HTTP adapter; `backend/lambda_handler.py` adapts API Gateway events to the same handler in AWS. All private operations get identity from a validated session. The assistant uses existing `StoreService` product, order and cart operations with server-derived principals, never model-provided customer IDs.
 
 `Storage` abstracts persistence. The SQLite adapter uses parameterized SQL and per-operation connections. SQLite collection scans are intentionally small-scale; the new DynamoDB adapter uses owner-scoped queries and pagination. Cart writes replace a product quantity; concurrent tabs use last-write-wins semantics. Audits are emitted after the operation and are not atomic with storage writes: an audit sink failure returns 500, but a completed mutation may already have persisted. A transactional outbox is deployment-phase work.
 
-No publicly accessible bypass, refunds, payment processing or Bedrock calls have been added. Fictional order placement is available locally and in the deployed store. The store's AWS infrastructure is deployed from Terraform; the shopping assistant and SOC are not. Future refund tools must introduce an explicitly authorized operation with an audit contract. The [deployment runbook](docs/aws-deployment.md) covers Person 1's hosted store, and the [team roadmap](docs/team-roadmap.md) coordinates assistant integration, testing and SOC work.
+No publicly accessible bypass, refunds, payment processing or Bedrock calls have been added. Fictional order placement is available locally and in the deployed store. The store's AWS infrastructure is deployed from Terraform; the assistant implementation is on the Person 2 branch and is not yet hosted. Future refund tools must introduce an explicitly authorized operation with an audit contract. The [deployment runbook](docs/aws-deployment.md) covers Person 1's hosted store, and the [team roadmap](docs/team-roadmap.md) coordinates assistant integration, testing and SOC work.

@@ -1,6 +1,6 @@
 # Team roadmap and ownership
 
-Person 1 update: **Archery Pro Shopping** is on `master` and deployed in Ohio (`us-east-2`) at **https://d16nqulwj27ltb.cloudfront.net**. The site has 18 synthetic archery products, a customer-driven fictional checkout and an **Ask Archery Pro** coming-later teaser. Hosted Alice/Bob ownership and audit verification passed before this catalog rollout; the new public catalog and an unauthenticated deny/audit were verified afterward. Repeat private Alice/Bob flows during assistant integration. The real assistant and SOC integrations remain for Persons 2 and 3. See [deployment status](aws-deployment.md). Milestone 2 remains incomplete.
+Person 1 update: **Archery Pro Shopping** is on `master` and deployed in Ohio (`us-east-2`) at **https://d16nqulwj27ltb.cloudfront.net**. The site has 18 synthetic archery products, a customer-driven fictional checkout and an **Ask Archery Pro** coming-later teaser on `master`. The Person 2 branch now contains the authenticated assistant API, Strands/Groq adapter, protected store tools, and storefront chat; it is not yet merged or hosted. Hosted Alice/Bob ownership and audit verification passed before this catalog rollout; repeat private Alice/Bob flows after assistant deployment. The SOC integration remains. See [deployment status](aws-deployment.md). Milestone 2 remains incomplete.
 
 This is the shared handoff plan. Milestone 1 is complete; milestone 2 is in progress; milestones 3-4 are planned. Changes to ownership or contracts should be agreed in a pull request.
 
@@ -17,9 +17,9 @@ Person 1's hosted store is complete. Persons 2 and 3 can start on `master` in se
 
 Immediate handoff:
 
-1. **Persons 2 and 3 together:** propose the authenticated `POST /api/assistant/messages` request/response, conversation ownership rule, and a versioned tool-event contract in a small PR. Keep the existing v1 audit schema stable.
-2. **Person 2:** implement a local Strands + Groq vertical slice for product search and the signed-in customer's order lookup through `StoreService`. Add cross-account, provider-error and malicious-product-text tests. Add review summaries after those tests pass; leave refund requests unavailable initially.
-3. **Person 3:** turn the existing Ask Archery Pro teaser into a chat panel against a local/mock contract with loading, failure and account-switch states. Prepare audit-event fixtures and a consumer test; full SOC UI waits for milestone 4.
+1. **Persons 2 and 3 together:** review the authenticated `POST /api/assistant/messages` contract and agree the versioned tool-event extension before SOC ingestion. Keep the existing v1 audit schema stable.
+2. **Person 2:** the branch implements the local Strands + Groq vertical slice, product search/navigation, signed-in customer's cart/order tools, review summaries, and targeted tests. Review the branch with the team; keep refund requests unavailable.
+3. **Person 3:** integrate/review the existing Ask Archery Pro chat panel against the authenticated API and coordinate with Person 1. Prepare audit-event fixtures and a consumer test; full SOC UI waits for milestone 4.
 4. **Person 1:** review the security/session boundary and deploy the integrated assistant only after local acceptance and a fresh cost review. Keep Groq keys server-side. Migrate Terraform state to a shared encrypted backend with locking before a teammate changes infrastructure; the current local state must not be recreated from a clean clone.
 
 ## Milestone 1: completed baseline
@@ -42,19 +42,18 @@ Immediate handoff:
 
 ### Person 2 - agent backend and enforcement lead
 
-1. Implement the Python Strands assistant in a proposed `backend/assistant/` package. Keep AgentGuard policy adapters under `agentguard/`.
-2. Use Groq as the initial inference provider, via a compatible Strands provider adapter. Verify the selected model's tool-calling support and pin tested dependencies; the exact model remains to be selected.
-3. Wrap existing store operations for product search, beginner gear/draw-weight comparison, the signed-in customer's orders, and synthetic review summaries. Product/review text is untrusted data, never an instruction source. Do not invent a universal hunting draw-weight threshold.
-4. Derive identity from the validated backend session. The model must not choose a customer ID, supply a trusted principal, bypass authorization, or access storage directly.
-5. Keep the existing protected ownership behavior; implement additional policy checks through the authorization interface. Handle policy/provider failures without leaking other customers' data.
-6. Define the chat and tool-event contracts with Person 3 before UI integration. Add tests for successful tool use, cross-account attempts, malformed tool arguments, provider failure and conversation isolation.
-7. Keep agent-assisted fictional checkout unavailable until the agent can present the trusted cart and total and receive an explicit user confirmation before invoking `checkout.simulate`. A model message or product review cannot supply confirmation. Refund scope is a separate synthetic request operation, not money movement: define ownership, eligible states, confirmation, idempotency and audit before enabling it.
+1. Implemented in branch: Python Strands assistant in `backend/assistant/` using Groq's OpenAI-compatible provider. Tested dependencies and default model are documented in `agentguard/README.md`.
+2. Implemented in branch: product search, constrained product navigation, own-cart/order reads, review summaries, and cart addition gated by explicit user intent plus a named product. Product/review text is untrusted; do not invent a universal hunting draw-weight threshold.
+3. Implemented in branch: derive identity only from the validated backend session, use existing `StoreService` operations, and apply the allowlisted `AgentGuardAuthorizer`. The model cannot select a customer ID or access storage directly.
+4. Implemented in branch: conversation ownership, short-lived bounded history, safe UI-action schema, and tests for cross-account attempts, malformed tool arguments, untrusted reviews, and provider failures.
+5. Next: review the API/event contract with Person 3 and the runtime/secret/cost setup with Person 1, then repeat Alice/Bob acceptance after deployment.
+6. Keep agent-assisted fictional checkout unavailable until a separate UI confirmation gate is designed. A model message or product review cannot supply confirmation. Refund scope is a separate synthetic request operation, not money movement: define ownership, eligible states, confirmation, idempotency and audit before enabling it.
 
 ### Person 3 - assistant integration and telemetry lead
 
-1. Turn the existing Ask Archery Pro teaser (`store/src/main.tsx`) into a real chat interface once Person 2's API works. Coordinate edits in `store/` with Person 1; do not present the teaser as a working AI.
+1. Review and integrate the Ask Archery Pro chat interface in `store/` against the authenticated endpoint. Coordinate changes with Person 1; do not imply the hosted `master` site already has the assistant.
 2. Add pending, error, retry and signed-out states. Clear chat on account switch/logout; never carry Alice's history into Bob's session. Render model text safely and do not expose API keys in the browser.
-3. Integrate against a documented authenticated chat endpoint. A proposed `POST /api/assistant/messages` may accept a message and an opaque conversation ID; the backend must validate conversation ownership. No such endpoint exists today.
+3. Integrate against the documented authenticated `POST /api/assistant/messages` endpoint. The Person 2 branch implements conversation ownership; verify it in the merged build.
 4. Agree versioned event extensions for conversation ID, tool-call ID and tool name. Preserve the current audit schema; propose a v2 schema before adding fields because v1 rejects unknown fields.
 5. Build sample event fixtures and a consumer/contract test now. Full SOC UI belongs to milestone 4, so do not block the assistant on building it.
 
@@ -93,8 +92,8 @@ Completion: demonstrate a normal order lookup, a blocked cross-account attempt, 
 | Person | First branch/task | Main paths |
 | --- | --- | --- |
 | 1 | Maintain the deployed store and review assistant integration | `store/`, `backend/` transport/storage, `infra/`, `seed/` |
-| 2 | `feat/assistant-tools`: propose chat/tool contracts and a Groq-backed local agent | proposed `backend/assistant/`, `agentguard/`, agent/security tests |
-| 3 | `feat/assistant-chat`: propose chat UI states and sample event consumer | assistant UI in `store/`, `dashboard/`, event/UI tests |
+| 2 | `person-2/assistant-agentguard`: implement chat/tool contracts and a Groq-backed local agent | `backend/assistant/`, `agentguard/`, agent/security tests |
+| 3 | Review/integrate assistant UI states and prepare sample event consumer | assistant UI in `store/`, `dashboard/`, event/UI tests |
 
 Use small pull requests against the repository's default branch. Agree changes to `backend/api.py`, `backend/service.py`, shared UI, and `docs/contracts.md` before overlapping edits. Person 1 integrates deployment changes; Person 2 reviews authorization changes; Person 3 reviews audit changes. Include setup steps, environment variable names, verification results and any schema changes in every handoff. Commit lockfiles and placeholders; never commit credentials, Terraform state or runtime data.
 

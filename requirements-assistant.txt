@@ -1,0 +1,2 @@
+strands-agents==1.62.0
+openai==2.54.0

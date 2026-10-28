@@ -5,6 +5,7 @@ import json
 import os
 from functools import lru_cache
 from .api import handle
+from .assistant import AssistantUnavailable, build_assistant
 from .auth import CognitoAuthenticator
 from .dynamo import DynamoStorage, DynamoAuditSink
 from .service import StoreService
@@ -19,7 +20,12 @@ def cloud_service():
     storage = DynamoStorage(db.Table(os.environ["STORE_TABLE"]))
     audit = DynamoAuditSink(db.Table(os.environ["AUDIT_TABLE"]))
     auth = CognitoAuthenticator(boto3.client("cognito-idp"), os.environ["COGNITO_CLIENT_ID"], storage)
-    return StoreService(storage, audit, authenticator=auth)
+    service = StoreService(storage, audit, authenticator=auth)
+    try:
+        service.assistant = build_assistant(service, storage)
+    except AssistantUnavailable:
+        service.assistant = None
+    return service
 
 
 def respond(status, message):
@@ -47,7 +53,8 @@ def adapt(event, service, allowed_origin):
         path += "?" + event["rawQueryString"]
     method = event.get("requestContext", {}).get("http", {}).get("method", "GET")
     status, response_headers, payload = handle(service, method, path, headers, body,
-                                              allowed_origins={allowed_origin}, secure_cookie=True)
+                                              allowed_origins={allowed_origin}, secure_cookie=True,
+                                              assistant=getattr(service, "assistant", None))
     cookies = []
     if "Set-Cookie" in response_headers:
         cookies.append(response_headers.pop("Set-Cookie"))

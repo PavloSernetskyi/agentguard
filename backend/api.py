@@ -3,12 +3,14 @@ import json
 import uuid
 from http.cookies import SimpleCookie
 from urllib.parse import urlsplit, parse_qs
+from .assistant import AssistantUnavailable
+from .security import Decision
 from .service import ApiError
 
 ALLOWED_ORIGINS = {"http://127.0.0.1:5173", "http://localhost:5173"}
 
 
-def handle(service, method, url, headers, body="", *, allowed_origins=None, secure_cookie=False):
+def handle(service, method, url, headers, body="", *, allowed_origins=None, secure_cookie=False, assistant=None):
     allowed_origins = ALLOWED_ORIGINS if allowed_origins is None else allowed_origins
     cookie_security = "; Secure" if secure_cookie else ""
     request_id = str(uuid.uuid4())
@@ -37,6 +39,15 @@ def handle(service, method, url, headers, body="", *, allowed_origins=None, secu
             service.logout(token)
             result = {"ok": True}
             response_headers["Set-Cookie"] = f"demomart_session=; HttpOnly; SameSite=Strict; Path=/api; Max-Age=0{cookie_security}"
+        elif path == "/api/assistant/messages" and method == "POST":
+            conversation_id = data.get("conversation_id")
+            resource_id = conversation_id if isinstance(conversation_id, str) and conversation_id else "new"
+            principal = service.principal(token, request_id, "assistant.message", resource_id)
+            if assistant is None:
+                service.record(request_id, principal.customer_id, "assistant.message", resource_id,
+                               Decision(True, "owner_match"), "failed")
+                raise AssistantUnavailable()
+            result = assistant.respond(principal, data.get("message"), conversation_id, request_id)
         else:
             known = (method == "GET" and path in ("/api/session", "/api/orders", "/api/cart")) or (method == "GET" and path.startswith("/api/orders/")) or (method == "PUT" and path.startswith("/api/cart/")) or (method == "POST" and path == "/api/checkout")
             if not known:
@@ -58,5 +69,7 @@ def handle(service, method, url, headers, body="", *, allowed_origins=None, secu
         return 400, response_headers, {"error": "Invalid JSON", "request_id": request_id}
     except ApiError as error:
         return error.status, response_headers, {"error": error.message, "request_id": request_id}
+    except AssistantUnavailable:
+        return 503, response_headers, {"error": "Assistant temporarily unavailable", "request_id": request_id}
     except Exception:
         return 500, response_headers, {"error": "Request failed", "request_id": request_id}

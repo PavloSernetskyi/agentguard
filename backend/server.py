@@ -1,6 +1,7 @@
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from .api import handle
+from .assistant import build_assistant
 from .service import StoreService
 from .storage import SQLiteStorage
 from seed.reset import DB_PATH, seed
@@ -12,6 +13,7 @@ def main():
     if not storage.list("products"):
         seed(storage)
     service = StoreService(storage, storage)
+    assistant = build_assistant(service, storage)
 
     class Handler(BaseHTTPRequestHandler):
         def dispatch(self):
@@ -24,7 +26,7 @@ def main():
             except (ValueError, UnicodeError):
                 self.send_error(400)
                 return
-            status, headers, result = handle(service, self.command, self.path, dict(self.headers), body)
+            status, headers, result = handle(service, self.command, self.path, dict(self.headers), body, assistant=assistant)
             payload = json.dumps(result).encode()
             self.send_response(status)
             for key, value in headers.items():
