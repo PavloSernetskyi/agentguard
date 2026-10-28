@@ -86,3 +86,14 @@ h2 { font-size: 14px; }
   .metric > div, .metric p { font-size: 10px; }
   .metric > strong { font-size: 25px; }
 }
+
+/* Correlation uses audited request references, never shopper credentials. */
+.request-trace{margin:0 22px;border-top:1px solid var(--line);padding:16px 0}
+.request-trace summary{display:flex;align-items:center;justify-content:space-between;gap:15px;cursor:pointer}
+.request-trace summary strong{font-size:12px}.request-trace small{display:block;font-size:10px;color:var(--muted);margin:5px 0}
+.request-trace code{font-size:10px;overflow-wrap:anywhere;color:var(--text)}
+.trace-actions,.application-links{display:flex;flex-wrap:wrap;gap:9px;padding:15px 0}
+.application-links{padding:20px 22px 0}.trace-events{list-style:none;padding:0;margin:0}
+.trace-events li{display:flex;align-items:center;gap:12px;border-top:1px solid var(--line-soft);padding:11px 0;font-size:11px;flex-wrap:wrap}
+.trace-events li>span:first-child{min-width:130px}.trace-events li>span:nth-child(2){flex:1;color:var(--muted)}
+.copy-status{font-size:11px;line-height:1.6;margin:12px 0;color:var(--muted)}

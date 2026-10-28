@@ -1,6 +1,7 @@
 import {FormEvent, useEffect, useRef, useState} from 'react';
 import {ArrowRight, Bot, ShoppingBag, X} from 'lucide-react';
-import {api, Cart, Customer, money} from './types';
+import {Cart, Customer, money} from './types';
+import {api, apiWithMetadata, ApiError} from './http';
 
 type Recommendation = {
   id: string;
@@ -11,7 +12,7 @@ type Recommendation = {
   use_case?: string | null;
   draw_weight_lb?: {min: number; max: number} | null;
 };
-type ChatMessage = {role: 'user' | 'assistant'; text: string; products?: Recommendation[]};
+type ChatMessage = {role: 'user' | 'assistant'; text: string; products?: Recommendation[]; requestId?: string | null};
 type AssistantResponse = {
   conversation_id: string;
   reply: string;
@@ -35,14 +36,29 @@ export function AssistantChat({customer, onClose, onSignIn, onCartUpdated, onAdd
   const [conversationId, setConversationId] = useState<string>();
   const [draft, setDraft] = useState('');
   const [error, setError] = useState('');
+  const [errorRequestId, setErrorRequestId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const transcript = useRef<HTMLDivElement>(null);
+  const pending = useRef<AbortController | null>(null);
+  const generation = useRef(0);
+  const currentCustomer = useRef(customer?.id);
+  currentCustomer.current = customer?.id;
 
   useEffect(() => {
+    generation.current++;
+    pending.current?.abort();
+    pending.current = null;
     setMessages([]);
     setConversationId(undefined);
     setDraft('');
     setError('');
+    setErrorRequestId(null);
+    setBusy(false);
+    return () => {
+      generation.current++;
+      pending.current?.abort();
+      pending.current = null;
+    };
   }, [customer?.id]);
 
   useEffect(() => {
@@ -52,41 +68,57 @@ export function AssistantChat({customer, onClose, onSignIn, onCartUpdated, onAdd
   async function sendMessage(event: FormEvent) {
     event.preventDefault();
     const message = draft.trim();
-    if (!message || busy) return;
+    if (!message || busy || pending.current) return;
     if (!customer) {
       onSignIn();
       return;
     }
 
+    const controller = new AbortController();
+    pending.current = controller;
+    const requestGeneration = generation.current;
+    const customerId = customer.id;
+    const active = () => !controller.signal.aborted && generation.current === requestGeneration && currentCustomer.current === customerId;
     setMessages(current => [...current, {role: 'user', text: message}]);
     setDraft('');
     setError('');
+    setErrorRequestId(null);
     setBusy(true);
     try {
-      const response = await api<AssistantResponse>('/assistant/messages', 'POST', {
+      const {data: response, requestId} = await apiWithMetadata<AssistantResponse>('/assistant/messages', 'POST', {
         message,
         ...(conversationId ? {conversation_id: conversationId} : {}),
-      });
+      }, {signal: controller.signal});
+      if (!active()) return;
       setConversationId(response.conversation_id);
       const recommendations = response.ui_actions.find(action => action.type === 'show_products');
       setMessages(current => [...current, {
         role: 'assistant',
         text: response.reply,
+        requestId,
         products: recommendations?.type === 'show_products' ? recommendations.products : undefined,
       }]);
       for (const action of response.ui_actions) {
+        if (!active()) return;
         if (action.type === 'navigate' && /^\/products\/[A-Za-z0-9_-]{1,64}$/.test(action.path)) {
           location.hash = action.path;
         } else if (action.type === 'cart_updated') {
-          onCartUpdated(await api<Cart>('/cart'));
+          const cart = await api<Cart>('/cart', 'GET', undefined, {signal: controller.signal});
+          if (!active()) return;
+          onCartUpdated(cart);
         }
       }
     } catch (requestError) {
+      if (!active()) return;
       const message = (requestError as Error).message;
       setError(message === 'Sign in to continue' ? 'Your session expired. Please sign in again.' : message);
+      setErrorRequestId(requestError instanceof ApiError ? requestError.requestId : null);
       if (message === 'Sign in to continue') onSignIn();
     } finally {
-      setBusy(false);
+      if (active()) {
+        pending.current = null;
+        setBusy(false);
+      }
     }
   }
 
@@ -118,6 +150,7 @@ export function AssistantChat({customer, onClose, onSignIn, onCartUpdated, onAdd
           {!messages.length && <p className="assistant-intro">Ask about products, ask me to open a product page, or explicitly ask me to add an item to your cart. I can only see your account’s cart and orders.</p>}
           {messages.map((message, index) => <div className={`assistant-message ${message.role}`} key={index}>
             <p>{message.text}</p>
+            {message.requestId && <details className="assistant-reference"><summary>Support reference</summary><code>{message.requestId}</code></details>}
             {message.products?.length ? <div className="assistant-recommendations" aria-label="Product recommendations">
               {message.products.map(product => <article className="assistant-product-card" key={product.id}>
                 <div>
@@ -140,7 +173,7 @@ export function AssistantChat({customer, onClose, onSignIn, onCartUpdated, onAdd
           </div>)}
           {busy && <p className="assistant-message assistant" role="status">Looking that up…</p>}
         </div>
-        {error && <p className="assistant-error" role="alert">{error}</p>}
+        {error && <div className="assistant-error" role="alert"><p>{error}</p>{errorRequestId && <details className="assistant-reference"><summary>Support reference</summary><code>{errorRequestId}</code></details>}</div>}
         <form className="assistant-form" onSubmit={sendMessage}>
           <label className="sr-only" htmlFor="assistant-message">Message Ask Archery Pro</label>
           <input id="assistant-message" value={draft} maxLength={2000} onChange={event => setDraft(event.target.value)} placeholder="Ask about range gear…" disabled={busy}/>

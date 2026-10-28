@@ -75,4 +75,8 @@ Use [SOC metrics and release plan](../docs/soc-dashboard.md) for definitions, mi
 
 The dashboard shares Archery Pro's forest green, warm ivory, copper accents, DM Sans body text and Manrope headings while preserving distinct SOC status colors and evidence views. Font assets are bundled locally through Fontsource. Design tokens live in `src/theme.css` and do not change the storefront.
 
-Read the [assistant and SOC integration handoff](../docs/assistant-soc-integration.md) before integrating Person 2's work. It separates existing behavior from proposed chat/event/reporting contracts, confirms Groq as the selected provider, assigns team handoffs, and records merge/deployment acceptance. Backend provider integration belongs to Person 2; AWS/operator hosting belongs to Person 1; UI and audit consumption belong to Person 3.
+Read the [assistant and SOC integration handoff](../docs/assistant-soc-integration.md) for the implemented v1 integration, local startup commands, support-reference lookup, assistant request traces and producer/consumer checks. It records the remaining cloud release gates. Backend provider integration belongs to Person 2; AWS/operator hosting belongs to Person 1; UI and audit consumption belong to Person 3.
+
+## Integrated assistant evidence
+
+The Assistant requests view groups merged backend events by HTTP request ID and shows audited store operations. Storefront replies and failures expose a safe support reference for operator lookup. Event details can copy an investigation link containing only that request ID. See the integration handoff for the test-only producer fixture and the six verification commands. Public catalog tools are not individually logged in v1; the UI does not claim complete tool traces or measured latency.

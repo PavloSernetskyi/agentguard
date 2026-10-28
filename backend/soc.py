@@ -70,8 +70,9 @@ def response(database, token, method, url, headers):
 
 
 def main():
+    from seed.reset import DB_PATH
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--database", type=Path, default=Path(__file__).parent / "data" / "demomart.sqlite3")
+    parser.add_argument("--database", type=Path, default=DB_PATH)
     parser.add_argument("--port", type=int, default=8001)
     args = parser.parse_args()
     token = os.environ.get("AGENTGUARD_SOC_TOKEN", "")

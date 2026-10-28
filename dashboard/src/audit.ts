@@ -9,6 +9,42 @@ const fields = ['schema_version', 'event_id', 'request_id', 'timestamp', 'actor_
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const authenticationReasons = ['invalid_session', 'invalid_credentials', 'identity_provider_unavailable'];
 export const isAuthenticationDenial = (event: AuditEvent) => event.decision === 'deny' && authenticationReasons.includes(event.reason);
+export const isOwnershipDenial = (event: AuditEvent) => event.decision === 'deny' && ['ownership_mismatch', 'conversation_ownership_mismatch'].includes(event.reason);
+
+export type AssistantRequest = {requestId: string; root: AuditEvent; events: AuditEvent[]; operations: AuditEvent[]};
+// A v1 request ID is the correlation boundary; it is not a conversation or tool-call ID.
+export function assistantRequests(selected: AuditEvent[], loaded: AuditEvent[] = selected): AssistantRequest[] {
+  const roots = new Map<string, AuditEvent>();
+  for (const event of selected) {
+    if (event.action !== 'assistant.message') continue;
+    const previous = roots.get(event.request_id);
+    if (!previous || Date.parse(event.timestamp) > Date.parse(previous.timestamp)) roots.set(event.request_id, event);
+  }
+  const grouped = new Map<string, AuditEvent[]>();
+  const seen = new Set<string>();
+  for (const event of loaded) {
+    if (!roots.has(event.request_id) || seen.has(event.event_id)) continue;
+    seen.add(event.event_id);
+    grouped.set(event.request_id, [...(grouped.get(event.request_id) ?? []), event]);
+  }
+  return [...roots].map(([requestId, root]) => {
+    const events = (grouped.get(requestId) ?? []).sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp) || a.event_id.localeCompare(b.event_id));
+    return {requestId, root, events, operations: events.filter(e => e.action !== 'assistant.message')};
+  }).sort((a, b) => Date.parse(b.root.timestamp) - Date.parse(a.root.timestamp));
+}
+
+export function requestFromSearch(search: string): string | null {
+  const value = new URLSearchParams(search).get('request_id');
+  return value && uuid.test(value) ? value : null;
+}
+
+export function investigationLink(base: string, requestId: string): string {
+  if (!uuid.test(requestId)) throw new Error('Invalid request reference');
+  const url = new URL(base);
+  url.username = ''; url.password = ''; url.search = ''; url.hash = '';
+  url.searchParams.set('request_id', requestId);
+  return url.toString();
+}
 function validTimestamp(value: unknown) {
   if (typeof value !== 'string') return false;
   const parts = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|[+-]\d{2}:\d{2})$/.exec(value);

@@ -1,89 +1,95 @@
-# Assistant and SOC integration handoff
+# Integrated assistant and SOC dashboard
 
-This is Person 3's integration proposal for review with Persons 1 and 2. It does not claim that a chat endpoint, v2 event schema, managed operator login or cloud reporting service has been implemented. The current dashboard reads v1 events from fixtures, imports and a protected local reporting feed. Preserve the existing store session and authorization boundaries.
+Person 3's `person-3/SOC-Dashboard` branch incorporates Person 2's assistant from `master` revision `4a44936`. The existing Strands/Groq backend, AgentGuard checks, authorized store tools and storefront chat panel are retained. The dashboard now consumes their actual v1 audit shape and correlates assistant requests with their audited store operations. No AWS deployment or provider credential is included in this integration.
 
-## Reviewed baseline
+## Connected flow
 
-The reviewed remote `master` revision is `96a8049177a631b4e8824b3f71dc4ec07135df15`. At review time no later Person 2 assistant implementation had merged. The roadmap names Strands with **Groq** inference, and the user confirmed Groq. Grok/xAI is a different provider and is not the selected integration. The exact Groq model remains Person 2's tested deployment choice; do not select one in the dashboard.
-
-## Responsibilities and handoffs
-
-| Owner | Owns | Supplies for integration | Person 3's boundary |
-| --- | --- | --- | --- |
-| Person 1 | Store, AWS hosting, sessions, Cognito mapping, DynamoDB, transport/storage adapters, Terraform and release operations | Authenticated endpoint URLs, operator access, reporting infrastructure, environment/config names, deployment revision and runbook | Coordinate edits in `store/` and shared API files; do not change AWS resources or recreate Terraform state from a clean clone |
-| Person 2 | Strands/Groq backend, authorized store tools, AgentGuard adapters, conversation isolation, provider error handling, security scenarios | Reviewed chat contract, actual server/tool events, policy reasons, event version, correlation IDs and producer tests | Consume events and replies; do not implement a second agent, authorization engine, direct storage access or provider SDK in either browser UI |
-| Person 3 | SOC UI, audit consumer, filters/matrix/metrics, integration fixtures and consumer checks; later storefront chat panel | Consumer requirements, proposed chat/event contracts, reporting needs, UI/error states, acceptance evidence | Reporting application work is coordinated with Person 1's operator authentication, IAM and hosting; Person 2 reviews event/security semantics |
-
-Shared files requiring coordination are `backend/api.py`, `backend/service.py`, `store/src/main.tsx`, `docs/contracts.md`, and the audit schema. The dashboard remains a separate package. A chat popover belongs in the shopper storefront; it is not a privileged SOC assistant.
-
-## Keep the two browser paths separate
-
-Shopper path: storefront chat → authenticated store API → Person 2's Strands agent → Groq inference and authorized `StoreService` tools → application results and durable audit events.
-
-Operator path: authenticated SOC dashboard → operator-only reporting API → audit read model. The dashboard must not call Groq, read customer tables, execute store tools, or infer execution from chatbot text. The existing application role remains audit-write-only; use a separate reporting role for reading evidence. AWS MCP remains development tooling and is not exposed to shoppers.
-
-Provider-specific endpoints, API keys, model configuration and retries belong on the backend. No provider secret belongs in a `VITE_` variable, browser request, localStorage or committed file. Person 1 supplies managed deployment secrets and cost limits. Person 2 verifies model tool support, bounds tool arguments, and handles provider limits/failure without bypassing authorization.
-
-## Proposed first chat contract
-
-Persons 2 and 3 should agree this small JSON exchange before either side depends on it. `POST /api/assistant/messages` is a proposal, not an existing route. Defer streaming until a non-streamed vertical slice works.
-
-```json
-{
-  "message": "User-authored message",
-  "conversation_id": null,
-  "client_message_id": "opaque-unique-message-id"
-}
+```mermaid
+flowchart LR
+  Shopper[Storefront chat] --> API[Authenticated assistant API]
+  API --> Agent[Strands and Groq]
+  Agent --> Tools[Authorized StoreService operations]
+  API --> Audit[Shared audit database]
+  Tools --> Audit
+  Audit --> Reporting[Operator-only reporting feed]
+  Reporting --> SOC[SOC dashboard request traces]
 ```
 
-The backend derives identity from a validated shopper session and creates or validates conversation ownership. It never accepts a trusted customer ID or principal from this body. Set explicit message-length, request-size, conversation-expiry and history limits. A client message ID supports retries only if the backend implements duplicate handling; it does not itself provide idempotency or replay protection. Do not automatically retry mutations.
+The storefront posts the existing `{message, conversation_id?}` body to `/api/assistant/messages` with its validated shopper session. The response body remains `{conversation_id, reply, ui_actions}`. The backend's `X-Request-Id` header is now retained as a support reference on the displayed reply; error responses retain the same reference when available. Customer identity and provider keys are never supplied by the frontend.
 
-An agreed successful response should supply `request_id`, `conversation_id`, a server message ID and assistant text, plus safe tool-call/event IDs when available. Do not return credentials, full tool arguments, hidden reasoning or other customers' data. Existing error envelopes should retain `error` and `request_id`; agree stable machine-readable codes for sign-in expiry, conversation denial, rate limiting, provider failure and timeout. Return an honest error instead of fabricating an answer. Person 2 defines status/code semantics; Person 3 renders them.
+An operator can paste that support reference into dashboard event search. The new **Assistant requests** view groups root `assistant.message` events and related v1 events by HTTP `request_id`. For example, the same request may contain `orders.list`, `cart.read` and the final assistant outcome. Request traces display recorded authorization decisions and actual execution outcomes, sorted by event timestamp. Conversation ownership denials are included in ownership signals.
 
-The storefront popover needs signed-out, ready, sending, completed, retryable-failure and expired-session states. Clear conversation data on logout/account switch, abort outstanding requests and ignore late responses from the previous account. Render replies as text or through an explicitly safe renderer. Any later fictional checkout must show the trusted cart and total and collect explicit UI confirmation; a model message cannot supply consent. Refunds/approval writes remain a separate future feature.
+Event details offer **Copy investigation link**. A link carries only a validated request UUID, opens the event explorer with that filter, and includes no token, cookie or event payload. The recipient still needs their own operator access or imported evidence. Data sources provides separate links to the local storefront and the existing hosted storefront. The retail UI does not expose a privileged SOC link or operator credentials.
 
-## Audit contract before dashboard integration
+## What v1 can and cannot establish
 
-Keep `docs/audit-event.schema.json` v1 unchanged. Its strict fields describe event/request IDs, timestamp, authenticated actor, action/resource, authorization decision/reason and actual execution outcome. Unknown fields are rejected by the dashboard. Do not append conversation or duration fields to v1 and assume they will be accepted.
+The strict v1 schema remains unchanged. Root assistant outcomes are counted per distinct HTTP request ID; audited store operations are separate events. An allowed assistant request can fail, including an unavailable provider. That is not a policy denial, and v1's generic failure reason cannot establish which provider error occurred.
 
-Propose a separately versioned event schema with Persons 1 and 2. Decide whether it is a new flat event or an envelope carrying a v1-compatible audit payload and a context object. The dashboard's current parser does not implement v2. Preserve original raw versioned events when a consumer normalization layer is introduced.
+Public catalog search, review reads and navigation tools currently do not emit individual v1 operation events. The dashboard therefore labels the trace as **audited store operations**, not a complete model/tool trace. No tool-call ID, duration, attack success, incident severity or provider-specific failure category is inferred. Conversation IDs may occur as an assistant event's resource ID; no new conversation/tool metadata is added to the event schema.
 
-| Evidence to agree | Producer / owner | What the dashboard gains |
-| --- | --- | --- |
-| `conversation_id`, `tool_call_id`, stable tool name | Person 2, propagated by server code | Drill-down from request through individual tool calls |
-| Request/event IDs propagated across model/tool boundaries | Person 2; Person 1's transport | Correlation across operational logs and audit records |
-| Policy decision/reason and independent execution status | Person 2 with existing service boundary | Honest decision × execution matrix |
-| Environment, deployed service revision, policy version | Persons 1 and 2 | Distinguish releases and restricted lab evidence |
-| Measured provider, policy, tool and server-request durations | Person 2, with explicit start/end boundaries | Separate p50/p95 latency measures; no invented zeros for missing durations |
-| Occurrence time and collector receipt time | Event producer and reporting collector | Ingestion lag, separately from request duration |
-| Scenario/run IDs, expected outcome and verified storage effects | Person 2, later scoped test runner | Attack/legitimate-task success and detection evaluation |
-| Session correlation reference | Person 1 with Person 2 | Session-level investigation without logging the session cookie/token |
+The legacy overview continues to count events; the Assistant requests view counts assistant root requests. Filters select root `assistant.message` events for that view, while its expanded traces include all loaded events with the matching HTTP request ID. Partial snapshots remain partial; missing records are not proof that an action did not happen.
 
-A Groq failure is not an authorization denial. Define an assistant/provider operational event type if needed instead of reusing `authorization_error` or pretending a tool was blocked by policy. Tool retry attempts need their own identity and a shared parent request/call reference so counts are not inflated accidentally. Later approval-required states need a real schema/workflow; v1 has only allow/deny.
+## Storefront isolation fixes
 
-For a contract PR, Person 2 should provide representative allowed, denied and allowed-but-failed events generated through the actual backend. Person 3 will add them as consumer contract fixtures, validate the agreed schema, deduplicate by event ID and assert filter/correlation/metric behavior. Those ordinary regression checks can precede the later probing phase; do not claim attack effectiveness from them.
+Pending chat and cart-refresh requests are aborted when the signed-in customer changes or the chat unmounts. Generation/account guards also ignore late results if a transport fails to honor cancellation. Old replies, navigation actions, errors and cart results cannot be applied to a newly selected account. The parent additionally keys the chat panel by customer ID. Existing safe text rendering, product navigation validation, session-expiry handling and customer-controlled cart behavior are preserved.
 
-## Reporting and hosted release work
+Aborting a browser request does not undo an already-executed server operation. Server authorization remains authoritative. Checkout, refunds, approvals, vulnerable fixtures and attack probing are not added by this integration.
 
-Person 1 and Person 3 must agree managed operator authentication, expiry/revocation, roles, HTTPS origin and route configuration before a hosted feed. Alice/Bob shopper sessions must not grant SOC access. Apply operator access control to the frontend as well as the API. The local shared-token/SQLite bridge is development-only.
+## Run the integrated local application
 
-Keep the reporting route distinct from shopper APIs. Define a versioned response envelope, source/environment, bounded page size, opaque cursor, time/filter semantics and snapshot coverage. The local envelope currently returns `{source: "local-sqlite", events: [...], next_cursor: null}`. Cloud reporting needs an explicit adapter/contract; changing only the dashboard URL does not make the local reader work with AWS. Consider `window_start`, `window_end`, `as_of` and a truncation/completeness indication in a proposed reporting envelope; do not silently call loaded records global totals.
+Use Python 3.12+ and Node 22.18+. From the repository root install the frontends:
 
-The audit table is currently keyed by request/event ID. Person 1 owns an appropriate bounded time-ordered index/read model and least-privilege IAM; avoid periodic full table scans. Agree index consistency, retention and pagination while records arrive. Keep secrets, addresses and raw customer/review content out of audit payloads. Existing store writes and audit writes are not atomic; reliable collection/outbox and ingestion monitoring are needed before claiming complete coverage.
+```powershell
+npm ci --prefix store
+npm ci --prefix dashboard
+```
 
-Frontend pushes and backend releases are separate. Person 1 deploys packaged backend/Terraform changes and operator infrastructure; a dashboard or storefront build does not automatically deploy the assistant. Keep static hosting response headers aligned with the existing dashboard configuration. If authentication requires different connection origins, review CSP/connect-src and cookie/CSRF behavior as part of that deployment rather than weakening them broadly.
+In your Python development environment, install `requirements-assistant.txt` and securely configure `GROQ_API_KEY` in the backend terminal. `GROQ_MODEL` is optional; the merged backend's documented default is retained. Do not paste keys into chat, commit them, or put them in a `VITE_` variable. Without the key, the store works and assistant requests return an audited 503.
 
-## Merge sequence and acceptance
+Run each long-lived process in a separate terminal at the repository root:
 
-1. Review/merge the small chat, event and reporting contract proposal first. Keep existing v1 consumers compatible until the new version is explicitly supported.
-2. Person 2 merges a tested local assistant/tool slice with real producer fixtures and configuration names. Person 1 reviews the session and deployment boundary; Person 3 reviews telemetry.
-3. Save/commit Person 3's current dashboard changes before integrating new source. Fetch `origin/master` and merge it into `person-3/SOC-Dashboard`; resolve shared-file conflicts deliberately. Do not reset the branch or overwrite local work.
-4. Add the agreed consumer adapter and fixtures. Run backend tests, dashboard consumer tests and the production build. Verify old v1 evidence still works and unknown versions produce visible quality errors.
-5. After the endpoint works, integrate the storefront chat UI in a coordinated, separate change. Test account-switch/expiry/rate-limit/provider-error states and request correlation. Keep inference secrets on the server.
-6. Person 1 deploys the approved backend and restricted reporting infrastructure, then the frontends. Verify deployed revisions and end-to-end evidence in staging before promoting the demo.
+```powershell
+python -m backend.server
+```
 
-Hosted acceptance must demonstrate normal owned-order use, denial without disclosure, an allowed operation failure, conversation isolation, shopper denial from SOC, correct filters/exports and visible stale/missing-feed behavior. These are release regression checks, not a claim of completed penetration testing. Later attack/probing results and security effectiveness metrics remain Person 2-led work with labeled evidence.
+```powershell
+$env:AGENTGUARD_SOC_TOKEN = python -c "import secrets; print(secrets.token_urlsafe(32))"
+python -m backend.soc
+```
 
-## Visual alignment delivered in this branch
+```powershell
+npm run dev --prefix store
+```
 
-The dashboard uses the storefront's forest/ivory/copper family, DM Sans body text and Manrope headings. Fonts are bundled locally with the dashboard; no third-party font request is needed while viewing audit data. Status labels retain separate green, rust/red and amber treatments. SOC navigation, evidence tables and the decision/execution matrix remain purpose-built for operators rather than copying the store's merchandising layout.
+```powershell
+npm run dev --prefix dashboard
+```
+
+Open the store at http://127.0.0.1:5173 and dashboard at http://127.0.0.1:5174. The store API runs on loopback port 8000 and the protected reporting feed on 8001. In the reporting terminal, copy its operator token with `$env:AGENTGUARD_SOC_TOKEN | Set-Clipboard`, paste it into dashboard **Data sources**, and connect. Clear the clipboard afterward. Shopper login does not grant reporting access. Both backend services use the configured local database (`DAYWELL_DB_PATH` if set); configure that variable consistently in both terminals. Do not reset an existing database to start this integration.
+
+## Verify the producer and both consumers
+
+```powershell
+python -m unittest discover -s tests -v
+python -m scripts.export_assistant_audit --check dashboard/src/fixtures/assistant-audit.v1.json
+npm test --prefix store
+npm test --prefix dashboard
+npm run build --prefix store
+npm run build --prefix dashboard
+```
+
+The checked-in contract fixture is generated through the real HTTP handler, `AssistantService`, `StoreService` and audit persistence, using an explicit test-only model runner in an isolated temporary database. It covers successful own-order/cart reads, provider failure, missing configuration and signed-out requests. IDs/timestamps are normalized for reproducibility. It does not call Groq, touch the user's store database or represent a live-model evaluation. Regenerate it only after reviewing a producer change:
+
+```powershell
+python -m scripts.export_assistant_audit --output dashboard/src/fixtures/assistant-audit.v1.json
+```
+
+Backend integration tests assert that real HTTP references reach the protected read-only reporting feed and customer cookies cannot read it. Dashboard tests validate the producer fixture, grouping, matrix/rate behavior and credential-free investigation links. Storefront tests cover safe text/navigation, metadata preservation, failed references, unmount cancellation and late replies/cart results after account switches.
+
+## Team release boundary
+
+Person 2 owns inference, tools and authorization; Person 3 owns the integrated UI and audit consumer; Person 1 owns AWS/backend release, managed operator authentication, reporting infrastructure and deployment approval. This branch does not recreate Terraform state, grant audit-reading permission to the store role, change cloud services, or deploy the assistant.
+
+The CloudFront store may still serve an older release. A merge/push does not deploy packaged Lambda code or operator reporting. Hosted acceptance remains: Person 1 deploys approved runtime secrets/dependencies and reporting infrastructure, then validates reciprocal Alice/Bob isolation, operator-only audit access and deployed request correlation. A bounded DynamoDB time-ordered read model and a separate reporting role are still needed before cloud polling. Shared Terraform state/locking, retention, cost and reliable audit delivery remain deployment gates.
+
+Future v2 telemetry, measured latency, approval workflows and labeled security evaluation require a separately reviewed contract. They are not prerequisites for this v1 integration.

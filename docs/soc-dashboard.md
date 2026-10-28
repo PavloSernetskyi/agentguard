@@ -1,6 +1,6 @@
 # SOC dashboard metrics and release plan
 
-This increment prioritizes Person 3's SOC dashboard over chat UI work at the user's request. It consumes the existing v1 store audit evidence. AI/agent examples, prompt-injection probes and vulnerable lab work remain later milestones. No inference or cloud resources are provisioned by this change.
+This increment prioritizes Person 3's SOC dashboard over chat UI work at the user's request. It consumes the existing v1 store audit evidence. The merged assistant and storefront are now integrated through v1 request correlation. Prompt-injection probes, vulnerable lab work and v2 telemetry remain later work. No inference calls or cloud resources are provisioned by the dashboard.
 
 ## Metrics available now
 
@@ -46,3 +46,7 @@ Ownership mismatch, authentication rejection, and allowed-operation failure are 
 5. **Later security evaluation:** agree v2 with Person 2 for tool/conversation/scenario correlation, durations, environment/mode and approvals. Add labeled evaluation metrics only after that evidence exists. Keep vulnerable fixtures restricted and separate.
 
 The local operator token is a development credential with process-lifetime revocation. It is not individual user attribution, RBAC, MFA, or managed cloud sessions. Read-only evidence access and production hosting are separate responsibilities from admin mode/reset/approval writes, which are excluded from this release.
+
+## Assistant integration
+
+Assistant requests are distinct HTTP request IDs with assistant.message root events. Completed, failed and blocked counts use those root outcomes. Expanded traces show other loaded events with the same request ID, including private store operations. These request counts are separate from event counts in the overview. Conversation ownership mismatches are included in ownership signals. See [implemented integration](assistant-soc-integration.md) for scope, setup and producer/consumer verification.

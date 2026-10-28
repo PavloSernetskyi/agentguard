@@ -1,5 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { assistantRequests, investigationLink, isOwnershipDenial, requestFromSearch } from './audit.ts';
 import { buckets, csv, emptyFilters, filterEvents, fixtures, parseEvents, readImport, summarize } from './audit.ts';
 
 const now = Date.parse('2026-10-28T12:00:00Z');
@@ -46,4 +48,30 @@ test('invalid calendar dates are rejected and reason aggregation handles arbitra
 test('authentication signal drill-down uses exactly the same reason predicate as its count', () => {
   const rows = [{ ...sample[0], reason: 'invalid_session' }, { ...sample[0], reason: 'ownership_mismatch' }];
   assert.equal(filterEvents(rows, { ...emptyFilters, signal: 'authentication' }, now).length, 1);
+});
+
+test('the merged assistant producer fixture validates unchanged as v1 and correlates private operations', () => {
+  const fixture = JSON.parse(readFileSync(new URL('./fixtures/assistant-audit.v1.json', import.meta.url), 'utf8'));
+  const parsed = parseEvents(fixture);
+  assert.equal(parsed.rejected, 0); assert.equal(parsed.duplicates, 0);
+  const requests = assistantRequests(parsed.events);
+  assert.equal(requests.length, 4);
+  assert.equal(requests.filter(r => r.root.execution === 'succeeded').length, 1);
+  assert.equal(requests.filter(r => r.root.execution === 'failed').length, 2);
+  assert.equal(requests.filter(r => r.root.execution === 'blocked').length, 1);
+  const successful = requests.find(r => r.root.execution === 'succeeded')!;
+  assert.deepEqual(successful.operations.map(e => e.action).sort(), ['cart.read', 'orders.list']);
+  assert.ok(successful.events.every(e => e.request_id === successful.requestId));
+  assert.equal(assistantRequests(parsed.events.filter(e => e.action === 'assistant.message'), parsed.events).find(r => r.requestId === successful.requestId)!.events.length, 3);
+});
+
+test('investigation links carry only a valid request ID, and conversation denials are ownership signals', () => {
+  const id = sample[0].request_id;
+  assert.equal(requestFromSearch('?request_id=' + id), id);
+  assert.equal(requestFromSearch('?request_id=wrong'), null);
+  const link = investigationLink('https://soc.example/?token=private&source=local#old', id);
+  assert.equal(new URL(link).searchParams.size, 1);
+  assert.equal(new URL(link).searchParams.get('request_id'), id);
+  assert.equal(new URL(link).hash, '');
+  assert.ok(isOwnershipDenial({...sample[0], decision: 'deny', reason: 'conversation_ownership_mismatch'}));
 });

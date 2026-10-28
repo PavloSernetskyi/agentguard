@@ -52,3 +52,7 @@ Only the protected implementation exists. A future vulnerable fixture must be en
 `Storage.list_owned(collection, customer_id)` is now part of the storage protocol. Cart reads use a strongly consistent per-customer partition; order lists use the eventually consistent owner index and recheck ownership in the service. Direct order reads are strongly consistent. Session TTL cleanup is asynchronous; expiry remains checked synchronously.
 
 Cloud audit rows wrap the unmodified v1 event in `value`, with `request_id`, `event_id` and expiry as storage metadata. Dashboard adapters must extract `value` before v1 schema validation. The application role can write, but cannot read/delete, audit rows. See [deployment limitations](aws-deployment.md) for non-atomic audit writes and session revocation.
+
+## Person 3 reporting integration
+
+The standalone loopback reporting server in backend/soc.py reads the same configured local audit database through a read-only connection. Its /soc-api/events and /soc-api/health endpoints require a separate operator bearer token; shopper cookies grant no access. The strict v1 payload is preserved. The dashboard groups assistant.message roots and related audited operations by request_id. The storefront retains X-Request-Id as a support reference without changing the assistant response body. See [integrated setup and acceptance](assistant-soc-integration.md). This local bridge is separate from the not-yet-deployed managed cloud reporting service.

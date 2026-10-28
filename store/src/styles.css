@@ -246,3 +246,5 @@ footer .brand{color:#294536}
   .hero-visual{min-height:250px;background-position:61% center}
   .hero .edition{display:block;right:17px;bottom:15px;font-size:8px}
 }
+
+.assistant-reference{font-size:11px;color:#586b5b;margin:9px 0}.assistant-reference summary{cursor:pointer}.assistant-reference code{display:block;margin-top:7px;overflow-wrap:anywhere;font-size:10px}.assistant-error p{margin:0}
