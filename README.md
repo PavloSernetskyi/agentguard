@@ -52,10 +52,10 @@ AWS MCP helped with initial provisioning and verification; it is a developer too
 - [x] Verify private hosted Bob-to-Alice and Alice-to-Bob agent order attempts are blocked and audited under their request IDs.
 - [ ] Finish the post-release browser regression for own-order agent detail, account switching, cart and fictional checkout.
 - [ ] **Team:** run controlled security tests against the administrator-enabled synthetic demo profile and protected agent; document actual tool results and audit evidence.
-- [ ] Deploy the existing local SOC dashboard to AWS with managed operator access and a bounded read-only cloud audit feed.
+- [x] Deploy the SOC dashboard to AWS with managed operator access and a bounded read-only cloud audit feed. The team still needs the final paired browser rehearsal and SOC trace review.
 - [ ] **Final demo:** show normal Alice/Bob use, a blocked cross-account agent request, a clearly labeled synthetic-data exposure in the controlled demo profile, and the matching SOC timeline. An indirect prompt-injection attempt is optional.
 
-The protected assistant build is deployed from `feat/agent-soc-aws-demo`. The default-off controlled profile code is deployed, but the vulnerable profile is **disabled** and no demo Cognito group exists. The SOC dashboard is not deployed. Groq inference is separate from AWS credits. Bedrock AgentCore remains optional, and no Bedrock model inference is claimed. Follow the [ordered project checklist](docs/project-todo.md) for the remaining gates.
+The protected assistant and SOC dashboard are deployed and merged to `master`. Alice is the sole member of the administrator-controlled synthetic demo group; her assistant profile is enabled through December 12, 2026, Pacific time, while Bob and the normal order APIs retain ownership checks. The live Alice exposure and paired SOC trace still need a browser rehearsal. Groq inference is separate from AWS credits. Bedrock AgentCore remains optional, and no Bedrock model inference is claimed. Follow the [ordered project checklist](docs/project-todo.md) for the remaining gates.
 
 ## Project status and team plan
 
