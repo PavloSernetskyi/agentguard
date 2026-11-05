@@ -63,7 +63,7 @@ The protected assistant build is deployed from `feat/agent-soc-aws-demo`. The de
 | --- | --- | --- |
 | 1. Local store | Complete | Store, sessions, carts, owned orders and audit baseline |
 | 2. AWS deployment + real assistant | Complete for protected path | Hosted store and Groq/Strands agent are live; reciprocal Alice/Bob order denials are audited |
-| 3. Controlled security demo | Planned | Administrator-enabled synthetic fixture on the same AWS site, scoped scenarios, enforcement and detection evidence |
+| 3. Controlled security demo | AWS Alice-only profile enabled; browser rehearsal pending | Administrator-enabled synthetic fixture on the same AWS site, scoped scenarios, enforcement and detection evidence |
 | 4. SOC dashboard + final demonstration | AWS reporting and operator verified; demo rehearsal pending | Read-only audit feed, correlated decision signals, and reproducible demo |
 
 Read the **[team roadmap and acceptance checks](docs/team-roadmap.md)** before starting a branch.
@@ -138,7 +138,7 @@ Stop the API with Ctrl+C before `python -m seed.reset`, then restart it. This de
 
 `Storage` abstracts persistence. The SQLite adapter uses parameterized SQL and per-operation connections. SQLite collection scans are intentionally small-scale; the new DynamoDB adapter uses owner-scoped queries and pagination. Cart writes replace a product quantity; concurrent tabs use last-write-wins semantics. Audits are emitted after the operation and are not atomic with storage writes: an audit sink failure returns 500, but a completed mutation may already have persisted. A transactional outbox is deployment-phase work.
 
-No publicly accessible bypass, refunds, payment processing or Bedrock calls have been added. Fictional order placement is available locally and in the deployed store. The protected assistant passed reciprocal hosted Alice/Bob cross-account checks after the latest default-off release. The intentionally weak profile is disabled by default and has not been enabled in AWS. Future refund tools must introduce an explicitly authorized operation with an audit contract. The [deployment runbook](docs/aws-deployment.md) records hosted status, and the [project checklist](docs/project-todo.md) tracks the remaining demo and SOC work.
+No publicly accessible bypass, refunds, payment processing or Bedrock calls have been added. Fictional order placement is available locally and in the deployed store. The protected assistant passed reciprocal hosted Alice/Bob cross-account checks. The source defaults the intentionally weak profile to off; the approved AWS classroom deployment enables it only for Alice's assistant lookup of Bob's synthetic fixture through December 12, 2026, 11:59 pm Pacific, after which it fails closed. Both customers' normal order APIs still enforce ownership. Future refund tools must introduce an explicitly authorized operation with an audit contract. The [deployment runbook](docs/aws-deployment.md) records hosted status, and the [project checklist](docs/project-todo.md) tracks the remaining demo and SOC work.
 ## Person 3 SOC dashboard integration
 
 The Person 3 dashboard in `dashboard/` consumes the merged assistant's existing v1 audit events through the protected local reporting feed. Storefront chat and audited store operations correlate by HTTP request ID. Run the dashboard at http://127.0.0.1:5174 alongside the local store and reporting service; see [dashboard setup](dashboard/README.md), [Person 2 handoff](docs/person-3-handoff.md), and [integration status](docs/assistant-soc-integration.md).

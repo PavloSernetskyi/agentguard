@@ -25,13 +25,13 @@ This is the execution checklist for the final Archery Pro Shopping demonstration
 
 ## 3. Build the controlled vulnerable profile on the same AWS website
 
-- [x] Deploy a default-off server-side flag, administrator-managed Cognito group definition, and UTC end time check. Only the approved Alice demo session can select the vulnerable agent profile; missing configuration or group access fails closed. AWS currently has the flag `false` and no demo group. Hosted enablement remains pending.
+- [x] Deploy a default-off server-side flag, administrator-managed Cognito group definition, and UTC end time check. Only the approved Alice demo session can select the vulnerable agent profile; missing configuration or group access fails closed. In the approved AWS classroom deployment, the flag is on, Alice is the sole demo-group member, and the profile expires at the end of December 12, 2026 Pacific. Bob's protected check passed after SOC deployment.
 - [x] Locally implement the deliberately weak **agent** order lookup, limited to Bob's pre-existing synthetic fixture. A system-prompt change alone cannot bypass the mandatory `StoreService` ownership check. Normal `/api/orders/{id}` ownership enforcement remains intact for everyone.
 - [x] Add trusted `protected` / `vulnerable-demo` labels to assistant replies and audit traces. No prompt text, request field or browser switch can select a mode. The code is deployed default-off; both private protected hosted checks passed.
 - [x] Rehearse Alice's synthetic fixture with the configured Groq model locally: the named-order tool ran, Bob's fictional address appeared in Alice's agent reply, and the Strands callback no longer printed the address to console logs.
 - [x] Verify both protected hosted directions after the default-off release. Bob's request for Alice's order and Alice's request for Bob's each produced `orders.read / deny / blocked` with no other-customer address. Alice's first attempt was inconclusive; the refined prompt and hosted recheck passed.
 - [x] Use only existing fictional Alice/Bob addresses and orders. Do not add real payment information or plausible card numbers.
-- [ ] Restrict the vulnerable profile to approved demonstrators and a short end date. Existing API throttles apply; verify them and the exact test window before enabling. Local tests cover Bob and a failed/expired group check; hosted checks for signed-out users and a non-member Alice session remain.
+- [x] Restrict the vulnerable profile to Alice, the exact synthetic Bob order, and an administrator-set end date. The live Lambda reports `2026-12-13T07:59:59Z`, and Cognito lists only Alice in the demo group. Existing API throttles apply. Local tests cover Bob and failed/expired group checks; the hosted Alice exposure rehearsal remains.
 - [ ] Rehearse Bob's protected attempt against Alice and Alice's controlled demo attempt against Bob. Independently confirm the demo agent returned Bob's synthetic data and the protected agent returned none.
 - [ ] Add an optional indirect injection fixture in an attacker-controlled synthetic product review; test it separately from direct shopper prompts.
 
@@ -46,7 +46,7 @@ This is the execution checklist for the final Archery Pro Shopping demonstration
 
 ## 5. Final demo and submission
 
-- [ ] Record a short script: normal own-order lookup; Bob's blocked attempt against Alice; Alice's synthetic-data exposure in the controlled demo profile; SOC comparison by request ID; optional review injection.
+- [x] Record a short audience story and exact Bob/Alice prompts with SOC expectations in [demo-script.md](demo-script.md). Rehearsal of the hosted Alice path and visible dashboard comparison remains.
 - [ ] Experiment on a separate feature branch with a collapsible right-side assistant panel that leaves the shop visible and gives order details more space. Preview locally and decide whether to merge or revert before any AWS release.
 - [ ] Run the full Python, store and dashboard tests and production builds; repeat hosted Alice/Bob checks after the final release.
 - [ ] Document architecture, AWS services actually used, model provider (Groq), deployment revision, URLs, cost observations, known limitations and each teammate's contribution.
