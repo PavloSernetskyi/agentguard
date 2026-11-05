@@ -40,3 +40,15 @@ variable "lambda_reserved_concurrency" {
     error_message = "Use -1 or the reviewed reservation of 5."
   }
 }
+
+variable "demo_vulnerable_enabled" {
+  type        = bool
+  default     = false
+  description = "Administrator-only synthetic Alice demo profile; disabled unless explicitly set in the private deployment configuration."
+}
+
+variable "demo_vulnerable_until_utc" {
+  type        = string
+  default     = ""
+  description = "UTC end of the administrator-approved synthetic demonstration (YYYY-MM-DDTHH:MM:SSZ). The profile fails closed when empty or expired."
+}

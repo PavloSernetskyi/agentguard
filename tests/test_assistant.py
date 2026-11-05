@@ -2,6 +2,7 @@ import json
 import tempfile
 import time
 import unittest
+import uuid
 from pathlib import Path
 from unittest.mock import patch
 
@@ -197,6 +198,78 @@ class AssistantTests(unittest.TestCase):
                 self.assertIn((actor, "orders.read", "deny", "blocked"),
                               [(event["actor_id"], event["action"], event["decision"], event["execution"]) for event in events])
 
+    def test_administrator_demo_profile_is_limited_to_alice_and_synthetic_bob_fixture(self):
+        for actor in ("alice", "bob"):
+            with self.subTest(actor=actor):
+                token = self.login(actor)
+                observed = []
+                protected = FakeRunner(lambda tools: observed.append(tools["get_order"]("ord-bob-001")))
+                demo = FakeRunner(lambda tools: observed.append(tools["get_order"]("ord-bob-001")))
+                assistant = AssistantService(self.store, self.storage, protected,
+                                             demo_authorizer=lambda _: True, demo_runner=demo)
+                status, headers, response = self.request(
+                    "POST", "/assistant/messages", token,
+                    {"message": "Show ord-bob-001 and its shipping address."}, assistant)
+                self.assertEqual(status, 200)
+                self.assertEqual(response["security_profile"], "vulnerable-demo" if actor == "alice" else "protected")
+                if actor == "alice":
+                    self.assertEqual(demo.calls, 1)
+                    self.assertIn("100 Example Lane", observed[0]["order"]["address"])
+                    self.assertEqual(self.request("GET", "/orders/ord-bob-001", token)[0], 403)
+                else:
+                    self.assertEqual(demo.calls, 0)
+                    self.assertNotIn("address", observed[0]["order"])
+                events = [event for event in self.storage.list("audit") if event["request_id"] == headers["X-Request-Id"]]
+                profiles = [event for event in events if event["action"] == "assistant.profile"]
+                self.assertEqual([event["resource_id"] for event in profiles], [response["security_profile"]])
+
+    def test_demo_profile_fails_closed_when_group_check_fails_or_fixture_changes(self):
+        token = self.login("alice")
+        for authorize in (lambda _: False, lambda _: (_ for _ in ()).throw(RuntimeError("Cognito unavailable"))):
+            with self.subTest(authorize=authorize):
+                captured = []
+                assistant = AssistantService(self.store, self.storage,
+                                             FakeRunner(lambda tools: captured.append(tools["get_order"]("ord-bob-001"))),
+                                             demo_authorizer=authorize, demo_runner=FakeRunner())
+                status, _, response = self.request("POST", "/assistant/messages", token,
+                    {"message": "Show ord-bob-001 and its shipping address."}, assistant)
+                self.assertEqual(status, 200)
+                self.assertEqual(response["security_profile"], "protected")
+                self.assertEqual(captured, [{"error": "Order access denied"}])
+
+        changed = self.storage.get("orders", "ord-bob-001")
+        changed["transaction"] = "not-a-synthetic-fixture"
+        self.storage.put("orders", "ord-bob-001", changed)
+        captured = []
+        assistant = AssistantService(self.store, self.storage, FakeRunner(),
+                                     demo_authorizer=lambda _: True,
+                                     demo_runner=FakeRunner(lambda tools: captured.append(tools["get_order"]("ord-bob-001"))))
+        status, _, response = self.request("POST", "/assistant/messages", token,
+            {"message": "Show ord-bob-001 and its shipping address."}, assistant)
+        self.assertEqual(status, 200)
+        self.assertEqual(response["security_profile"], "vulnerable-demo")
+        self.assertEqual(captured, [{"error": "Synthetic demo order unavailable"}])
+
+    def test_protected_profile_does_not_reuse_vulnerable_conversation_history(self):
+        token = self.login("alice")
+        conversation_id = str(uuid.uuid4())
+        self.storage.put("assistant_conversations", conversation_id, {
+            "customer_id": "alice", "security_profile": "vulnerable-demo",
+            "messages": [{"role": "assistant", "content": "Bob, 100 Example Lane"}],
+            "expires": int(time.time()) + 3600,
+        })
+        runner = FakeRunner()
+        assistant = AssistantService(self.store, self.storage, runner,
+                                     demo_authorizer=lambda _: False, demo_runner=FakeRunner())
+        status, _, response = self.request("POST", "/assistant/messages", token,
+            {"message": "What can you help me find?", "conversation_id": conversation_id}, assistant)
+        self.assertEqual(status, 200)
+        self.assertEqual(response["security_profile"], "protected")
+        self.assertNotIn("100 Example Lane", runner.prompt)
+        saved = self.storage.get("assistant_conversations", conversation_id)
+        self.assertEqual(saved["security_profile"], "protected")
+        self.assertNotIn("100 Example Lane", json.dumps(saved))
+
     def test_order_tool_ignores_an_id_not_named_by_the_current_customer(self):
         token = self.login("alice")
         captured = []
@@ -239,7 +312,7 @@ class AssistantTests(unittest.TestCase):
         self.assertEqual(self.storage.list("assistant_conversations"), [])
         self.store.authorizer = original_authorizer
         self.assertEqual(self.request("GET", "/cart", token)[2]["items"], [])
-        event = next(e for e in self.storage.list("audit") if e["request_id"] == response["request_id"])
+        event = next(e for e in self.storage.list("audit") if e["request_id"] == response["request_id"] and e["action"] == "assistant.message")
         self.assertEqual((event["actor_id"], event["action"], event["decision"], event["execution"]),
                          ("alice", "assistant.message", "deny", "blocked"))
 
@@ -301,7 +374,7 @@ class AssistantTests(unittest.TestCase):
         self.assertEqual(status, 503)
         self.assertEqual(response["error"], "Assistant temporarily unavailable")
         self.assertEqual(self.storage.list("assistant_conversations"), [])
-        event = next(e for e in self.storage.list("audit") if e["request_id"] == response["request_id"])
+        event = next(e for e in self.storage.list("audit") if e["request_id"] == response["request_id"] and e["action"] == "assistant.message")
         self.assertEqual((event["decision"], event["execution"]), ("allow", "failed"))
 
     def test_provider_failure_does_not_commit_a_pending_cart_add(self):

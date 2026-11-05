@@ -94,6 +94,24 @@ class CloudAdapterTests(unittest.TestCase):
         self.assertEqual(secret_client.get_secret_value.call_count, 1)
         self.assertEqual(build.call_args.kwargs["environ"]["GROQ_API_KEY"], "private-test-key")
 
+    def test_cloud_demo_authorizer_requires_admin_group_and_fails_closed(self):
+        self.service.assistant = None
+        secret_client = Mock()
+        secret_client.get_secret_value.return_value = {"SecretString": "private-test-key"}
+        with patch.dict("os.environ", {"GROQ_SECRET_ARN": "test-secret", "DEMO_VULNERABLE_ENABLED": "true", "DEMO_VULNERABLE_UNTIL_UTC": "2099-01-01T00:00:00Z", "COGNITO_POOL_ID": "test-pool"}), \
+             patch("boto3.client", return_value=secret_client), \
+             patch("backend.lambda_handler.build_assistant", return_value=Mock()) as build:
+            cloud_assistant(self.service)
+            authorize = build.call_args.kwargs["demo_authorizer"]
+            self.cognito.admin_list_groups_for_user.return_value = {"Groups": [{"GroupName": "agentguard-vulnerable-demo"}]}
+            self.assertTrue(authorize(Mock(customer_id="alice")))
+            self.cognito.admin_list_groups_for_user.assert_called_with(UserPoolId="test-pool", Username="alice")
+            self.cognito.admin_list_groups_for_user.side_effect = RuntimeError("Cognito unavailable")
+            with self.assertRaises(RuntimeError):
+                authorize(Mock(customer_id="alice"))
+            with patch.dict("os.environ", {"DEMO_VULNERABLE_UNTIL_UTC": "2000-01-01T00:00:00Z"}):
+                self.assertFalse(authorize(Mock(customer_id="alice")))
+
 
 class DynamoTests(unittest.TestCase):
     def test_round_trip_numeric_values_and_session_ttl(self):

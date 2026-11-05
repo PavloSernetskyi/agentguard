@@ -60,9 +60,9 @@ test('the merged assistant producer fixture validates unchanged as v1 and correl
   assert.equal(requests.filter(r => r.root.execution === 'failed').length, 2);
   assert.equal(requests.filter(r => r.root.execution === 'blocked').length, 1);
   const successful = requests.find(r => r.root.execution === 'succeeded')!;
-  assert.deepEqual(successful.operations.map(e => e.action).sort(), ['cart.read', 'orders.list']);
+  assert.deepEqual(successful.operations.map(e => e.action).sort(), ['assistant.profile', 'cart.read', 'orders.list']);
   assert.ok(successful.events.every(e => e.request_id === successful.requestId));
-  assert.equal(assistantRequests(parsed.events.filter(e => e.action === 'assistant.message'), parsed.events).find(r => r.requestId === successful.requestId)!.events.length, 3);
+  assert.equal(assistantRequests(parsed.events.filter(e => e.action === 'assistant.message'), parsed.events).find(r => r.requestId === successful.requestId)!.events.length, 4);
 });
 
 test('investigation links carry only a valid request ID, and conversation denials are ownership signals', () => {

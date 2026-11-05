@@ -15,7 +15,7 @@ flowchart LR
   Reporting --> SOC[SOC dashboard request traces]
 ```
 
-The storefront posts the existing `{message, conversation_id?}` body to `/api/assistant/messages` with its validated shopper session. The response body remains `{conversation_id, reply, ui_actions}`. The backend's `X-Request-Id` header is now retained as a support reference on the displayed reply; error responses retain the same reference when available. Customer identity and provider keys are never supplied by the frontend.
+The storefront posts `{message, conversation_id?}` to `/api/assistant/messages` with its validated shopper session. The response body is `{conversation_id, reply, ui_actions, security_profile}`, where the backend sets `security_profile` to `protected` or `vulnerable-demo`. The `X-Request-Id` header is retained as a support reference on the displayed reply; error responses retain the same reference when available. Customer identity, profile choice and provider keys are never supplied by the frontend. Conversation history is separated by backend-selected profile so a protected request cannot reuse text from a prior vulnerable demo turn.
 
 An operator can paste that support reference into dashboard event search. The new **Assistant requests** view groups root `assistant.message` events and related v1 events by HTTP `request_id`. For example, the same request may contain `orders.list`, `cart.read` and the final assistant outcome. Request traces display recorded authorization decisions and actual execution outcomes, sorted by event timestamp. Conversation ownership denials are included in ownership signals.
 
@@ -78,7 +78,7 @@ npm run build --prefix store
 npm run build --prefix dashboard
 ```
 
-The checked-in contract fixture is generated through the real HTTP handler, `AssistantService`, `StoreService` and audit persistence, using an explicit test-only model runner in an isolated temporary database. It covers successful own-order/cart reads, provider failure, missing configuration and signed-out requests. IDs/timestamps are normalized for reproducibility. It does not call Groq, touch the user's store database or represent a live-model evaluation. Regenerate it only after reviewing a producer change:
+The checked-in contract fixture is generated through the real HTTP handler, `AssistantService`, `StoreService` and audit persistence, using an explicit test-only model runner in an isolated temporary database. It covers successful own-order/cart reads, the trusted `assistant.profile` event, provider failure, missing configuration and signed-out requests. IDs/timestamps are normalized for reproducibility. It does not call Groq, touch the user's store database or represent a live-model evaluation. Regenerate it only after reviewing a producer change:
 
 ```powershell
 python -m scripts.export_assistant_audit --output dashboard/src/fixtures/assistant-audit.v1.json

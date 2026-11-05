@@ -12,10 +12,11 @@ type Recommendation = {
   use_case?: string | null;
   draw_weight_lb?: {min: number; max: number} | null;
 };
-type ChatMessage = {role: 'user' | 'assistant'; text: string; products?: Recommendation[]; requestId?: string | null};
+type ChatMessage = {role: 'user' | 'assistant'; text: string; products?: Recommendation[]; requestId?: string | null; securityProfile?: 'protected' | 'vulnerable-demo'};
 type AssistantResponse = {
   conversation_id: string;
   reply: string;
+  security_profile: 'protected' | 'vulnerable-demo';
   ui_actions: (
     | {type: 'navigate'; path: string}
     | {type: 'cart_updated'}
@@ -96,6 +97,7 @@ export function AssistantChat({customer, onClose, onSignIn, onCartUpdated, onAdd
         role: 'assistant',
         text: response.reply,
         requestId,
+        securityProfile: response.security_profile,
         products: recommendations?.type === 'show_products' ? recommendations.products : undefined,
       }]);
       for (const action of response.ui_actions) {
@@ -147,8 +149,9 @@ export function AssistantChat({customer, onClose, onSignIn, onCartUpdated, onAdd
         <button className="primary" onClick={onSignIn}>Sign in to continue <ArrowRight size={17}/></button>
       </div> : <>
         <div className="assistant-transcript" ref={transcript} aria-live="polite" aria-label="Conversation">
-          {!messages.length && <p className="assistant-intro">Ask about products, ask me to open a product page, or explicitly ask me to add an item to your cart. I can only see your account’s cart and orders.</p>}
+          {!messages.length && <p className="assistant-intro">Ask about products, ask me to open a product page, or explicitly ask me to add an item to your cart. This classroom shop uses synthetic customer data.</p>}
           {messages.map((message, index) => <div className={`assistant-message ${message.role}`} key={index}>
+            {message.securityProfile && <strong className="assistant-profile">{message.securityProfile === 'protected' ? 'Protected agent' : 'Vulnerable classroom demo'}</strong>}
             <p>{message.text}</p>
             {message.requestId && <details className="assistant-reference"><summary>Support reference</summary><code>{message.requestId}</code></details>}
             {message.products?.length ? <div className="assistant-recommendations" aria-label="Product recommendations">

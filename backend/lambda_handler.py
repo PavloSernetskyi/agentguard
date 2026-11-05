@@ -3,6 +3,7 @@ import base64
 import binascii
 import json
 import os
+from datetime import datetime, timezone
 from functools import lru_cache
 from .api import handle
 from .assistant import build_assistant
@@ -35,7 +36,18 @@ def cloud_assistant(service):
         import boto3
         api_key = boto3.client("secretsmanager").get_secret_value(SecretId=secret_arn)["SecretString"]
         config = {"GROQ_API_KEY": api_key, "GROQ_MODEL": os.environ.get("GROQ_MODEL", "qwen/qwen3.8-27b")}
-        service.assistant = build_assistant(service, service.storage, environ=config)
+        demo_authorizer = None
+        if os.environ.get("DEMO_VULNERABLE_ENABLED") == "true":
+            def demo_authorizer(principal):
+                # Missing, invalid, or expired administrator window fails closed.
+                until = datetime.strptime(os.environ["DEMO_VULNERABLE_UNTIL_UTC"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+                if datetime.now(timezone.utc) >= until:
+                    return False
+                groups = service.authenticator.client.admin_list_groups_for_user(
+                    UserPoolId=os.environ["COGNITO_POOL_ID"], Username=principal.customer_id)["Groups"]
+                return any(group["GroupName"] == "agentguard-vulnerable-demo" for group in groups)
+        service.assistant = build_assistant(service, service.storage, environ=config,
+                                            demo_authorizer=demo_authorizer)
     except Exception:
         # Provider/secret failures leave the store available and assistant requests fail closed.
         return None

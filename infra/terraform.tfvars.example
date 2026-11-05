@@ -4,3 +4,7 @@ budget_email = "you@example.com"
 region       = "us-east-2"
 # Keep -1 if the account has a low Lambda quota.
 lambda_reserved_concurrency = -1
+# The intentionally weak synthetic agent profile is disabled by default.
+# A short UTC end time is required before administrator-approved enablement.
+demo_vulnerable_enabled   = false
+demo_vulnerable_until_utc = ""

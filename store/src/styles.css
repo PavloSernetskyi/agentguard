@@ -205,6 +205,7 @@ footer .brand{color:#294536}
 .assistant-message>p{margin:0}
 .assistant-message.user{align-self:flex-end;background:#285b4d;color:#fff;border-bottom-right-radius:3px}
 .assistant-message.assistant{align-self:flex-start;background:#e9eee5;color:#2d4940;border-bottom-left-radius:3px}
+.assistant-profile{display:block;margin-bottom:5px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#2d594b}
 .assistant-message.assistant:has(.assistant-recommendations){max-width:100%;width:100%}
 .assistant-recommendations{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:9px;margin-top:12px}
 .assistant-product-card{display:flex;flex-direction:column;justify-content:space-between;gap:12px;background:#fff;border:1px solid #dfe6dc;border-radius:8px;padding:12px}

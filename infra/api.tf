@@ -33,17 +33,21 @@ resource "aws_lambda_function" "api" {
   timeout                        = 25
   reserved_concurrent_executions = var.lambda_reserved_concurrency
   environment {
-    variables = {
-      AUTH_MODE         = "cognito"
-      STORE_TABLE       = aws_dynamodb_table.store.name
-      AUDIT_TABLE       = aws_dynamodb_table.audit.name
-      COGNITO_CLIENT_ID = aws_cognito_user_pool_client.backend.id
-      PUBLIC_ORIGIN     = "https://${aws_cloudfront_distribution.site.domain_name}"
-      GROQ_SECRET_ARN   = aws_secretsmanager_secret.groq.arn
-      GROQ_MODEL        = "qwen/qwen3.8-27b"
-    }
+    variables = merge({
+      AUTH_MODE               = "cognito"
+      STORE_TABLE             = aws_dynamodb_table.store.name
+      AUDIT_TABLE             = aws_dynamodb_table.audit.name
+      COGNITO_CLIENT_ID       = aws_cognito_user_pool_client.backend.id
+      COGNITO_POOL_ID         = aws_cognito_user_pool.demo.id
+      PUBLIC_ORIGIN           = "https://${aws_cloudfront_distribution.site.domain_name}"
+      GROQ_SECRET_ARN         = aws_secretsmanager_secret.groq.arn
+      GROQ_MODEL              = "qwen/qwen3.8-27b"
+      DEMO_VULNERABLE_ENABLED = tostring(var.demo_vulnerable_enabled)
+      }, var.demo_vulnerable_until_utc == "" ? {} : {
+      DEMO_VULNERABLE_UNTIL_UTC = var.demo_vulnerable_until_utc
+    })
   }
-  depends_on = [aws_iam_role_policy.lambda, aws_iam_role_policy.assistant_secret]
+  depends_on = [aws_iam_role_policy.lambda, aws_iam_role_policy.assistant_secret, aws_iam_role_policy.demo_group_check]
 }
 resource "aws_apigatewayv2_api" "store" {
   name          = var.name

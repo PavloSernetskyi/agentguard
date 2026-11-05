@@ -5,7 +5,7 @@ import {api, apiWithMetadata, ApiError} from './http';
 
 vi.mock('./http', async importOriginal => ({...await importOriginal<typeof import('./http')>(), api: vi.fn(), apiWithMetadata: vi.fn()}));
 const requestId = '10000000-0000-4000-8000-000000000001';
-const response = {data: {conversation_id: '20000000-0000-4000-8000-000000000001', reply: 'Your own orders are ready.', ui_actions: []}, requestId};
+const response = {data: {conversation_id: '20000000-0000-4000-8000-000000000001', reply: 'Your own orders are ready.', security_profile: 'protected', ui_actions: []}, requestId};
 const alice = {id: 'alice', name: 'Alice'};
 const bob = {id: 'bob', name: 'Bob'};
 const props = () => ({customer: alice, onClose: vi.fn(), onSignIn: vi.fn(), onCartUpdated: vi.fn(), onAddProduct: vi.fn()});
@@ -24,6 +24,7 @@ describe('merged assistant integration', () => {
     send();
     await screen.findByText('<img src=x onerror=alert(1)>');
     expect(screen.getByText(requestId)).toBeTruthy();
+    expect(screen.getByText('Protected agent')).toBeTruthy();
     expect(document.querySelector('.assistant-message img')).toBeNull();
     expect(vi.mocked(apiWithMetadata).mock.calls[0][2]).toEqual({message: 'Show my orders'});
   });

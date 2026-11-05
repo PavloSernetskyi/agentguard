@@ -10,7 +10,7 @@ A deployed, synthetic shopping platform for a three-person school project. Perso
 
 Use this checklist for the final project demonstration. Checked items are implemented and verified; unchecked items are planned team work.
 
-For the ordered work from the hosted store through the protected agent, restricted lab, AWS SOC dashboard and final presentation, use the [remaining project checklist](docs/project-todo.md).
+For the ordered work from the hosted store through the protected agent, controlled synthetic demo profile, AWS SOC dashboard and final presentation, use the [remaining project checklist](docs/project-todo.md) and [demo script](docs/demo-script.md).
 
 ### AWS services in use — Person 1 complete
 
@@ -49,11 +49,11 @@ AWS MCP helped with initial provisioning and verification; it is a developer too
 - [x] Deploy the protected assistant build with a server-side Groq secret and reviewed Lambda timeout and Terraform plan.
 - [x] Verify private hosted Bob-to-Alice and Alice-to-Bob agent order attempts are blocked and audited under their request IDs.
 - [ ] Finish the post-release browser regression for own-order agent detail, account switching, cart and fictional checkout.
-- [ ] **Team:** run controlled security tests against an isolated vulnerable fixture and the protected store; document actual tool results and audit evidence.
+- [ ] **Team:** run controlled security tests against the administrator-enabled synthetic demo profile and protected agent; document actual tool results and audit evidence.
 - [ ] Deploy the existing local SOC dashboard to AWS with managed operator access and a bounded read-only cloud audit feed.
-- [ ] **Final demo:** show normal Alice/Bob use, a blocked cross-account agent request, an indirect prompt-injection attempt, a clearly labeled isolated vulnerable comparison, and the matching SOC timeline.
+- [ ] **Final demo:** show normal Alice/Bob use, a blocked cross-account agent request, a clearly labeled synthetic-data exposure in the controlled demo profile, and the matching SOC timeline. An indirect prompt-injection attempt is optional.
 
-The protected assistant build is deployed from `feat/agent-soc-aws-demo`, and reciprocal hosted cross-account checks passed. The vulnerable lab and SOC dashboard are not deployed. Groq inference is separate from AWS credits. Bedrock AgentCore remains optional, and no Bedrock model inference is claimed. Follow the [ordered project checklist](docs/project-todo.md) for the remaining gates.
+The protected assistant build is deployed from `feat/agent-soc-aws-demo`, and reciprocal hosted cross-account checks passed. The controlled vulnerable profile and SOC dashboard are not deployed. Groq inference is separate from AWS credits. Bedrock AgentCore remains optional, and no Bedrock model inference is claimed. Follow the [ordered project checklist](docs/project-todo.md) for the remaining gates.
 
 ## Project status and team plan
 
@@ -63,7 +63,7 @@ The protected assistant build is deployed from `feat/agent-soc-aws-demo`, and re
 | --- | --- | --- |
 | 1. Local store | Complete | Store, sessions, carts, owned orders and audit baseline |
 | 2. AWS deployment + real assistant | In progress | Assistant is integrated on `master`; AWS deployment and hosted Alice/Bob acceptance are pending |
-| 3. Controlled penetration-testing lab | Planned | Isolated fixtures, scoped security scenarios, enforcement and detection evidence |
+| 3. Controlled security demo | Planned | Administrator-enabled synthetic fixture on the same AWS site, scoped scenarios, enforcement and detection evidence |
 | 4. SOC dashboard + final demonstration | Planned | Operator dashboard, correlated alerts, findings and reproducible demo |
 
 Read the **[team roadmap and acceptance checks](docs/team-roadmap.md)** before starting a branch.
@@ -138,7 +138,7 @@ Stop the API with Ctrl+C before `python -m seed.reset`, then restart it. This de
 
 `Storage` abstracts persistence. The SQLite adapter uses parameterized SQL and per-operation connections. SQLite collection scans are intentionally small-scale; the new DynamoDB adapter uses owner-scoped queries and pagination. Cart writes replace a product quantity; concurrent tabs use last-write-wins semantics. Audits are emitted after the operation and are not atomic with storage writes: an audit sink failure returns 500, but a completed mutation may already have persisted. A transactional outbox is deployment-phase work.
 
-No publicly accessible bypass, refunds, payment processing or Bedrock calls have been added. Fictional order placement is available locally and in the deployed store. The protected assistant build is hosted and passed reciprocal Alice/Bob cross-account checks. Future refund tools must introduce an explicitly authorized operation with an audit contract. The [deployment runbook](docs/aws-deployment.md) records hosted status, and the [project checklist](docs/project-todo.md) tracks the remaining lab and SOC work.
+No publicly accessible bypass, refunds, payment processing or Bedrock calls have been added. Fictional order placement is available locally and in the deployed store. The protected assistant build is hosted and passed reciprocal Alice/Bob cross-account checks. The intentionally weak profile is under development and disabled by default. Future refund tools must introduce an explicitly authorized operation with an audit contract. The [deployment runbook](docs/aws-deployment.md) records hosted status, and the [project checklist](docs/project-todo.md) tracks the remaining demo and SOC work.
 ## Person 3 SOC dashboard integration
 
 The Person 3 dashboard in `dashboard/` consumes the merged assistant's existing v1 audit events through the protected local reporting feed. Storefront chat and audited store operations correlate by HTTP request ID. Run the dashboard at http://127.0.0.1:5174 alongside the local store and reporting service; see [dashboard setup](dashboard/README.md), [Person 2 handoff](docs/person-3-handoff.md), and [integration status](docs/assistant-soc-integration.md).

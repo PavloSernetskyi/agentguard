@@ -25,7 +25,7 @@ class AssistantReportingIntegrationTests(unittest.TestCase):
             self.assertEqual(roots[references["unconfigured"]]["execution"], "failed")
             self.assertEqual(roots[references["signed_out"]]["decision"], "deny")
             trace = [event for event in payload["events"] if event["request_id"] == references["success"]]
-            self.assertEqual({event["action"] for event in trace}, {"orders.list", "cart.read", "assistant.message"})
+            self.assertEqual({event["action"] for event in trace}, {"orders.list", "cart.read", "assistant.message", "assistant.profile"})
             self.assertTrue(all(event["actor_id"] == "alice" for event in trace))
             for event in trace:
                 self.assertEqual(set(event), {"schema_version", "event_id", "request_id", "timestamp", "actor_id", "action", "resource_id", "decision", "reason", "execution"})

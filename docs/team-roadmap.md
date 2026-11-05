@@ -10,7 +10,7 @@ This is the shared handoff plan. Milestone 1 is complete; milestone 2 is in prog
 | --- | --- | --- | --- | --- |
 | 1 - Local store (complete) | React store, Python API, storage, seed/reset, sessions and orders | Enforcement interface available for integration | Audit contract available for integration | Alice reads her order, cannot read Bob's, and the backend records the decision |
 | 2 - AWS store and real assistant (in progress) | Hosted Archery Pro store; own assistant deployment, runtime secrets and cost checks | Strands agent with Groq, authorized store tools, enforcement and tool tests | Ask Archery Pro chat UI, API integration, telemetry consumption and contract tests | Hosted store and real assistant work; both preserve Alice/Bob isolation |
-| 3 - Controlled penetration-testing lab | Isolated AWS lab, reset/teardown, scope and deployment evidence | Local threat model, scoped defensive scenarios and protected-policy regression tests on this branch; hosted lab execution remains pending | Event collection, detection rules and labeled test fixtures | Repeatable scoped tests produce correlated decisions and execution evidence |
+| 3 - Controlled security demo | Administrator-controlled synthetic profile on the existing AWS site, scope and deployment evidence | Threat model, protected-policy regression tests and one intentionally weak agent tool for Alice's approved session | Event collection, detection rules and labeled test fixtures | Bob's protected attempt is blocked; Alice's approved demo attempt exposes only Bob's synthetic fixture; both traces are correlated |
 | 4 - SOC dashboard and final demo | Stable demo deployment, runbook, cost/teardown checks | Tune enforcement, rerun attacks, document findings | Build SOC dashboard, alerts, filters and event drill-down | Demonstrate request -> decision -> execution -> SOC evidence end to end |
 
 Person 1's hosted store is complete. Person 3 can review the assistant UI now on `master` and start independent telemetry work; coordinate before overlapping API/UI files or changing shared contracts. Milestone 2 is complete only when the real assistant works in the hosted environment without breaking Alice/Bob isolation. Everyone helps with testing in milestones 3 and 4.
@@ -69,20 +69,20 @@ Immediate handoff:
 
 ## Milestone 3: controlled penetration-testing preparation and execution
 
-Only test the team's explicitly approved isolated environment and synthetic data. Write down hostnames, accounts, allowed techniques, test window, rate limits, stop conditions and cleanup steps before testing. Do not target AWS/Groq infrastructure or other tenants.
+Only test the team's explicitly approved site and synthetic data. Write down hostnames, accounts, allowed techniques, test window, rate limits, stop conditions and cleanup steps before testing. Do not target AWS/Groq infrastructure or other tenants.
 
-- **Person 1:** provision a separate lab and fixtures; separate roles/data from the normal demo; provide repeatable reset and teardown; record deployment version and environment.
+- **Person 1:** manage the default-off deployment flag, approved Cognito group and existing synthetic fixture; record deployment version, test window and disable procedure.
 - **Person 2:** own the threat model and tests for direct API ownership attacks, forged/expired sessions, prompt injection in synthetic reviews, tool-argument tampering, conversation crossover and unauthorized refund requests. Assert storage effects as well as HTTP responses/model text.
 - **Person 3:** collect correlated events, label expected allow/deny/failed outcomes, draft detection rules and prepare SOC fixtures. Distinguish a denied request from a successful attack and from an allowed operation that failed.
 
-The normal application remains protected. If the course needs vulnerable/protected comparisons, Person 2 designs an explicitly vulnerable fixture in a separate administrator-controlled lab deployment; Person 1 controls provisioning and access. No public mode switch, request flag, model prompt or client-provided identity may activate it. Do not weaken the shared production service or its ownership invariant to support the fixture.
+The normal store APIs and Bob's agent retain mandatory order ownership checks. For the classroom comparison, Alice's approved Cognito session can use an intentionally weak agent order tool on the same AWS site, limited to `ord-bob-001` when the administrator enables the Terraform flag. It is disabled by default, labels replies and audit traces, and must be disabled after the demonstration. No public mode switch, request flag, model prompt or client-provided identity may activate it. A prompt change alone cannot override the protected store operation.
 
-Completion: a checked-in test matrix links each scenario to setup, expected behavior, actual behavior, audit evidence, cleanup and any remediation. Repeat the same scenarios after fixes. No exploit scripts or vulnerable mode are implemented by this planning update.
+Completion: a checked-in test matrix links each scenario to setup, expected behavior, actual behavior, audit evidence, cleanup and any remediation. Repeat the same scenarios after fixes.
 
 ## Milestone 4: SOC dashboard and final demonstration
 
 - **Person 3 leads:** authenticated, operator-only SOC UI in `dashboard/`; event ingestion, timeline, filters by actor/action/resource/decision/execution/request ID, alerts and event detail views. Use real collected events and clearly label fixtures. Keep customer data and secrets out of event payloads.
-- **Person 2:** map detections to test scenarios, investigate false positives, tune policies and demonstrate blocked attempts and any isolated vulnerable-fixture results accurately.
+- **Person 2:** map detections to test scenarios, investigate false positives, tune policies and demonstrate blocked attempts and the controlled synthetic profile accurately.
 - **Person 1:** deploy dashboard and ingestion with restricted access; maintain retention/cost controls, demo reset, deployment and teardown instructions.
 
 Completion: demonstrate a normal order lookup, a blocked cross-account attempt, a prompt-injection attempt and an allowed operation failure. Trace each from request/tool call through authorization, actual execution and dashboard evidence. Deliver the final architecture, test report, known limitations, individual contributions and repeatable demo script.
