@@ -1,10 +1,12 @@
 # Archery Pro Shopping / AgentGuard
 
-**Current store:** Archery Pro Shopping is hosted at the AWS demo URL with original generated product photography, 18 synthetic items and a fictional checkout. The protected assistant build has been deployed from the `feat/agent-soc-aws-demo` branch; hosted Alice/Bob cross-account agent checks passed in both directions. The [local guide](docs/archery-preview.md) remains available.
+**Current store:** Archery Pro Shopping is hosted on AWS with original generated product photography, 18 synthetic items and a fictional checkout. The protected assistant and SOC reporting code are merged into `master`. The [local guide](docs/archery-preview.md) remains available.
 
 A deployed, synthetic shopping platform for a three-person school project. Person 1 owns the store and AWS deployment; Person 2 owns AgentGuard enforcement; Person 3 owns the assistant UI and SOC dashboard.
 
-**Live store:** https://d16nqulwj27ltb.cloudfront.net · **AWS region:** `us-east-2` (Ohio) · **Data:** synthetic only
+- **Live store:** https://d16nqulwj27ltb.cloudfront.net
+- **Live SOC dashboard:** https://d16nqulwj27ltb.cloudfront.net/soc/index.html (private operator sign-in)
+- **AWS region:** `us-east-2` (Ohio) · **Data:** synthetic only
 
 ## Final deliverable checklist
 
@@ -17,11 +19,11 @@ For the ordered work from the hosted store through the protected agent, controll
 | AWS service | How this project uses it | Evidence in this repository |
 | --- | --- | --- |
 | Amazon S3 | Private bucket stores the built React website | [Website infrastructure](infra/storage.tf) |
-| Amazon CloudFront | Serves the site over HTTPS and forwards `/api` to the backend | [Distribution and origins](infra/site.tf) |
-| Amazon API Gateway HTTP API | Receives browser API requests and invokes Lambda | [API routes](infra/api.tf) |
-| AWS Lambda | Runs the Python store API on demand | [Lambda handler](backend/lambda_handler.py) and [infrastructure](infra/api.tf) |
-| Amazon DynamoDB | Separate store and audit tables hold synthetic data, sessions and decisions | [Tables](infra/storage.tf) and [storage adapter](backend/dynamo.py) |
-| Amazon Cognito | Validates the private Alice and Bob accounts before store sessions are issued | [User pool](infra/auth.tf) and [authentication adapter](backend/auth.py) |
+| Amazon CloudFront | Serves the store and SOC dashboard over HTTPS and forwards `/api` and `/soc-api` | [Distribution and origins](infra/site.tf) |
+| Amazon API Gateway HTTP API | Routes browser requests to the store and read-only SOC Lambdas | [Store routes](infra/api.tf) and [SOC routes](infra/soc.tf) |
+| AWS Lambda | Runs the Python store API and separate read-only SOC reporting API on demand | [Store handler](backend/lambda_handler.py) and [SOC handler](backend/soc_cloud.py) |
+| Amazon DynamoDB | Separate store and audit tables hold synthetic data, sessions and decisions; a time index serves recent SOC evidence | [Tables](infra/storage.tf) and [storage adapter](backend/dynamo.py) |
+| Amazon Cognito | Validates Alice/Bob store sessions and a separate SOC operator sign-in | [User pool](infra/auth.tf), [store authentication](backend/auth.py) and [SOC configuration](infra/soc.tf) |
 | Amazon CloudWatch Logs | Records API and Lambda operational logs with seven-day retention | [Log configuration](infra/api.tf) |
 | AWS Identity and Access Management (IAM) | Gives Lambda scoped access to its tables and logs | [Application role](infra/api.tf) |
 | AWS Budgets | Sends monthly usage alerts at $1, $3 and $5 | [Budget configuration](infra/budget.tf) |

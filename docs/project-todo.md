@@ -1,5 +1,7 @@
 # AgentGuard remaining work: ordered checklist
 
+**Next rehearsal reminder:** before the final presentation, follow [the Bob/Alice demo script](demo-script.md) on the live store, check both support request IDs in the [SOC dashboard](https://d16nqulwj27ltb.cloudfront.net/soc/index.html), and confirm Bob's denial and Alice's synthetic demo access. Do not paste passwords or customer fixture text into team notes. Alice's approved classroom profile expires after December 12, 2026, Pacific time.
+
 This is the execution checklist for the final Archery Pro Shopping demonstration. The protected store and agent are hosted in AWS Ohio (`us-east-2`) at https://d16nqulwj27ltb.cloudfront.net. Both private Alice/Bob cross-account agent checks passed; broader browser regression, the controlled demo profile and SOC release remain. All accounts, orders, addresses and test evidence must remain synthetic. The project owner will coordinate and implement the remaining work across the store, agent and SOC dashboard.
 
 **Demo roles:** Bob (project owner) attempts to read Alice's order through the protected agent. Alice (teammate) attempts to read Bob's order through an intentionally vulnerable, administrator-enabled demo profile on the same AWS website. Person 3 presents the SOC traces. The normal store APIs continue to enforce ownership for both customers. An assistant prompt or request parameter cannot enable the demo profile.
