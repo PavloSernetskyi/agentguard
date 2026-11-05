@@ -1,0 +1,74 @@
+[
+  {
+    "schema_version": 1,
+    "event_id": "51a5b9a1-e784-5c48-99f9-3bd4e1d6e8e0",
+    "request_id": "a34c4537-17b0-5aae-a0b7-2739d8929e96",
+    "timestamp": "2026-10-27T12:00:00+00:00",
+    "actor_id": "alice",
+    "action": "orders.list",
+    "resource_id": "orders",
+    "decision": "allow",
+    "reason": "owner_match",
+    "execution": "succeeded"
+  },
+  {
+    "schema_version": 1,
+    "event_id": "bbf52697-057b-527f-b440-771907288e73",
+    "request_id": "a34c4537-17b0-5aae-a0b7-2739d8929e96",
+    "timestamp": "2026-10-27T12:00:01+00:00",
+    "actor_id": "alice",
+    "action": "cart.read",
+    "resource_id": "cart:alice",
+    "decision": "allow",
+    "reason": "owner_match",
+    "execution": "succeeded"
+  },
+  {
+    "schema_version": 1,
+    "event_id": "eb476264-22cc-52fe-a501-a43b93506c24",
+    "request_id": "a34c4537-17b0-5aae-a0b7-2739d8929e96",
+    "timestamp": "2026-10-27T12:00:02+00:00",
+    "actor_id": "alice",
+    "action": "assistant.message",
+    "resource_id": "007a27ac-6b36-5669-8002-7bbe593df5a5",
+    "decision": "allow",
+    "reason": "owner_match",
+    "execution": "succeeded"
+  },
+  {
+    "schema_version": 1,
+    "event_id": "41ccf650-9049-51ed-86a1-0891195e09e6",
+    "request_id": "f170210b-638b-5217-ad27-aa33029aa1fa",
+    "timestamp": "2026-10-27T12:00:03+00:00",
+    "actor_id": "alice",
+    "action": "assistant.message",
+    "resource_id": "86f1ab70-abb3-50a6-b4ea-d157943d2e82",
+    "decision": "allow",
+    "reason": "owner_match",
+    "execution": "failed"
+  },
+  {
+    "schema_version": 1,
+    "event_id": "bd9d9597-74b5-5f08-89c1-a9113a38dda8",
+    "request_id": "9ec40797-6016-5719-8c13-06e52ded3950",
+    "timestamp": "2026-10-27T12:00:04+00:00",
+    "actor_id": "alice",
+    "action": "assistant.message",
+    "resource_id": "new",
+    "decision": "allow",
+    "reason": "owner_match",
+    "execution": "failed"
+  },
+  {
+    "schema_version": 1,
+    "event_id": "ec36b0c9-fe85-5250-9d40-ea059527f905",
+    "request_id": "5e50fb49-03ad-50e7-b4ec-885ac8319d0a",
+    "timestamp": "2026-10-27T12:00:05+00:00",
+    "actor_id": null,
+    "action": "assistant.message",
+    "resource_id": "new",
+    "decision": "deny",
+    "reason": "invalid_session",
+    "execution": "blocked"
+  }
+]

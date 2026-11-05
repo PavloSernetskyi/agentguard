@@ -28,3 +28,7 @@ Use `POST /api/assistant/messages` as documented in [contracts.md](contracts.md)
 ## Acceptance boundary
 
 This handoff is for local review and integration. The code is already on `master`, but local tests alone do not authorize deployment or changes to shared AWS resources. The hosted assistant is accepted only after the deployment owner completes deployment and the integrated site passes reciprocal Alice/Bob isolation and audit checks.
+
+## Person 3 integration completed on the SOC branch
+
+The SOC branch incorporates master revision 4a44936, adds v1 assistant request traces and support references, and protects pending UI requests across account switches/unmounts. Backend-generated contract fixtures connect the real HTTP handler/service/audit producer to the read-only reporting feed and dashboard consumer. Storefront and dashboard tests/builds cover the integrated source. See [current integration](assistant-soc-integration.md) for reproducible commands and the distinction between a test-only runner and live Groq verification. Hosted deployment and acceptance remain pending with Person 1.
