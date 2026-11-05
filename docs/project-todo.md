@@ -25,9 +25,9 @@ This is the execution checklist for the final Archery Pro Shopping demonstration
 
 ## 3. Build the controlled vulnerable profile on the same AWS website
 
-- [x] Locally implement a default-off server-side deployment flag, administrator-managed Cognito group, and UTC end time. Only the approved Alice demo session can select the vulnerable agent profile; missing configuration or group access fails closed. Hosted enablement remains pending.
+- [x] Deploy a default-off server-side flag, administrator-managed Cognito group definition, and UTC end time check. Only the approved Alice demo session can select the vulnerable agent profile; missing configuration or group access fails closed. AWS currently has the flag `false` and no demo group. Hosted enablement remains pending.
 - [x] Locally implement the deliberately weak **agent** order lookup, limited to Bob's pre-existing synthetic fixture. A system-prompt change alone cannot bypass the mandatory `StoreService` ownership check. Normal `/api/orders/{id}` ownership enforcement remains intact for everyone.
-- [x] Locally label each assistant reply and audit trace `protected` or `vulnerable-demo` using trusted backend state. No prompt text, request field or browser switch can select a mode. Cloud verification remains pending.
+- [x] Add trusted `protected` / `vulnerable-demo` labels to assistant replies and audit traces. No prompt text, request field or browser switch can select a mode. The code is deployed default-off; private hosted response verification remains pending.
 - [x] Rehearse Alice's synthetic fixture with the configured Groq model locally: the named-order tool ran, Bob's fictional address appeared in Alice's agent reply, and the Strands callback no longer printed the address to console logs.
 - [x] Use only existing fictional Alice/Bob addresses and orders. Do not add real payment information or plausible card numbers.
 - [ ] Restrict the vulnerable profile to approved demonstrators and a short end date. Existing API throttles apply; verify them and the exact test window before enabling. Local tests cover Bob and a failed/expired group check; hosted checks for signed-out users and a non-member Alice session remain.
