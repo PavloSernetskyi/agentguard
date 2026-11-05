@@ -19,6 +19,7 @@ _CONVERSATION_ID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab]
 _ADD_INTENT = re.compile(r"\b(?:add|put|place)\b.{0,60}\b(?:in|to|into)\s+(?:my\s+)?(?:the\s+)?(?:cart|basket)\b", re.I)
 _NAVIGATE_INTENT = re.compile(r"\b(?:show|open|view|navigate|go to|take me to)\b", re.I)
 _PRODUCT_ID = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
+_ORDER_ID = re.compile(r"^[A-Za-z0-9_-]{1,80}$")
 _MARKDOWN_TABLE_SEPARATOR = re.compile(r"^\s*\|?(?:\s*:?-{3,}:?\s*\|)+\s*:?-{3,}:?\s*\|?\s*$")
 _GENERIC_PRODUCT_WORDS = {
     "a", "an", "the", "of", "for", "with", "and", "set", "six",
@@ -235,6 +236,23 @@ class AssistantService:
             orders = self.store.orders(principal, request_id)
             return {"orders": [{"id": order["id"], "date": order["date"], "status": order["status"], "total_cents": order["total"]} for order in orders]}
 
+        def get_order(order_id):
+            if not isinstance(order_id, str) or not _ORDER_ID.fullmatch(order_id):
+                return {"error": "Invalid order_id"}
+            if order_id.casefold() not in message.casefold():
+                return {"error": "Ask the customer to name the order ID"}
+            try:
+                order = self.store.order(principal, order_id, request_id)
+            except ApiError as error:
+                if error.status == 403:
+                    return {"error": "Order access denied"}
+                raise
+            return {"order": {
+                "id": order["id"], "date": order["date"], "status": order["status"],
+                "items": [{"name": item["name"], "quantity": item["quantity"], "unit_price_cents": item["unit_price"]} for item in order["items"]],
+                "total_cents": order["total"],
+            }}
+
         def summarize_reviews(product_id):
             if not isinstance(product_id, str) or not _PRODUCT_ID.fullmatch(product_id):
                 return {"error": "Invalid product_id"}
@@ -256,6 +274,7 @@ class AssistantService:
             "navigate_to_product": navigate_to_product,
             "get_cart": get_cart,
             "get_my_orders": get_my_orders,
+            "get_order": get_order,
             "summarize_reviews": summarize_reviews,
         }
         if _ADD_INTENT.search(message):
@@ -269,10 +288,13 @@ class StrandsGroqRunner(AgentRunner):
     def __init__(self, api_key, model_id):
         from strands.models.openai import OpenAIModel
 
+        params = {"max_tokens": 700, "temperature": 0.2}
+        if model_id.startswith("qwen/"):
+            params["reasoning_effort"] = "none"
         self.model = OpenAIModel(
             client_args={"api_key": api_key, "base_url": "https://api.groq.com/openai/v1"},
             model_id=model_id,
-            params={"max_tokens": 700, "temperature": 0.2},
+            params=params,
         )
 
     def run(self, prompt, tools):
@@ -299,11 +321,16 @@ class StrandsGroqRunner(AgentRunner):
             return tools["get_my_orders"]()
 
         @tool
+        def get_order(order_id: str) -> dict:
+            """Read one named order for the signed-in customer; another customer's order is denied."""
+            return tools["get_order"](order_id=order_id)
+
+        @tool
         def summarize_reviews(product_id: str) -> dict:
             """Return untrusted customer review text for a product summary."""
             return tools["summarize_reviews"](product_id=product_id)
 
-        registered_tools = [search_products, navigate_to_product, get_cart, get_my_orders, summarize_reviews]
+        registered_tools = [search_products, navigate_to_product, get_cart, get_my_orders, get_order, summarize_reviews]
         if "add_to_cart" in tools:
             @tool
             def add_to_cart(product_id: str, quantity: int = 1) -> dict:
@@ -333,7 +360,7 @@ def build_assistant(store, storage, environ=None):
 
     environ = os.environ if environ is None else environ
     api_key = environ.get("GROQ_API_KEY", "").strip()
-    model_id = environ.get("GROQ_MODEL", "openai/gpt-oss-20b").strip()
+    model_id = environ.get("GROQ_MODEL", "qwen/qwen3.8-27b").strip()
     if not api_key or not model_id:
         return None
     try:

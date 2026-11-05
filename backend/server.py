@@ -1,5 +1,33 @@
 import json
+import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+
+
+def load_local_env():
+    """Read server-only settings from the ignored project .env.local file."""
+    root = Path(__file__).resolve().parents[1]
+    path = root / ".env.local"
+    if not path.is_file():
+        return
+    for line in path.read_text(encoding="utf-8-sig").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        key, separator, value = line.partition("=")
+        key = key.strip()
+        if not separator or key not in {"DAYWELL_DB_PATH", "GROQ_API_KEY", "GROQ_MODEL"}:
+            continue
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in {"'", '"'}:
+            value = value[1:-1]
+        if key == "DAYWELL_DB_PATH" and value and not Path(value).is_absolute():
+            value = str(root / value)
+        os.environ.setdefault(key, value)
+
+
+load_local_env()
+
 from .api import handle
 from .assistant import build_assistant
 from .service import StoreService

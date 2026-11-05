@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 from backend.auth import CognitoAuthenticator, AuthenticationUnavailable
 from backend.dynamo import DynamoStorage, DynamoAuditSink
-from backend.lambda_handler import adapt, handler, cloud_service
+from backend.lambda_handler import adapt, handler, cloud_service, cloud_assistant
 from backend.service import StoreService
 from backend.storage import SQLiteStorage
 from seed.reset import seed
@@ -80,6 +80,19 @@ class CloudAdapterTests(unittest.TestCase):
     def test_missing_cloud_configuration_fails_closed(self):
         with patch.dict("os.environ", {}, clear=True):
             self.assertEqual(handler({}, Mock(aws_request_id="test-request"))["statusCode"],503)
+
+    def test_cloud_assistant_reads_managed_secret_once_and_keeps_it_server_side(self):
+        self.service.assistant = None
+        secret_client = Mock()
+        secret_client.get_secret_value.return_value = {"SecretString": "private-test-key"}
+        runner = Mock()
+        with patch.dict("os.environ", {"GROQ_SECRET_ARN": "arn:aws:secretsmanager:us-east-2:123:secret:test", "GROQ_MODEL": "test-model"}), \
+             patch("boto3.client", return_value=secret_client), \
+             patch("backend.lambda_handler.build_assistant", return_value=runner) as build:
+            self.assertIs(cloud_assistant(self.service), runner)
+            self.assertIs(cloud_assistant(self.service), runner)
+        self.assertEqual(secret_client.get_secret_value.call_count, 1)
+        self.assertEqual(build.call_args.kwargs["environ"]["GROQ_API_KEY"], "private-test-key")
 
 
 class DynamoTests(unittest.TestCase):

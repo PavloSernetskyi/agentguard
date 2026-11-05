@@ -1,8 +1,10 @@
 $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $PSScriptRoot
+$python = Join-Path $projectRoot ".venv/Scripts/python.exe"
+if (-not (Test-Path -LiteralPath $python)) { $python = "python" }
 Push-Location $projectRoot
 try {
-    python scripts/package_backend.py
+    & $python scripts/package_backend.py --with-assistant-deps
     if ($LASTEXITCODE -ne 0) { throw "Backend packaging failed" }
     Push-Location store
     $previousAuthMode = $env:VITE_AUTH_MODE

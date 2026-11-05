@@ -39,14 +39,24 @@ def build(dependency_root=None):
 
 if args.with_assistant_deps:
     with tempfile.TemporaryDirectory(prefix="agentguard-lambda-deps-") as dependency_root:
-        subprocess.run([
-            sys.executable, "-m", "pip", "install", "--disable-pip-version-check",
-            "--only-binary=:all:", "--platform", "manylinux2014_x86_64",
-            "--implementation", "cp", "--python-version", "312", "--abi", "cp312",
-            "--target", dependency_root, "-r", str(ROOT / "requirements-assistant.txt"),
-        ], check=True)
+        if sys.platform == "win32":
+            uv = Path(sys.executable).with_name("uv.exe")
+            if not uv.is_file():
+                raise SystemExit("Install uv in the build environment: python -m pip install uv")
+            command = [str(uv), "pip", "install", "--python-platform", "x86_64-manylinux2014",
+                       "--python-version", "3.12", "--only-binary", ":all:"]
+        else:
+            command = [sys.executable, "-m", "pip", "install", "--disable-pip-version-check",
+                       "--only-binary=:all:"]
+        subprocess.run(command + ["--target", dependency_root, "-r", str(ROOT / "requirements-assistant.txt")], check=True)
         build(dependency_root)
 else:
     build()
 
+if args.with_assistant_deps:
+    with ZipFile(output) as archive:
+        uncompressed = sum(entry.file_size for entry in archive.infolist())
+    if output.stat().st_size > 50 * 1024 * 1024 or uncompressed > 250 * 1024 * 1024:
+        raise SystemExit("Assistant package exceeds Lambda direct-upload or uncompressed size limits")
+    print(f"Lambda package: {output.stat().st_size / 1024 / 1024:.1f} MiB zipped, {uncompressed / 1024 / 1024:.1f} MiB unzipped")
 print("Built", output)

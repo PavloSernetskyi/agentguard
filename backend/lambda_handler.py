@@ -5,7 +5,7 @@ import json
 import os
 from functools import lru_cache
 from .api import handle
-from .assistant import AssistantUnavailable, build_assistant
+from .assistant import build_assistant
 from .auth import CognitoAuthenticator
 from .dynamo import DynamoStorage, DynamoAuditSink
 from .service import StoreService
@@ -21,11 +21,25 @@ def cloud_service():
     audit = DynamoAuditSink(db.Table(os.environ["AUDIT_TABLE"]))
     auth = CognitoAuthenticator(boto3.client("cognito-idp"), os.environ["COGNITO_CLIENT_ID"], storage)
     service = StoreService(storage, audit, authenticator=auth)
-    try:
-        service.assistant = build_assistant(service, storage)
-    except AssistantUnavailable:
-        service.assistant = None
+    service.assistant = None
     return service
+
+
+def cloud_assistant(service):
+    if service.assistant is not None:
+        return service.assistant
+    secret_arn = os.environ.get("GROQ_SECRET_ARN")
+    if not secret_arn:
+        return None
+    try:
+        import boto3
+        api_key = boto3.client("secretsmanager").get_secret_value(SecretId=secret_arn)["SecretString"]
+        config = {"GROQ_API_KEY": api_key, "GROQ_MODEL": os.environ.get("GROQ_MODEL", "qwen/qwen3.8-27b")}
+        service.assistant = build_assistant(service, service.storage, environ=config)
+    except Exception:
+        # Provider/secret failures leave the store available and assistant requests fail closed.
+        return None
+    return service.assistant
 
 
 def respond(status, message):
@@ -52,9 +66,10 @@ def adapt(event, service, allowed_origin):
     if event.get("rawQueryString"):
         path += "?" + event["rawQueryString"]
     method = event.get("requestContext", {}).get("http", {}).get("method", "GET")
+    assistant = cloud_assistant(service) if path == "/api/assistant/messages" and method == "POST" else getattr(service, "assistant", None)
     status, response_headers, payload = handle(service, method, path, headers, body,
                                               allowed_origins={allowed_origin}, secure_cookie=True,
-                                              assistant=getattr(service, "assistant", None))
+                                              assistant=assistant)
     cookies = []
     if "Set-Cookie" in response_headers:
         cookies.append(response_headers.pop("Set-Cookie"))

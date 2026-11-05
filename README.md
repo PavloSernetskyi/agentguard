@@ -1,6 +1,6 @@
 # Archery Pro Shopping / AgentGuard
 
-**Current store:** Archery Pro Shopping is on `master` and powers the existing AWS demo URL with original generated product photography, 18 synthetic items and a fictional checkout. The assistant integration is also merged into `master`, but the live AWS deployment has not yet been updated to that build. The [local guide](docs/archery-preview.md) remains available.
+**Current store:** Archery Pro Shopping is hosted at the AWS demo URL with original generated product photography, 18 synthetic items and a fictional checkout. The protected assistant build has been deployed from the `feat/agent-soc-aws-demo` branch; hosted Alice/Bob cross-account agent checks passed in both directions. The [local guide](docs/archery-preview.md) remains available.
 
 A deployed, synthetic shopping platform for a three-person school project. Person 1 owns the store and AWS deployment; Person 2 owns AgentGuard enforcement; Person 3 owns the assistant UI and SOC dashboard.
 
@@ -9,6 +9,8 @@ A deployed, synthetic shopping platform for a three-person school project. Perso
 ## Final deliverable checklist
 
 Use this checklist for the final project demonstration. Checked items are implemented and verified; unchecked items are planned team work.
+
+For the ordered work from the hosted store through the protected agent, restricted lab, AWS SOC dashboard and final presentation, use the [remaining project checklist](docs/project-todo.md).
 
 ### AWS services in use — Person 1 complete
 
@@ -43,14 +45,15 @@ AWS MCP helped with initial provisioning and verification; it is a developer too
 ### Remaining group deliverables
 
 - [x] **Person 2:** implement and merge the Strands/Groq assistant, authorized store tools, storefront chat, security regressions and threat-model acceptance matrix to `master`.
-- [ ] **Person 3:** review the merged chat/API integration, validate UI states and add consumer/contract coverage. Follow [Person 3's handoff](docs/person-3-handoff.md).
-- [ ] **Person 1 + Person 2:** review production runtime, server-side Groq secret configuration, timeout and cost controls before any deployment.
-- [ ] **Person 1 + team:** deploy the current `master` build after review; configure the provider key server-side and rerun hosted Alice/Bob security acceptance checks. The live site currently serves an older build.
+- [x] Integrate the assistant chat/API and the local SOC consumer with request-ID contract coverage.
+- [x] Deploy the protected assistant build with a server-side Groq secret and reviewed Lambda timeout and Terraform plan.
+- [x] Verify private hosted Bob-to-Alice and Alice-to-Bob agent order attempts are blocked and audited under their request IDs.
+- [ ] Finish the post-release browser regression for own-order agent detail, account switching, cart and fictional checkout.
 - [ ] **Team:** run controlled security tests against an isolated vulnerable fixture and the protected store; document actual tool results and audit evidence.
-- [ ] **Person 3 leads:** build an operator-only SOC dashboard showing correlated requests, decisions, executions and alerts.
+- [ ] Deploy the existing local SOC dashboard to AWS with managed operator access and a bounded read-only cloud audit feed.
 - [ ] **Final demo:** show normal Alice/Bob use, a blocked cross-account agent request, an indirect prompt-injection attempt, a clearly labeled isolated vulnerable comparison, and the matching SOC timeline.
 
-The store is deployed; the assistant implementation and chat UI are merged to `master` but not yet deployed to AWS. Do not treat local tests as hosted acceptance. The vulnerable lab and SOC dashboard are also not deployed. Groq inference is separate from AWS credits. Bedrock AgentCore remains an optional runtime to evaluate, and no Bedrock model inference is currently claimed. See the [team roadmap](docs/team-roadmap.md) for owners and acceptance criteria.
+The protected assistant build is deployed from `feat/agent-soc-aws-demo`, and reciprocal hosted cross-account checks passed. The vulnerable lab and SOC dashboard are not deployed. Groq inference is separate from AWS credits. Bedrock AgentCore remains optional, and no Bedrock model inference is claimed. Follow the [ordered project checklist](docs/project-todo.md) for the remaining gates.
 
 ## Project status and team plan
 
@@ -79,12 +82,12 @@ See the [deployment runbook](docs/aws-deployment.md) for the current status, res
 
 ## Start locally
 
-Requires Python 3.12+ and Node.js 22+. The store API uses Python's standard library; the optional assistant dependencies are in [requirements-assistant.txt](requirements-assistant.txt).
+Requires Python 3.12+ and Node.js 22+. The store API uses Python's standard library; the optional assistant dependencies are in [requirements-assistant.txt](requirements-assistant.txt). For local assistant use, copy [.env.example](.env.example) to an ignored `.env.local` at the repository root and set `GROQ_API_KEY` there. The Python server reads this file on startup; keep the key out of `store/`, chat, and Git. The example selects the separate archery database and the server seeds it if empty.
 
 From the repository root, in terminal 1:
 
 ```powershell
-python -m seed.reset
+python -m pip install -r requirements-assistant.txt
 python -m backend.server
 ```
 
@@ -135,9 +138,9 @@ Stop the API with Ctrl+C before `python -m seed.reset`, then restart it. This de
 
 `Storage` abstracts persistence. The SQLite adapter uses parameterized SQL and per-operation connections. SQLite collection scans are intentionally small-scale; the new DynamoDB adapter uses owner-scoped queries and pagination. Cart writes replace a product quantity; concurrent tabs use last-write-wins semantics. Audits are emitted after the operation and are not atomic with storage writes: an audit sink failure returns 500, but a completed mutation may already have persisted. A transactional outbox is deployment-phase work.
 
-No publicly accessible bypass, refunds, payment processing or Bedrock calls have been added. Fictional order placement is available locally and in the deployed store. The store's AWS infrastructure is deployed from Terraform; the assistant implementation is merged to `master` but not yet hosted. Future refund tools must introduce an explicitly authorized operation with an audit contract. The [deployment runbook](docs/aws-deployment.md) covers Person 1's hosted store, and the [team roadmap](docs/team-roadmap.md) coordinates assistant deployment, testing and SOC work.
+No publicly accessible bypass, refunds, payment processing or Bedrock calls have been added. Fictional order placement is available locally and in the deployed store. The protected assistant build is hosted and passed reciprocal Alice/Bob cross-account checks. Future refund tools must introduce an explicitly authorized operation with an audit contract. The [deployment runbook](docs/aws-deployment.md) records hosted status, and the [project checklist](docs/project-todo.md) tracks the remaining lab and SOC work.
 ## Person 3 SOC dashboard integration
 
 The Person 3 dashboard in `dashboard/` consumes the merged assistant's existing v1 audit events through the protected local reporting feed. Storefront chat and audited store operations correlate by HTTP request ID. Run the dashboard at http://127.0.0.1:5174 alongside the local store and reporting service; see [dashboard setup](dashboard/README.md), [Person 2 handoff](docs/person-3-handoff.md), and [integration status](docs/assistant-soc-integration.md).
 
-The assistant and dashboard source are integrated locally. Hosted assistant deployment, operator cloud authentication and reporting deployment remain Person 1's release work; a Git merge does not deploy AWS resources.
+The assistant and dashboard source are integrated locally. The protected assistant is now hosted; operator cloud authentication and reporting deployment remain. A Git merge alone does not deploy AWS resources.

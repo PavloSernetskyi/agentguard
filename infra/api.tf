@@ -30,7 +30,7 @@ resource "aws_lambda_function" "api" {
   filename                       = "${path.module}/../artifacts/backend.zip"
   source_code_hash               = filebase64sha256("${path.module}/../artifacts/backend.zip")
   memory_size                    = 512
-  timeout                        = 10
+  timeout                        = 25
   reserved_concurrent_executions = var.lambda_reserved_concurrency
   environment {
     variables = {
@@ -39,9 +39,11 @@ resource "aws_lambda_function" "api" {
       AUDIT_TABLE       = aws_dynamodb_table.audit.name
       COGNITO_CLIENT_ID = aws_cognito_user_pool_client.backend.id
       PUBLIC_ORIGIN     = "https://${aws_cloudfront_distribution.site.domain_name}"
+      GROQ_SECRET_ARN   = aws_secretsmanager_secret.groq.arn
+      GROQ_MODEL        = "qwen/qwen3.8-27b"
     }
   }
-  depends_on = [aws_iam_role_policy.lambda]
+  depends_on = [aws_iam_role_policy.lambda, aws_iam_role_policy.assistant_secret]
 }
 resource "aws_apigatewayv2_api" "store" {
   name          = var.name
@@ -52,7 +54,7 @@ resource "aws_apigatewayv2_integration" "lambda" {
   integration_type       = "AWS_PROXY"
   integration_uri        = aws_lambda_function.api.invoke_arn
   payload_format_version = "2.0"
-  timeout_milliseconds   = 10000
+  timeout_milliseconds   = 28000
 }
 resource "aws_apigatewayv2_route" "api" {
   api_id    = aws_apigatewayv2_api.store.id

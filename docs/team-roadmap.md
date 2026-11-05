@@ -1,6 +1,6 @@
 # Team roadmap and ownership
 
-Person 1 update: **Archery Pro Shopping** is deployed in Ohio (`us-east-2`) at **https://d16nqulwj27ltb.cloudfront.net**. The deployed site has 18 synthetic archery products and a customer-driven fictional checkout. The authenticated assistant API, Strands/Groq adapter, protected store tools, storefront chat and Person 3 handoff are now merged to `master`, but the live site still serves an older build. Hosted Alice/Bob ownership and audit verification passed before assistant deployment; repeat private Alice/Bob flows after deploying the assistant. The SOC integration remains. See [deployment status](aws-deployment.md). Milestone 2 remains incomplete.
+Current update: **Archery Pro Shopping** is deployed in Ohio (`us-east-2`) at **https://d16nqulwj27ltb.cloudfront.net**. The deployed site has 18 synthetic archery products and a customer-driven fictional checkout. The protected Strands/Groq agent build is now hosted from `feat/agent-soc-aws-demo`, with the key in AWS Secrets Manager. Reciprocal hosted Alice/Bob cross-account agent checks passed with matching denial audit events. The SOC is local only. Follow the [ordered remaining checklist](project-todo.md) and [deployment status](aws-deployment.md). Browser regression remains before marking milestone 2 complete.
 
 This is the shared handoff plan. Milestone 1 is complete; milestone 2 is in progress; milestones 3-4 are planned. Changes to ownership or contracts should be agreed in a pull request.
 

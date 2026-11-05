@@ -56,11 +56,11 @@ function App() {
     try {
       const collected: unknown[] = []; let cursor: string | null = null;
       do {
-        const res = await fetch('/soc-api/events?limit=500' + (cursor ? '&cursor=' + encodeURIComponent(cursor) : ''), { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store', credentials: 'omit', signal: controller.signal });
+        const res: Response = await fetch('/soc-api/events?limit=500' + (cursor ? '&cursor=' + encodeURIComponent(cursor) : ''), { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store', credentials: 'omit', signal: controller.signal });
         if (!res.ok) throw new Error(res.status === 401 ? 'Operator access denied. Check your token in Data sources.' : `Reporting feed unavailable (HTTP ${res.status}).`);
-        const payload = await res.json();
+        const payload: { source: unknown; events: unknown; next_cursor: unknown } = await res.json();
         if (payload.source !== 'local-sqlite' || !Array.isArray(payload.events) || (payload.next_cursor !== null && typeof payload.next_cursor !== 'string')) throw new Error('The reporting feed returned an unsupported response.');
-        collected.push(...payload.events); cursor = payload.next_cursor;
+        collected.push(...payload.events); cursor = payload.next_cursor as string | null;
       } while (cursor && collected.length < 5000);
       const parsed = parseEvents(collected.slice(0, 5000));
       if (collected.length && !parsed.events.length) throw new Error('No valid v1 events were received. Check the event schema.');
