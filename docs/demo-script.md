@@ -2,6 +2,8 @@
 
 Run this only during the agreed test window on the project's synthetic Archery Pro Shopping site. Bob and Alice use their own private Cognito passwords. Person 3 uses an operator-only SOC view. Do not put real addresses, cards, credentials or API keys into prompts or orders.
 
+In the presentation, call this an **intentional agent authorization flaw in a synthetic classroom fixture**. It is not an assigned CVE. The comparison should take only a few minutes: Bob's protected attempt, Alice's controlled exposure, and Person 3's two request traces.
+
 ## Before the comparison
 
 1. Person 1 verifies the current deployment, AWS budget, Groq availability and the exact synthetic `ord-alice-001` / `ord-bob-001` fixtures. The normal order API must return 403 for a cross-account request.

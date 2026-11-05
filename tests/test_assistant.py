@@ -127,6 +127,7 @@ class AssistantTests(unittest.TestCase):
         self.assertIn("Do not use markdown", prompt)
         self.assertIn("do not invent", prompt)
         self.assertIn("one helpful follow-up question", prompt)
+        self.assertIn("call get_order for that ID", prompt)
 
     def test_assistant_response_converts_markdown_products_to_plain_text(self):
         markdown = (
