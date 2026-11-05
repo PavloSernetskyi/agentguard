@@ -38,11 +38,11 @@ This is the execution checklist for the final Archery Pro Shopping demonstration
 ## 4. Deploy and connect the SOC dashboard
 
 - [x] Local dashboard renders labeled sample events, validates the v1 audit contract and groups assistant/store events by request ID.
-- [ ] Add an efficient bounded recent-events query or read model for the cloud audit table. The current request-ID key cannot serve a time-ordered feed without a scan.
-- [ ] Deploy a separate read-only reporting API and IAM role. The store Lambda stays audit-write-only.
-- [ ] Give operators managed sign-in and protect both dashboard assets and reporting requests. Alice, Bob and anonymous visitors must receive no audit feed.
-- [ ] Label each record's protected or vulnerable-demo profile without placing prompts, addresses, cookies or keys into audit events. Show authorization decision separately from actual execution and independently verified exposure.
-- [ ] Deploy the dashboard on AWS, verify HTTPS, pagination, freshness, request lookup, denied shopper access, and a live trace from each scenario.
+- [x] Add a bounded recent-events query using the audit table's `by_time` index. New audit writes carry timeline keys; older records without those keys do not appear in this feed.
+- [x] Deploy a separate read-only reporting Lambda and IAM role. The store Lambda stays audit-write-only. The reviewed 2026-11-05 SOC plan applied with 23 additions, 3 updates and no deletions.
+- [x] Complete managed operator sign-in and hosted verification. The user reported the private provisioning script verified, and Cognito confirms `soc-operator` belongs to `agentguard-soc-operators`. The static sign-in page is public; anonymous feed and health requests returned 401. Alice and Bob access still needs a private hosted check.
+- [x] Correlate `assistant.profile`, `orders.read`, and `assistant.message` v1 events by request ID without placing prompts, addresses, cookies or keys into audit events. Display authorization decision separately from execution. Verify visible exposure separately from audit evidence.
+- [ ] Finish SOC acceptance: visually check the operator dashboard, 15-second visible-tab refresh, pagination, request lookup, and a fresh trace from each scenario. The dashboard shell returned 200 at `/soc/index.html`; the user reported the private operator feed verification passed. A new hosted anonymous order read produced a `deny / blocked` event in the timeline index.
 
 ## 5. Final demo and submission
 

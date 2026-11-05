@@ -178,6 +178,7 @@ class AssistantTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(captured[0]["order"]["id"], "ord-bob-001")
         self.assertNotIn("address", captured[0]["order"])
+        self.assertNotIn("demo_payment_label", captured[0]["order"])
         events = [event for event in self.storage.list("audit") if event["request_id"] == headers["X-Request-Id"]]
         self.assertIn(("bob", "orders.read", "allow", "succeeded"),
                       [(event["actor_id"], event["action"], event["decision"], event["execution"]) for event in events])
@@ -216,10 +217,12 @@ class AssistantTests(unittest.TestCase):
                 if actor == "alice":
                     self.assertEqual(demo.calls, 1)
                     self.assertIn("100 Example Lane", observed[0]["order"]["address"])
+                    self.assertEqual(observed[0]["order"]["demo_payment_label"], "BOB-DEMO-CARD-INVALID")
                     self.assertEqual(self.request("GET", "/orders/ord-bob-001", token)[0], 403)
                 else:
                     self.assertEqual(demo.calls, 0)
                     self.assertNotIn("address", observed[0]["order"])
+                    self.assertNotIn("demo_payment_label", observed[0]["order"])
                 events = [event for event in self.storage.list("audit") if event["request_id"] == headers["X-Request-Id"]]
                 profiles = [event for event in events if event["action"] == "assistant.profile"]
                 self.assertEqual([event["resource_id"] for event in profiles], [response["security_profile"]])

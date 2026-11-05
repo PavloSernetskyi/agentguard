@@ -50,6 +50,15 @@ resource "aws_cloudfront_distribution" "site" {
     cache_policy_id          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
     origin_request_policy_id = aws_cloudfront_origin_request_policy.api.id
   }
+  ordered_cache_behavior {
+    path_pattern             = "/soc-api/*"
+    target_origin_id         = "api"
+    viewer_protocol_policy   = "https-only"
+    allowed_methods          = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods           = ["GET", "HEAD"]
+    cache_policy_id          = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
+    origin_request_policy_id = aws_cloudfront_origin_request_policy.api.id
+  }
   # No global 403-to-index rewrite: API authorization errors must remain errors.
   restrictions {
     geo_restriction { restriction_type = "none" }
@@ -57,7 +66,7 @@ resource "aws_cloudfront_distribution" "site" {
   viewer_certificate { cloudfront_default_certificate = true }
 }
 locals {
-  mime_types = { html = "text/html", js = "application/javascript", css = "text/css", svg = "image/svg+xml", json = "application/json", ico = "image/x-icon", webp = "image/webp" }
+  mime_types = { html = "text/html", js = "application/javascript", css = "text/css", svg = "image/svg+xml", json = "application/json", ico = "image/x-icon", webp = "image/webp", woff2 = "font/woff2", txt = "text/plain" }
 }
 resource "aws_s3_object" "site" {
   for_each      = fileset("${path.module}/../artifacts/store", "**")

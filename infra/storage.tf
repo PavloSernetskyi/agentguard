@@ -74,6 +74,24 @@ resource "aws_dynamodb_table" "audit" {
     name = "event_id"
     type = "S"
   }
+  attribute {
+    name = "timeline_pk"
+    type = "S"
+  }
+  attribute {
+    name = "timeline_sk"
+    type = "S"
+  }
+  global_secondary_index {
+    name            = "by_time"
+    hash_key        = "timeline_pk"
+    range_key       = "timeline_sk"
+    projection_type = "ALL"
+    on_demand_throughput {
+      max_read_request_units  = 10
+      max_write_request_units = 20
+    }
+  }
   ttl {
     attribute_name = "expires"
     enabled        = true

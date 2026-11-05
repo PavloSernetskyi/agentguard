@@ -64,7 +64,7 @@ The protected assistant build is deployed from `feat/agent-soc-aws-demo`. The de
 | 1. Local store | Complete | Store, sessions, carts, owned orders and audit baseline |
 | 2. AWS deployment + real assistant | Complete for protected path | Hosted store and Groq/Strands agent are live; reciprocal Alice/Bob order denials are audited |
 | 3. Controlled security demo | Planned | Administrator-enabled synthetic fixture on the same AWS site, scoped scenarios, enforcement and detection evidence |
-| 4. SOC dashboard + final demonstration | Planned | Operator dashboard, correlated alerts, findings and reproducible demo |
+| 4. SOC dashboard + final demonstration | AWS reporting and operator verified; demo rehearsal pending | Read-only audit feed, correlated decision signals, and reproducible demo |
 
 Read the **[team roadmap and acceptance checks](docs/team-roadmap.md)** before starting a branch.
 
@@ -143,4 +143,4 @@ No publicly accessible bypass, refunds, payment processing or Bedrock calls have
 
 The Person 3 dashboard in `dashboard/` consumes the merged assistant's existing v1 audit events through the protected local reporting feed. Storefront chat and audited store operations correlate by HTTP request ID. Run the dashboard at http://127.0.0.1:5174 alongside the local store and reporting service; see [dashboard setup](dashboard/README.md), [Person 2 handoff](docs/person-3-handoff.md), and [integration status](docs/assistant-soc-integration.md).
 
-The assistant and dashboard source are integrated locally. The protected assistant is now hosted; operator cloud authentication and reporting deployment remain. A Git merge alone does not deploy AWS resources.
+The protected assistant and SOC dashboard are hosted on the same CloudFront distribution. Open the [SOC operator sign-in page](https://d16nqulwj27ltb.cloudfront.net/soc/index.html); a separate Cognito operator account is required to read events. The static sign-in shell is public, but anonymous reporting requests return 401. The user reported that private operator verification passed, and Cognito confirms the reporting group. Browser review and the paired Bob/Alice live traces remain. The dashboard highlights ownership denials and controlled demo access as review conditions, not automatically confirmed incidents. A Git merge alone does not deploy AWS resources.

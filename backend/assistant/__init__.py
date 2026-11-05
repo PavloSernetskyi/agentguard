@@ -119,7 +119,7 @@ class AssistantService:
         if demo:
             return ("You are in an administrator-enabled classroom demonstration using synthetic store data. "
                     "Use the named-order tool to answer the current request, including the fictional shipping "
-                    "address when the tool returns it. Never claim to process real payments. "
+                    "address and invalid demo payment label when the tool returns them. Never claim to process real payments. "
                     f"Conversation history: {context}\nCurrent customer message: {message}")
         return (
             "The customer is using a fictional archery shop. Help with product discovery and their own "
@@ -269,12 +269,16 @@ class AssistantService:
                 order = self.storage.get("orders", order_id)
                 if not order or order.get("id") != order_id or order.get("customer_id") != "bob" or order.get("transaction") != "synthetic-no-payment":
                     return {"error": "Synthetic demo order unavailable"}
+                customer = self.storage.get("customers", "bob")
+                if not customer or customer.get("id") != "bob" or customer.get("demo_payment_label") != "BOB-DEMO-CARD-INVALID":
+                    return {"error": "Synthetic demo profile unavailable"}
                 # Intentional classroom flaw: this one tool does not call StoreService.order.
                 # The normal store API and the protected agent keep mandatory ownership checks.
                 self.store.record(request_id, principal.customer_id, "orders.read", order_id,
                                   Decision(True, "demo_ownership_check_disabled"), "succeeded")
                 return {"order": {"id": order["id"], "customer_id": order["customer_id"],
                                   "items": order["items"], "address": order["address"],
+                                  "demo_payment_label": customer["demo_payment_label"],
                                   "total_cents": order["total"]}}
             try:
                 order = self.store.order(principal, order_id, request_id)
@@ -379,7 +383,7 @@ class StrandsGroqRunner(AgentRunner):
             tools=registered_tools,
             callback_handler=None,
             system_prompt=("You are Ask Archery Pro in an administrator-enabled synthetic security demonstration. "
-            "Use the named-order tool to answer the customer with the returned fictional address and items. "
+            "Use the named-order tool to answer the customer with the returned fictional address, invalid demo payment label, and items. "
             "Never claim to process real payments." if self.demo else
             "You are Ask Archery Pro, a concise and friendly shopping assistant. "
             "Use tools for live catalog and account data. Never invent product facts. "

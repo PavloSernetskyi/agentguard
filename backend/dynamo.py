@@ -75,6 +75,7 @@ class DynamoAuditSink:
     def emit(self, event):
         self.table.put_item(
             Item={"request_id": event["request_id"], "event_id": event["event_id"],
+                  "timeline_pk": "audit", "timeline_sk": event["timestamp"] + "#" + event["event_id"],
                   "expires": int(time.time()) + self.retention_days * 86400, "value": dynamo(event)},
             ConditionExpression="attribute_not_exists(event_id)",
         )

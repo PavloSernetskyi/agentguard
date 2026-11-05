@@ -41,7 +41,9 @@ def seed(storage):
         draw_weight_lb = {"min": draw_weights[pid][0], "max": draw_weights[pid][1]} if pid in bow_ids else None
         storage.put("products", pid, dict(id=pid, name=name, category=category, price=price, image=image, use_case=use_case, draw_weight_lb=draw_weight_lb, description=description, rating=rating, reviews=[{"author": "Jordan P.", "rating": 5, "text": "Looks great in my practice kit. A fictional favorite."}, {"author": "Morgan L.", "rating": 4, "text": "A solid addition to my synthetic range setup."}]))
     for account, product in [("alice", "p01"), ("bob", "p02")]:
-        storage.put("customers", account, {"id": account, "name": account.title(), "address": account.title() + ", 100 Example Lane, Fiction City, ZZ 00000"})
+        storage.put("customers", account, {"id": account, "name": account.title(),
+                   "address": account.title() + ", 100 Example Lane, Fiction City, ZZ 00000",
+                   "demo_payment_label": account.upper() + "-DEMO-CARD-INVALID"})
         storage.put("orders", "ord-" + account + "-001", {"id": "ord-" + account + "-001", "customer_id": account, "date": "2026-10-12", "status": "Delivered", "address": account.title() + ", 100 Example Lane, Fiction City, ZZ 00000", "items": [{"product_id": product, "name": storage.get("products", product)["name"], "quantity": 1, "unit_price": storage.get("products", product)["price"]}], "total": storage.get("products", product)["price"], "transaction": "synthetic-no-payment"})
 
 

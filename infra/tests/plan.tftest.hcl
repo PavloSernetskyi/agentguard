@@ -34,6 +34,14 @@ run "protected_store_plan" {
     condition     = aws_cloudwatch_log_group.lambda.retention_in_days == 7 && aws_dynamodb_table.store.billing_mode == "PAY_PER_REQUEST"
     error_message = "Keep bounded log retention and on-demand database capacity."
   }
+  assert {
+    condition     = contains([for index in aws_dynamodb_table.audit.global_secondary_index : index.name], "by_time") && aws_iam_role.soc.name != aws_iam_role.lambda.name
+    error_message = "SOC must use the bounded audit index and a separate role."
+  }
+  assert {
+    condition     = aws_cloudfront_distribution.site.ordered_cache_behavior[1].cache_policy_id == "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
+    error_message = "Operator API responses must never be cached at CloudFront."
+  }
 }
 
 run "approved_demo_plan" {

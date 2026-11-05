@@ -1,5 +1,11 @@
 # AgentGuard SOC dashboard
 
+## Hosted release (2026-11-05)
+
+The dashboard sign-in page is deployed at https://d16nqulwj27ltb.cloudfront.net/soc/index.html. Its static shell is public; the `/soc-api/events` and `/soc-api/health` reporting routes require the separate Cognito `soc-operator` session. Anonymous requests returned 401 after deployment. The user reported the private operator verification succeeded, and Cognito confirms group membership. The operator password was entered privately and is not stored in Git. To reset or recheck it, run `.\.venv\Scripts\python.exe scripts\provision_soc_operator.py` from the repository root; the script prints no password or event contents.
+
+The hosted feed uses a bounded DynamoDB `by_time` index query through a separate read-only Lambda role. The UI refreshes every 15 seconds while visible and loads at most 5,000 records. Only audit rows written after timeline keys were added appear; earlier rows remain in the table but are absent from this view. The Signals page highlights ownership denials, authentication denials, allowed operation failures, and the controlled `demo_ownership_check_disabled` condition. A tool event records a decision and execution result; visible agent output must be checked separately before claiming data exposure. No prompts or addresses are included in v1 audit events.
+
 Person 3 owns this standalone React/TypeScript dashboard. This branch integrates the merged assistant and storefront with SOC visibility through the existing v1 audit contract. Attack probing, vulnerable fixtures, and admin write controls remain deferred. Read the [Person 2 handoff](../docs/person-3-handoff.md) before changing assistant behavior.
 
 ## First release
@@ -10,7 +16,7 @@ Person 3 owns this standalone React/TypeScript dashboard. This branch integrates
 - JSON/NDJSON import, plain DynamoDB `value` payload import, strict v1 event validation, ID deduplication, data-quality warnings and filtered CSV/event JSON export.
 - Clearly labeled fixtures for UI development, separate from imported and local live evidence.
 - Read-only, operator-token-protected local reporting server. No shopper account can read the feed.
-- No new cloud resources or inference dependencies. No browser persistence of tokens or imported evidence.
+- The original local build required no cloud resources or inference dependencies. The hosted release above adds an operator reporting path; no browser persistence of imported evidence is used.
 
 ## Run the dashboard
 
@@ -67,7 +73,7 @@ Manual acceptance: use each source; verify a blocked event differs from a failed
 
 The static build is `dashboard/dist`; frontend hosting can use `dashboard/` as its app root, `npm ci && npm run build` as the build command, and `dist` as output. `vercel.json` supplies Vite build settings and restrictive response headers; it does not supply access control or provision a backend. A static frontend deployment alone does not deploy the reporting backend. The local shared token/SQLite server is a development bridge, not production operator identity.
 
-Before an operator deployment, Person 1 and Person 3 must add a managed operator identity/role boundary, HTTPS same-origin reporting, bounded paginated DynamoDB read access in a **separate reporting role**, and approved hosting/retention/cost configuration. The existing store role is audit-write-only and must stay that way. The current audit table keys by request/event, so a time-ordered feed needs an agreed index/read model; do not implement polling with unbounded table scans. Migrate shared Terraform state before teammate applies. Test that unauthenticated requests and Alice/Bob customer sessions cannot read audits. Apply authentication to the operator frontend as well as the API.
+The hosted release has a managed operator identity, HTTPS same-origin reporting, bounded paginated DynamoDB read access in a **separate reporting role**, and a time-ordered index. The existing store role remains audit-write-only. Its static sign-in shell is public; actual evidence remains behind operator authentication. Private operator login, Alice/Bob customer denial, and live traces still require hosted acceptance. Teammates must use the existing Terraform state rather than applying from a fresh state.
 
 Use [SOC metrics and release plan](../docs/soc-dashboard.md) for definitions, missing instrumentation, and the deployment gate. Keep this work in `person-3/SOC-Dashboard` and open a PR to `master` after verification. Do not deploy cloud resources from a fresh local Terraform state.
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Activity, Bot, ArrowDownToLine, ArrowRight, Check, ChevronRight, Database, FileUp, Filter, LayoutDashboard, ListFilter, LockKeyhole, Radio, RefreshCw, Search, Shield, ShieldCheck, SlidersHorizontal, Unplug, X } from 'lucide-react';
 import { buckets, csv, emptyFilters, filterEvents, fixtures, parseEvents, readImport, summarize, isAuthenticationDenial, isOwnershipDenial, assistantRequests, investigationLink, requestFromSearch } from './audit';
@@ -9,6 +9,7 @@ import './styles.css';
 import './theme.css';
 
 type View = 'Overview' | 'Assistant requests' | 'Audit explorer' | 'Signals' | 'Data sources';
+const cloud = import.meta.env.VITE_SOC_MODE === 'cloud';
 type Dataset = { events: AuditEvent[]; source: 'fixtures' | 'import' | 'live'; label: string; loaded: number; rejected: number; duplicates: number; truncated: boolean };
 const initialRequest = requestFromSearch(location.search);
 const initial: Dataset = { events: fixtures(), source: 'fixtures', label: 'Sample audit events', loaded: Date.now(), rejected: 0, duplicates: 0, truncated: false };
@@ -22,9 +23,9 @@ function download(name: string, content: string, type: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function App() {
+function App({onUnauthorized, onSignOut}: {onUnauthorized?: () => void; onSignOut?: () => void}) {
   const [view, setView] = useState<View>(initialRequest ? 'Audit explorer' : 'Overview');
-  const [data, setData] = useState(initial);
+  const [data, setData] = useState<Dataset>(cloud ? {...initial, events: [], source: 'live', label: 'AWS audit feed'} : initial);
   const [filters, setFilters] = useState<Filters>(initialRequest ? {...emptyFilters, hours: 0, search: initialRequest} : emptyFilters);
   const [selected, setSelected] = useState<AuditEvent | null>(null);
   const [page, setPage] = useState(0);
@@ -33,7 +34,7 @@ function App() {
   const [copyStatus, setCopyStatus] = useState('');
   const [busy, setBusy] = useState(false);
   const [tokenInput, setTokenInput] = useState('');
-  const [liveToken, setLiveToken] = useState('');
+  const [liveToken, setLiveToken] = useState(cloud ? 'cloud-session' : '');
   const request = useRef<AbortController | null>(null);
   const busyRef = useRef(false);
   const importRef = useRef<HTMLInputElement>(null);
@@ -56,16 +57,17 @@ function App() {
     try {
       const collected: unknown[] = []; let cursor: string | null = null;
       do {
-        const res: Response = await fetch('/soc-api/events?limit=500' + (cursor ? '&cursor=' + encodeURIComponent(cursor) : ''), { headers: { Authorization: `Bearer ${token}` }, cache: 'no-store', credentials: 'omit', signal: controller.signal });
+        const res: Response = await fetch('/soc-api/events?limit=500' + (cursor ? '&cursor=' + encodeURIComponent(cursor) : ''), { headers: cloud ? {} : { Authorization: `Bearer ${token}` }, cache: 'no-store', credentials: cloud ? 'include' : 'omit', signal: controller.signal });
+        if (res.status === 401 && cloud) { onUnauthorized?.(); return; }
         if (!res.ok) throw new Error(res.status === 401 ? 'Operator access denied. Check your token in Data sources.' : `Reporting feed unavailable (HTTP ${res.status}).`);
         const payload: { source: unknown; events: unknown; next_cursor: unknown } = await res.json();
-        if (payload.source !== 'local-sqlite' || !Array.isArray(payload.events) || (payload.next_cursor !== null && typeof payload.next_cursor !== 'string')) throw new Error('The reporting feed returned an unsupported response.');
+        if (payload.source !== (cloud ? 'cloud-dynamodb' : 'local-sqlite') || !Array.isArray(payload.events) || (payload.next_cursor !== null && typeof payload.next_cursor !== 'string')) throw new Error('The reporting feed returned an unsupported response.');
         collected.push(...payload.events); cursor = payload.next_cursor as string | null;
       } while (cursor && collected.length < 5000);
       const parsed = parseEvents(collected.slice(0, 5000));
       if (collected.length && !parsed.events.length) throw new Error('No valid v1 events were received. Check the event schema.');
       if (controller.signal.aborted) return;
-      setData({ ...parsed, source: 'live', label: 'Local audit database', loaded: Date.now(), truncated: Boolean(cursor) || collected.length > 5000 });
+      setData({ ...parsed, source: 'live', label: cloud ? 'AWS audit feed' : 'Local audit database', loaded: Date.now(), truncated: Boolean(cursor) || collected.length > 5000 });
       setClock(Date.now()); setError('');
     } catch (cause) {
       if (request.current === controller) setError(controller.signal.aborted ? 'Reporting request timed out. Showing the previous snapshot.' : (cause as Error).message + ' Showing the previous snapshot.');
@@ -74,12 +76,13 @@ function App() {
   useEffect(() => {
     if (!liveToken) return;
     void refresh(liveToken);
-    const timer = setInterval(() => void refresh(liveToken), 15000);
+    const timer = setInterval(() => { if (document.visibilityState === 'visible') void refresh(liveToken); }, 15000);
     return () => { clearInterval(timer); request.current?.abort(); request.current = null; };
   }, [liveToken]);
 
   const rows = useMemo(() => filterEvents(data.events, filters, clock), [data.events, filters, clock]);
   const stats = useMemo(() => summarize(rows), [rows]);
+  const demoAccesses = rows.filter(event => event.reason === 'demo_ownership_check_disabled').length;
   const requests = useMemo(() => assistantRequests(rows, data.events), [rows, data.events]);
   const chart = useMemo(() => buckets(rows, filters.hours, clock), [rows, filters.hours, clock]);
   const maxBucket = Math.max(1, ...chart.map(b => b.total));
@@ -110,21 +113,21 @@ function App() {
   const jump = (next: Partial<Filters>) => { setFilters(current => ({ ...current, signal: '', ...next })); setView('Audit explorer'); };
   const nav = [{ name: 'Overview', icon: LayoutDashboard }, { name: 'Audit explorer', icon: ListFilter }, { name: 'Assistant requests', icon: Bot }, { name: 'Signals', icon: Radio }, { name: 'Data sources', icon: Database }] as const;
 
-  return <div className="app-shell">
+  return <div className={`app-shell${cloud ? ' cloud-mode' : ''}`}>
     <a className="skip" href="#main">Skip to dashboard</a>
     <aside className="sidebar">
       <a className="brand" aria-label="AgentGuard security overview" href="#" onClick={e => { e.preventDefault(); setView('Overview'); }}><span className="brand-mark"><ShieldCheck size={25} /></span><span>AgentGuard<small>SECURITY OPERATIONS</small></span></a>
       <div className="workspace"><span className="workspace-icon">AP</span><span>Archery Pro<small>Project workspace</small></span><ChevronRight size={16} /></div>
       <p className="nav-label">WORKSPACE</p>
-      <nav aria-label="Main navigation">{nav.map(({ name, icon: Icon }) => <button key={name} title={name} aria-current={view === name ? 'page' : undefined} className={view === name ? 'active' : ''} onClick={() => setView(name)}><Icon size={18} />{name}{name === 'Signals' && <span className="nav-count">{stats.denied + stats.failed}</span>}</button>)}</nav>
+      <nav aria-label="Main navigation">{nav.map(({ name, icon: Icon }) => <button key={name} title={name} aria-current={view === name ? 'page' : undefined} className={view === name ? 'active' : ''} onClick={() => setView(name)}><Icon size={18} />{name}{name === 'Signals' && <span className="nav-count">{stats.denied + stats.failed + demoAccesses}</span>}</button>)}</nav>
       <div className="sidebar-bottom"><div className="boundary"><LockKeyhole size={17} /><strong>Read-only workspace</strong><p>Inspect decisions and execution evidence.</p></div><div className="operator"><span>03</span><div>Person 3<small>SOC Dashboard owner</small></div></div></div>
     </aside>
     <div className="main-shell">
-      <header className="topbar"><div>Workspace <ChevronRight size={13} /><strong>{view}</strong></div><span className="top-status"><span className={`dot ${data.source === 'live' && !error ? 'green' : 'amber'}`} />{data.source === 'fixtures' ? 'Fixture preview' : data.source === 'import' ? 'Imported snapshot' : error ? 'Feed needs attention' : 'Local feed connected'}</span></header>
+      <header className="topbar"><div>Workspace <ChevronRight size={13} /><strong>{view}</strong></div><span className="top-status"><span className={`dot ${data.source === 'live' && !error ? 'green' : 'amber'}`} />{data.source === 'fixtures' ? 'Fixture preview' : data.source === 'import' ? 'Imported snapshot' : error ? 'Feed needs attention' : cloud ? 'AWS feed connected' : 'Local feed connected'}</span></header>
       <main id="main">
         <div className="page-heading"><div><p className="eyebrow">AGENTGUARD / SOC</p><h1>{view === 'Overview' ? 'Security overview' : view}</h1><p className="subtitle">{view === 'Overview' ? 'Every decision. Every outcome. One place to investigate.' : view === 'Audit explorer' ? 'Follow each request from authorization to execution.' : view === 'Assistant requests' ? 'Connect assistant outcomes to their audited store operations.' : view === 'Signals' ? 'Review observable conditions in the current event selection.' : 'Choose the evidence behind your dashboard.'}</p></div><div className="heading-actions"><button className="button" onClick={() => importRef.current?.click()}><FileUp size={16} />Import events</button><button className="button primary" disabled={!rows.length} onClick={() => download('agentguard-filtered-events.csv', csv(rows), 'text/csv;charset=utf-8')}><ArrowDownToLine size={16} />Export CSV</button></div></div>
         <input ref={importRef} className="visually-hidden" aria-label="Import audit JSON or NDJSON" type="file" accept=".json,.jsonl,.ndjson,application/json" onChange={e => void importFile(e.target.files?.[0])} />
-        <div className={`source-banner ${data.source === 'fixtures' ? 'sample' : ''}`}><div><span className="source-icon"><Database size={17} /></span><span><strong>{data.source === 'fixtures' ? 'Sample data · Preview only' : data.source === 'import' ? 'Imported evidence · Static snapshot' : 'Local evidence · Read-only feed'}</strong><small>{data.source === 'fixtures' ? '64 synthetic audit fixtures. These are not recorded attacks or production activity.' : `${data.label} · Updated ${time(data.loaded)} · ${data.source === 'live' ? 'Polls every 15 seconds' : 'No automatic refresh'}`}</small></span></div><button className="text-button" onClick={() => setView('Data sources')}>Manage source <ArrowRight size={15} /></button></div>
+        <div className={`source-banner ${data.source === 'fixtures' ? 'sample' : ''}`}><div><span className="source-icon"><Database size={17} /></span><span><strong>{data.source === 'fixtures' ? 'Sample data · Preview only' : data.source === 'import' ? 'Imported evidence · Static snapshot' : cloud ? 'AWS evidence · Read-only feed' : 'Local evidence · Read-only feed'}</strong><small>{data.source === 'fixtures' ? '64 synthetic audit fixtures. These are not recorded attacks or production activity.' : `${data.label} · Updated ${time(data.loaded)} · ${data.source === 'live' ? 'Polls every 15 seconds' : 'No automatic refresh'}`}</small></span></div><button className="text-button" onClick={() => setView('Data sources')}>Manage source <ArrowRight size={15} /></button></div>
         {error && <div role="alert" className="notice error">{error}</div>}
         {(data.rejected > 0 || data.duplicates > 0 || data.truncated) && <div role="status" className="notice">{data.rejected} invalid records excluded · {data.duplicates} duplicate IDs excluded.{data.truncated && ' Snapshot capped at 5,000 records; metrics cover loaded events only.'}</div>}
         {view !== 'Data sources' && <>
@@ -163,8 +166,10 @@ function App() {
             <div className="pagination"><span>{requests.length} assistant requests · newest first</span><div><button className="button" disabled={!page} onClick={() => setPage(p => p - 1)}>Previous</button><span>Page {Math.min(page + 1, Math.max(1, Math.ceil(requests.length / 12)))} / {Math.max(1, Math.ceil(requests.length / 12))}</span><button className="button" disabled={(page + 1) * 12 >= requests.length} onClick={() => setPage(p => p + 1)}>Next</button></div></div>
           </section>
         </>}
+        {view === 'Signals' && demoAccesses > 0 && <section className="panel signals"><div className="panel-heading"><div><h2>Controlled demo order access</h2><p>Agent tool reads allowed by the intentionally vulnerable classroom profile. Confirm visible exposure from the agent reply.</p></div><Shield size={20}/></div><article className="signal"><span className="signal-icon"><Activity size={19}/></span><div><h3>Demo ownership check disabled</h3><p>This is a review signal, not an independently confirmed incident.</p></div><strong>{demoAccesses}</strong><button className="button" onClick={() => jump({search: 'demo_ownership_check_disabled'})}>Review <ArrowRight size={14}/></button></article></section>}
         {view === 'Signals' && <section className="panel signals"><div className="panel-heading"><div><h2>Conditions to review</h2><p>Derived observations, not confirmed incidents. Counts follow the active filters.</p></div><Radio size={20} /></div>{[{ title: 'Ownership mismatches', description: 'Requests denied because the actor did not own an order or conversation.', events: rows.filter(isOwnershipDenial), filter: { search: 'ownership_mismatch', decision: 'deny' } }, { title: 'Authentication denials', description: 'Invalid sessions, invalid credentials, or unavailable identity provider.', events: rows.filter(isAuthenticationDenial), filter: { search: 'session', decision: 'deny' } }, { title: 'Allowed operations that failed', description: 'Authorization succeeded, but the application operation failed.', events: rows.filter(e => e.decision === 'allow' && e.execution === 'failed'), filter: { decision: 'allow', execution: 'failed' } }].map(signal => <article className="signal" key={signal.title}><span className="signal-icon"><Activity size={19} /></span><div><h3>{signal.title}</h3><p>{signal.description}</p></div><strong>{signal.events.length}</strong><button className="button" onClick={() => { if (signal.title === 'Authentication denials') { setFilters(current => ({ ...current, search: '', decision: 'deny', action: '', execution: '', actor: '', signal: 'authentication' })); setView('Audit explorer'); } else jump(signal.filter); }}>Review <ArrowRight size={14} /></button></article>)}<p className="panel-footnote">Detection precision, attack success, and response times require labeled scenarios and an incident workflow. They are deferred.</p></section>}
-        {view === 'Data sources' && <div className="source-grid"><section className="panel"><div className="panel-heading"><div><h2>Connect local audit feed</h2><p>Operator access is separate from Alice/Bob shopper accounts.</p></div><LockKeyhole size={20} /></div><p className="body-copy">Start the read-only reporting server, then enter its operator token. The token stays in memory and is cleared when the page reloads or you disconnect.</p><pre>python -m backend.soc</pre><form onSubmit={e => { e.preventDefault(); if (tokenInput.length < 32) { setError('Use the operator token configured for the reporting server (at least 32 characters).'); return; } if (busy) return; if (liveToken === tokenInput) void refresh(liveToken); else setLiveToken(tokenInput); }}><label htmlFor="operator-token">Operator token</label><input id="operator-token" type="password" value={tokenInput} onChange={e => setTokenInput(e.target.value)} autoComplete="off" spellCheck={false} placeholder="Paste local operator token" /><div className="form-actions"><button className="button primary" disabled={busy} type="submit"><Database size={16} />{busy ? 'Connecting…' : 'Connect feed'}</button>{liveToken && <button type="button" className="button" onClick={() => { setLiveToken(''); setTokenInput(''); setData(current => ({ ...current, source: 'import', label: 'Disconnected local snapshot' })); setError(''); }}><Unplug size={16} />Disconnect</button>}</div></form><p className="panel-footnote">Feed: /soc-api/events · Read-only · Maximum 5,000 loaded events. Cloud operator authentication and hosting are a separate deployment gate.</p></section><section className="panel"><div className="panel-heading"><div><h2>Work with an audit snapshot</h2><p>Inspect evidence without connecting to AWS.</p></div><FileUp size={20} /></div><div className="import-zone"><FileUp size={32} /><h3>Import JSON or NDJSON</h3><p>v1 events, reporting envelopes, or plain DynamoDB rows with a value payload. Up to 10 MB / 50,000 records.</p><button className="button" onClick={() => importRef.current?.click()}>Choose audit file</button></div><div className="source-option"><div><strong>Explore fixture data</strong><p>Reset to clearly labeled synthetic sample events.</p></div><button className="button" onClick={restoreFixtures}>Load fixtures</button></div></section><section className="panel full-width"><div className="panel-heading"><div><h2>Connected applications</h2><p>The local store and operator feed share the same configured audit database.</p></div></div><div className="application-links"><a className="button" href="http://127.0.0.1:5173" target="_blank" rel="noreferrer">Open local storefront <ArrowRight size={14}/></a><a className="button" href="https://d16nqulwj27ltb.cloudfront.net/" target="_blank" rel="noreferrer">Hosted storefront <ArrowRight size={14}/></a></div><p className="panel-footnote">The hosted release may differ from this branch. Shopper access never grants operator reporting access. Copy a chat support reference into event search to investigate the matching request.</p></section><section className="panel full-width"><div className="panel-heading"><div><h2>Data quality and coverage</h2><p>Metrics describe the loaded, filtered events only.</p></div><Check size={20} /></div><div className="quality-grid"><div><span>Valid events</span><strong>{data.events.length}</strong></div><div><span>Invalid records excluded</span><strong>{data.rejected}</strong></div><div><span>Duplicate IDs excluded</span><strong>{data.duplicates}</strong></div><div><span>Newest event</span><strong className="quality-time">{latest === null ? 'No events' : new Date(latest).toLocaleString()}</strong></div></div><p className="panel-footnote">Deduplication uses event_id. Unknown fields and invalid v1 decision/outcome pairs are rejected. Newest-event age is evidence freshness, not ingestion latency or a completeness guarantee.</p></section></div>}
+        {view === 'Data sources' && cloud && <div className="source-grid"><section className="panel"><div className="panel-heading"><div><h2>AWS audit feed</h2><p>Operator-only, read-only evidence. Refreshes every 15 seconds.</p></div><LockKeyhole size={20}/></div><p className="body-copy">Recent events are loaded from DynamoDB through the separate reporting role. Alice, Bob, and signed-out visitors cannot access this feed.</p><div className="form-actions"><button className="button primary" onClick={() => void refresh(liveToken)} disabled={busy}><RefreshCw size={16}/>Refresh now</button><button className="button" onClick={onSignOut}><Unplug size={16}/>Sign out</button></div></section></div>}
+        {view === 'Data sources' && !cloud && <div className="source-grid"><section className="panel"><div className="panel-heading"><div><h2>Connect local audit feed</h2><p>Operator access is separate from Alice/Bob shopper accounts.</p></div><LockKeyhole size={20} /></div><p className="body-copy">Start the read-only reporting server, then enter its operator token. The token stays in memory and is cleared when the page reloads or you disconnect.</p><pre>python -m backend.soc</pre><form onSubmit={e => { e.preventDefault(); if (tokenInput.length < 32) { setError('Use the operator token configured for the reporting server (at least 32 characters).'); return; } if (busy) return; if (liveToken === tokenInput) void refresh(liveToken); else setLiveToken(tokenInput); }}><label htmlFor="operator-token">Operator token</label><input id="operator-token" type="password" value={tokenInput} onChange={e => setTokenInput(e.target.value)} autoComplete="off" spellCheck={false} placeholder="Paste local operator token" /><div className="form-actions"><button className="button primary" disabled={busy} type="submit"><Database size={16} />{busy ? 'Connecting…' : 'Connect feed'}</button>{liveToken && <button type="button" className="button" onClick={() => { setLiveToken(''); setTokenInput(''); setData(current => ({ ...current, source: 'import', label: 'Disconnected local snapshot' })); setError(''); }}><Unplug size={16} />Disconnect</button>}</div></form><p className="panel-footnote">Feed: /soc-api/events · Read-only · Maximum 5,000 loaded events. Cloud operator authentication and hosting are a separate deployment gate.</p></section><section className="panel"><div className="panel-heading"><div><h2>Work with an audit snapshot</h2><p>Inspect evidence without connecting to AWS.</p></div><FileUp size={20} /></div><div className="import-zone"><FileUp size={32} /><h3>Import JSON or NDJSON</h3><p>v1 events, reporting envelopes, or plain DynamoDB rows with a value payload. Up to 10 MB / 50,000 records.</p><button className="button" onClick={() => importRef.current?.click()}>Choose audit file</button></div><div className="source-option"><div><strong>Explore fixture data</strong><p>Reset to clearly labeled synthetic sample events.</p></div><button className="button" onClick={restoreFixtures}>Load fixtures</button></div></section><section className="panel full-width"><div className="panel-heading"><div><h2>Connected applications</h2><p>The local store and operator feed share the same configured audit database.</p></div></div><div className="application-links"><a className="button" href="http://127.0.0.1:5173" target="_blank" rel="noreferrer">Open local storefront <ArrowRight size={14}/></a><a className="button" href="https://d16nqulwj27ltb.cloudfront.net/" target="_blank" rel="noreferrer">Hosted storefront <ArrowRight size={14}/></a></div><p className="panel-footnote">The hosted release may differ from this branch. Shopper access never grants operator reporting access. Copy a chat support reference into event search to investigate the matching request.</p></section><section className="panel full-width"><div className="panel-heading"><div><h2>Data quality and coverage</h2><p>Metrics describe the loaded, filtered events only.</p></div><Check size={20} /></div><div className="quality-grid"><div><span>Valid events</span><strong>{data.events.length}</strong></div><div><span>Invalid records excluded</span><strong>{data.rejected}</strong></div><div><span>Duplicate IDs excluded</span><strong>{data.duplicates}</strong></div><div><span>Newest event</span><strong className="quality-time">{latest === null ? 'No events' : new Date(latest).toLocaleString()}</strong></div></div><p className="panel-footnote">Deduplication uses event_id. Unknown fields and invalid v1 decision/outcome pairs are rejected. Newest-event age is evidence freshness, not ingestion latency or a completeness guarantee.</p></section></div>}
         <footer><span><ShieldCheck size={14} />AgentGuard SOC <span className="footer-divider">/</span> {data.source === 'fixtures' ? 'Synthetic fixtures' : 'Audit evidence'} <span className="footer-divider">/</span> Read-only</span><span>Schema v1 · {data.events.length} valid events loaded</span></footer>
       </main>
     </div>
@@ -173,4 +178,39 @@ function App() {
     </dialog>
   </div>;
 }
-createRoot(document.getElementById('root')!).render(<App />);
+function CloudGate() {
+  const [checking, setChecking] = useState(true);
+  const [signedIn, setSignedIn] = useState(false);
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let active = true;
+    fetch('/soc-api/health', {credentials: 'include', cache: 'no-store'})
+      .then(response => { if (active) setSignedIn(response.ok); })
+      .catch(() => { if (active) setError('Operator service unavailable.'); })
+      .finally(() => { if (active) setChecking(false); });
+    return () => { active = false; };
+  }, []);
+  async function signIn(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true); setError('');
+    try {
+      const response = await fetch('/soc-api/session', {method: 'POST', credentials: 'include', cache: 'no-store',
+        headers: {'content-type': 'application/json'}, body: JSON.stringify({password})});
+      setPassword('');
+      if (!response.ok) throw new Error('Operator sign-in failed.');
+      setSignedIn(true);
+    } catch (cause) { setError((cause as Error).message); }
+    finally { setBusy(false); }
+  }
+  async function signOut() {
+    try { await fetch('/soc-api/session', {method: 'DELETE', credentials: 'include', cache: 'no-store'}); }
+    finally { setSignedIn(false); setPassword(''); }
+  }
+  if (checking) return <main className="soc-login" role="status">Checking operator session…</main>;
+  if (signedIn) return <App onUnauthorized={() => setSignedIn(false)} onSignOut={() => void signOut()}/>;
+  return <main className="soc-login"><section className="soc-login-card"><LockKeyhole size={28}/><p className="eyebrow">AGENTGUARD / SOC</p><h1>Operator sign in</h1><p>Read-only audit evidence for the Archery Pro classroom demo.</p><form onSubmit={signIn}><label htmlFor="soc-password">Operator password</label><input id="soc-password" type="password" autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} required minLength={14}/><button className="button primary" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Open dashboard'}</button></form>{error && <p role="alert" className="notice error">{error}</p>}</section></main>;
+}
+
+createRoot(document.getElementById('root')!).render(cloud ? <CloudGate/> : <App/>);

@@ -150,12 +150,14 @@ class DynamoTests(unittest.TestCase):
 
     def test_audit_sink_keeps_schema_payload_separate_from_ttl(self):
         table = Mock()
-        event={"request_id":"request", "event_id":"event", "decision":"deny", "execution":"blocked"}
+        event={"request_id":"request", "event_id":"event", "timestamp":"2026-11-05T12:00:00+00:00", "decision":"deny", "execution":"blocked"}
         DynamoAuditSink(table).emit(event)
         item=table.put_item.call_args.kwargs["Item"]
         self.assertEqual(item["value"],event)
         self.assertIn("expires",item)
         self.assertNotIn("expires",item["value"])
+        self.assertEqual(item["timeline_pk"], "audit")
+        self.assertEqual(item["timeline_sk"], "2026-11-05T12:00:00+00:00#event")
 
 
 if __name__ == "__main__":
