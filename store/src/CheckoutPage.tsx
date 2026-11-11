@@ -13,7 +13,7 @@ type Props = {
 };
 
 export function CheckoutPage({customer, cart, step, placedOrder, busy, onStep, onPlace}: Props) {
-  if (placedOrder) return <section className="checkout-confirmation"><CheckCircle2 size={48}/><div className="eyebrow">FICTIONAL ORDER RECORDED</div><h1>Thanks, {customer.name}.</h1><p>Your synthetic order <b>{placedOrder.id}</b> is in My orders. No payment was taken and nothing will ship.</p><div className="checkout-confirmation-actions"><a className="primary" href={'#/orders/'+placedOrder.id}>View order details <ArrowRight size={17}/></a><a href="#/">Continue browsing</a></div></section>;
+  if (placedOrder) return <section className="checkout-confirmation"><CheckCircle2 size={48}/><div className="eyebrow">ORDER CONFIRMED</div><h1>Thanks, {customer.name}.</h1><p>Your order <b>{placedOrder.id}</b> has been processed and added to My orders.</p><div className="checkout-confirmation-actions"><a className="primary" href={'#/orders/'+placedOrder.id}>View order details <ArrowRight size={17}/></a><a href="#/">Continue browsing</a></div></section>;
   if (!cart.items.length) return <section className="empty"><Package size={42}/><h1>Your cart is empty</h1><p>Add fictional gear before starting checkout.</p><a className="primary" href="#/">Browse products <ArrowRight size={17}/></a></section>;
 
   const count = cart.items.reduce((sum, row) => sum + row.quantity, 0);

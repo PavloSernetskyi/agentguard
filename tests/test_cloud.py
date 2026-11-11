@@ -148,6 +148,14 @@ class DynamoTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             storage.list("orders")
 
+    def test_order_sequence_uses_atomic_counter(self):
+        table = Mock()
+        table.update_item.return_value = {"Attributes": {"sequence": 2}}
+        self.assertEqual(DynamoStorage(table).next_order_number("bob"), 2)
+        args = table.update_item.call_args.kwargs
+        self.assertEqual(args["Key"], {"pk": "order_counters", "sk": "bob"})
+        self.assertIn("if_not_exists", args["UpdateExpression"])
+
     def test_audit_sink_keeps_schema_payload_separate_from_ttl(self):
         table = Mock()
         event={"request_id":"request", "event_id":"event", "timestamp":"2026-11-05T12:00:00+00:00", "decision":"deny", "execution":"blocked"}

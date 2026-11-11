@@ -122,11 +122,13 @@ class StoreService:
             customer = self.storage.get("customers", principal.customer_id)
             if not customer:
                 raise ApiError(401, "Account not found")
-            order_id = "ord-" + principal.customer_id + "-" + uuid.uuid4().hex[:12]
+            order_id = f"ord-{principal.customer_id}-{self.storage.next_order_number(principal.customer_id):03d}"
+            placed_at = datetime.now(timezone.utc).isoformat()
             order = {
                 "id": order_id,
                 "customer_id": principal.customer_id,
                 "date": datetime.now(timezone.utc).date().isoformat(),
+                "placed_at": placed_at,
                 "status": "Placed (fictional)",
                 "address": customer.get("address") or customer["name"] + ", 100 Example Lane, Fiction City, ZZ 00000",
                 "items": items,

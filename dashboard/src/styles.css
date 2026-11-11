@@ -13,3 +13,23 @@
 .soc-login-card .button{justify-content:center}.soc-login-card .notice{margin-top:15px}
 
 .table-scroll{position:relative}.source-banner strong,.source-banner small{overflow-wrap:anywhere}.source-banner>div{min-width:0}.source-banner>div>span:last-child{min-width:0}
+
+.comparison-panel{margin-bottom:22px;overflow:hidden}
+.comparison-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:18px 21px 0}
+.comparison-card{min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:8px;padding:18px;border:1px solid var(--line);border-radius:8px;background:var(--surface-subtle)}
+.comparison-card.comparison-blocked{background:var(--success-bg);border-color:#b8d6c1}
+.comparison-card.comparison-allowed{background:var(--deny-bg);border-color:#e4b8ac}
+.comparison-route{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:700;letter-spacing:.08em;color:var(--muted)}
+.comparison-card>strong{font-size:25px;letter-spacing:-.7px;color:var(--ink)}
+.comparison-blocked>strong{color:var(--success-text)}
+.comparison-allowed>strong{color:var(--deny-text)}
+.comparison-card p{font-size:11px;line-height:1.5;color:var(--text)}
+.comparison-card small{font-size:10px;color:var(--muted);overflow-wrap:anywhere}
+.comparison-card .text-button{margin-top:auto}
+.comparison-note{padding:14px 21px 18px;color:var(--muted);font-size:10px;line-height:1.5}
+.analytics-details{margin:0 0 22px}.analytics-details>summary{cursor:pointer;display:list-item;margin-bottom:16px;color:var(--muted);font-size:11px}.analytics-details:not([open])>summary{margin-bottom:0}
+@media(max-width:700px){.comparison-grid{grid-template-columns:1fr;padding-inline:15px}.comparison-note{padding-inline:15px}}
+.protected-order-read .badge.deny,.protected-order-read .badge.blocked{background:var(--success-bg);color:var(--success-text)}
+.exposed-order-access .badge.allow,.exposed-order-access .badge.succeeded{background:var(--deny-bg);color:var(--deny-text)}
+.demo-view-notice{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.demo-view-notice .text-button{flex-shrink:0}

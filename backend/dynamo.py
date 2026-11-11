@@ -67,6 +67,16 @@ class DynamoStorage:
             return self.query("orders#" + customer_id, "by_owner")
         raise ValueError("Unsupported owner collection")
 
+    def next_order_number(self, customer_id):
+        response = self.table.update_item(
+            Key=self.key("order_counters", customer_id),
+            UpdateExpression="SET #sequence = if_not_exists(#sequence, :initial) + :one",
+            ExpressionAttributeNames={"#sequence": "sequence"},
+            ExpressionAttributeValues={":initial": 1, ":one": 1},
+            ReturnValues="UPDATED_NEW",
+        )
+        return int(response["Attributes"]["sequence"])
+
 
 class DynamoAuditSink:
     def __init__(self, table, retention_days=30):

@@ -11,6 +11,7 @@ class Storage(Protocol):
     def delete(self, collection: str, key: str): ...
     def list(self, collection: str) -> list[dict]: ...
     def list_owned(self, collection: str, customer_id: str) -> list[dict]: ...
+    def next_order_number(self, customer_id: str) -> int: ...
 
 
 class AuditSink(Protocol):
@@ -51,6 +52,14 @@ class SQLiteStorage:
 
     def list_owned(self, collection, customer_id):
         return [v for v in self.list(collection) if v.get("customer_id") == customer_id]
+
+    def next_order_number(self, customer_id):
+        with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            row = db.execute("SELECT value FROM records WHERE collection=? AND key=?", ("order_counters", customer_id)).fetchone()
+            number = (int(row[0]) if row else 1) + 1
+            db.execute("INSERT OR REPLACE INTO records VALUES (?,?,?)", ("order_counters", customer_id, str(number)))
+        return number
 
     def emit(self, event):
         self.put("audit", event["event_id"], event)
