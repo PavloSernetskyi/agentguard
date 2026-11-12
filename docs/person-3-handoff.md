@@ -1,5 +1,7 @@
 # Person 3 handoff: assistant integration and telemetry
 
+**Historical integration handoff.** The assistant and SOC dashboard are now deployed. For the current Person 3 click path and speaking lines, use the [Presentation Demo Guide](presentation-demo-guide.md); for open acceptance items, use the [project checklist](project-todo.md). The notes below describe the earlier integration stage.
+
 ## Current state
 
 The assistant backend and Ask Archery Pro chat UI are merged to `master` from [`person-2/assistant-agentguard`](https://github.com/PavloSernetskyi/agentguard/tree/person-2/assistant-agentguard). They are **not yet deployed to AWS**; the live site still serves an older build. Person 2's local verification passed 44 Python tests and the storefront TypeScript/production build. Automated visual/browser acceptance and hosted Alice/Bob verification remain outstanding.

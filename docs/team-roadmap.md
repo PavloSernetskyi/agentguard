@@ -1,6 +1,6 @@
 # Team roadmap and ownership
 
-Current update: **Archery Pro Shopping** is deployed in Ohio (`us-east-2`) at **https://d16nqulwj27ltb.cloudfront.net**. The deployed site has 18 synthetic archery products and a customer-driven fictional checkout. The protected Strands/Groq agent build is now hosted from `feat/agent-soc-aws-demo`, with the key in AWS Secrets Manager. Reciprocal hosted Alice/Bob cross-account agent checks passed with matching denial audit events. The SOC is local only. Follow the [ordered remaining checklist](project-todo.md) and [deployment status](aws-deployment.md). Browser regression remains before marking milestone 2 complete.
+**Historical planning document.** The milestone and branch notes below record the original plan and should not be used as the current acceptance status. The store, assistant and SOC dashboard are now hosted. Use the [current project checklist](project-todo.md) for remaining work and the [Presentation Demo Guide](presentation-demo-guide.md) for the rehearsed three-person scene.
 
 This is the shared handoff plan. Milestone 1 is complete; milestone 2 is in progress; milestones 3-4 are planned. Changes to ownership or contracts should be agreed in a pull request.
 

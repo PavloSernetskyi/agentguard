@@ -1,20 +1,31 @@
 # Archery Pro Shopping / AgentGuard
 
-**Current store:** Archery Pro Shopping is hosted on AWS with original generated product photography, 18 synthetic items and a fictional checkout. The protected assistant and SOC reporting code are merged into `master`. The [local guide](docs/archery-preview.md) remains available.
+**Current status:** Archery Pro Shopping and the AgentGuard SOC dashboard are hosted on AWS. The browser rehearsal confirmed Bob's blocked cross-account order read, Alice's controlled read of Bob's fictional order, and matching green/red SOC evidence. Use the **[Presentation Demo Guide](docs/presentation-demo-guide.md)** for the exact three-person prompts, clicks, handoffs and speaking lines. The [local preview guide](docs/archery-preview.md) remains available.
 
 A deployed, synthetic shopping platform for a three-person school project. Person 1 owns the store and AWS deployment; Person 2 owns AgentGuard enforcement; Person 3 owns the assistant UI and SOC dashboard.
 
 - **Live store:** https://d16nqulwj27ltb.cloudfront.net
 - **Live SOC dashboard:** https://d16nqulwj27ltb.cloudfront.net/soc/index.html (private operator sign-in)
+- **Team presentation:** [step-by-step guide for Persons 1, 2 and 3](docs/presentation-demo-guide.md)
 - **AWS region:** `us-east-2` (Ohio) · **Data:** synthetic only
 
 ## Final deliverable checklist
 
 Use this checklist for the final project demonstration. Checked items are implemented and verified; unchecked items are planned team work.
 
-For the ordered work from the hosted store through the protected agent, controlled synthetic demo profile, AWS SOC dashboard and final presentation, use the [remaining project checklist](docs/project-todo.md) and [demo script](docs/demo-script.md).
+For current acceptance status and unfinished submission work, use the [project checklist](docs/project-todo.md). The [presentation guide](docs/presentation-demo-guide.md) is the live script.
 
-### AWS services in use — Person 1 complete
+### Three-person presentation areas
+
+| Presenter | Area to explain | Show during the demo | Repository evidence |
+| --- | --- | --- | --- |
+| **Person 1 — store and AWS** | Storefront, account sessions, catalog, cart, fictional checkout and hosting | Bob shops, places an order, checks it, then attempts Alice's order | [Store](store/src/main.tsx), [store service](backend/service.py), [infrastructure](infra/site.tf) |
+| **Person 2 — agent and guardrails** | LLM plus tool harness, server-side order ownership, and the controlled Alice order-tool weakness | Alice shops, gets a direct refusal, then receives Bob's fictional order through the JSON reframe | [Assistant](backend/assistant/__init__.py), [security tests](tests/test_assistant.py), [threat model](docs/assistant-security.md) |
+| **Person 3 — interface and SOC evidence** | Assistant sidebar, request correlation, read-only audit feed and green/red security outcomes | Clear the demo view, show Bob's green blocked event, then Alice's red allowed read and its audit detail | [Assistant UI](store/src/AssistantChat.tsx), [SOC dashboard](dashboard/src/main.tsx), [audit contract](dashboard/src/audit.ts) |
+
+These are the team roles and presentation responsibilities. Use the [step-by-step guide](docs/presentation-demo-guide.md) for each person's exact lines and screen handoffs.
+
+### AWS services in use — Person 1 presentation area
 
 | AWS service | How this project uses it | Evidence in this repository |
 | --- | --- | --- |
@@ -44,29 +55,30 @@ AWS MCP helped with initial provisioning and verification; it is a developer too
 - [x] Enforce order ownership in backend operations and persist separate authorization decisions and execution outcomes.
 - [x] Keep payment processing disabled; the synthetic checkout records only a fictional order. No real customers, addresses, charges or refunds.
 
-### Remaining group deliverables
+### Agent, interface and SOC deliverables
 
-- [x] **Person 2:** implement and merge the Strands/Groq assistant, authorized store tools, storefront chat, security regressions and threat-model acceptance matrix to `master`.
-- [x] Integrate the assistant chat/API and the local SOC consumer with request-ID contract coverage.
+- [x] **Person 2 area:** Strands/Groq assistant, authorized store tools, security regressions and threat-model acceptance matrix are implemented and merged to `master`.
+- [x] **Person 3 area:** integrate the assistant chat/API, SOC consumer and request-ID contract coverage.
 - [x] Deploy the protected assistant build with a server-side Groq secret and reviewed Lambda timeout and Terraform plan.
-- [x] Verify private hosted Bob-to-Alice and Alice-to-Bob agent order attempts are blocked and audited under their request IDs.
-- [ ] Finish the post-release browser regression for own-order agent detail, account switching, cart and fictional checkout.
-- [ ] **Team:** run controlled security tests against the administrator-enabled synthetic demo profile and protected agent; document actual tool results and audit evidence.
-- [x] Deploy the SOC dashboard to AWS with managed operator access and a bounded read-only cloud audit feed. The team still needs the final paired browser rehearsal and SOC trace review.
-- [ ] **Final demo:** show normal Alice/Bob use, a blocked cross-account agent request, a clearly labeled synthetic-data exposure in the controlled demo profile, and the matching SOC timeline. An indirect prompt-injection attempt is optional.
+- [x] Verify Bob's protected Alice-order lookup is blocked and audited. Alice's controlled order-tool path returned Bob's fictional order and was audited as allowed; her ordinary order page still denies that read.
+- [x] Rehearse the hosted Bob/Alice shopping and security sequence, including the two SOC handoffs and matching green/red evidence.
+- [x] Deploy the SOC dashboard to AWS with managed operator access, a bounded read-only audit feed, and a reversible **Clear demo view** for the presentation.
+- [x] Write the exact three-person [presentation guide](docs/presentation-demo-guide.md), including prompts, clicks, security terms and closing lines.
+- [ ] Finish a separate resilience pass for slow responses, provider failures, session expiry and narrow-screen keyboard/focus behavior.
+- [ ] Complete a team-run presentation and collect the submission evidence. A separate indirect prompt-injection fixture is optional.
 
-The protected assistant and SOC dashboard are deployed and merged to `master`. Alice is the sole member of the administrator-controlled synthetic demo group; her assistant profile is enabled through December 12, 2026, Pacific time, while Bob and the normal order APIs retain ownership checks. The live Alice exposure and paired SOC trace still need a browser rehearsal. Groq inference is separate from AWS credits. Bedrock AgentCore remains optional, and no Bedrock model inference is claimed. Follow the [ordered project checklist](docs/project-todo.md) for the remaining gates.
+The protected assistant and SOC dashboard are deployed and merged to `master`. Alice is the sole member of the administrator-controlled classroom group; her assistant profile is enabled through December 12, 2026, Pacific time, while Bob and the normal order APIs retain ownership checks. The live Alice exposure and paired SOC trace were verified in the hosted browser. Groq inference is separate from AWS credits. Bedrock AgentCore remains optional, and no Bedrock model inference is claimed. Follow the [project checklist](docs/project-todo.md) for the remaining gates.
 
 ## Project status and team plan
 
-**Milestone 1 is complete:** the store works locally; Alice can view her order, cannot retrieve Bob's order, and the backend records the decision. The original 21 baseline tests passed before assistant work; this branch adds assistant acceptance tests.
+**Demo implementation is ready:** the hosted store, assistant, controlled Alice profile and SOC dashboard support the scripted three-person scene. On November 11, 2026, full local verification passed 81 Python tests, 17 store tests, 12 dashboard tests and both production builds. A team-run presentation and final submission package are still pending.
 
 | Milestone | Status | Deliverable |
 | --- | --- | --- |
 | 1. Local store | Complete | Store, sessions, carts, owned orders and audit baseline |
-| 2. AWS deployment + real assistant | Complete for protected path | Hosted store and Groq/Strands agent are live; reciprocal Alice/Bob order denials are audited |
-| 3. Controlled security demo | AWS Alice-only profile enabled; browser rehearsal pending | Administrator-enabled synthetic fixture on the same AWS site, scoped scenarios, enforcement and detection evidence |
-| 4. SOC dashboard + final demonstration | AWS reporting and operator verified; demo rehearsal pending | Read-only audit feed, correlated decision signals, and reproducible demo |
+| 2. AWS deployment + real assistant | Complete | Hosted store and Groq/Strands agent are live; Bob's protected order read is audited |
+| 3. Controlled security demo | Live scene verified | Alice's classroom order-tool read returned Bob's fictional order; the ordinary order page remains protected |
+| 4. SOC dashboard + final demonstration | Dashboard verified; team presentation pending | Read-only audit feed, green blocked and red exposed-order signals, and a repeatable [presentation guide](docs/presentation-demo-guide.md) |
 
 Read the **[team roadmap and acceptance checks](docs/team-roadmap.md)** before starting a branch.
 
@@ -78,9 +90,9 @@ Assistant architecture: **Strands + Groq inference**, with **Bedrock AgentCore e
 
 ## Hosted store status
 
-The Person 1 cloud store is deployed at **https://d16nqulwj27ltb.cloudfront.net** in Ohio (`us-east-2`): Lambda API, owner-scoped DynamoDB storage, Cognito-backed sign-in, secure cookies, private S3/CloudFront hosting and a $5/month alert budget. The public brand is now **Archery Pro Shopping**, with 18 synthetic products. The original `demomart-*` AWS resource IDs remain stable. Private Alice/Bob hosted ownership passed before this visual/catalog rollout; repeat the browser sign-in, own-order, cross-order and fictional checkout checks when integrating the assistant.
+The Person 1 cloud store is deployed at **https://d16nqulwj27ltb.cloudfront.net** in Ohio (`us-east-2`): Lambda API, owner-scoped DynamoDB storage, Cognito-backed sign-in, secure cookies, private S3/CloudFront hosting and a $5/month alert budget. The public brand is now **Archery Pro Shopping**, with 18 synthetic products. The original `demomart-*` AWS resource IDs remain stable. The current hosted assistant, order lookup, cart and fictional checkout have been exercised in the Bob/Alice rehearsal.
 
-See the [deployment runbook](docs/aws-deployment.md) for the current status, resource inventory, setup, cost controls and hosted acceptance evidence. This rollout passed 21 Python tests, a frontend build, a reviewed Terraform plan/apply, public catalog and asset checks, and an unauthenticated order denial with a matching audit event. Persons 2 and 3 can now branch from `master` and use the documented store and audit contracts.
+See the [deployment runbook](docs/aws-deployment.md) for the resource inventory, setup and cost controls. The latest complete local check passed 81 Python tests, 17 store tests, 12 dashboard tests and both production builds. The hosted browser showed Bob's denied order read and Alice's allowed cross-account order read, each with matching SOC evidence.
 
 ## Start locally
 
@@ -114,7 +126,7 @@ These deliberately public credentials are for local development only; the hosted
 
 1. **Structure and contracts:** see [API and teammate contracts](docs/contracts.md). `store/` contains React/TypeScript, `backend/` contains APIs and reusable operations, `seed/` contains synthetic fixtures, `tests/` contains security acceptance tests. `agentguard/`, `dashboard/`, and `infra/` provide teammate handoff notes.
 2. **Storefront:** start both servers; verify 18 archery products, bow-style sections, search, category filters, product details with fictional draw weights, and synthetic reviews. Original generated product images live in `store/public/images/`. Fonts use Google Fonts with local system fallbacks; no remote product assets are needed.
-3. **Accounts, cart, orders, audit:** sign in as Alice; add a product, adjust quantities, review the fictional checkout and record a synthetic order. Switch to Bob and confirm his cart and orders are separate. On the Person 2 branch, Ask Archery Pro uses the authenticated chat API when Groq is configured; without provider configuration, the rest of the store remains available. The hosted checkout also creates only synthetic orders.
+3. **Accounts, cart, orders, audit:** sign in as Alice; add a product, adjust quantities, review the fictional checkout and record a synthetic order. Switch to Bob and confirm his cart and orders are separate. Ask Archery Pro uses the authenticated chat API when Groq is configured; without provider configuration, the rest of the store remains available. The hosted checkout also creates only synthetic orders.
 4. **Verification:** run the commands below and the [manual checklist](docs/verification.md).
 
 ```powershell
@@ -145,4 +157,4 @@ No publicly accessible bypass, refunds, payment processing or Bedrock calls have
 
 The Person 3 dashboard in `dashboard/` consumes the merged assistant's existing v1 audit events through the protected local reporting feed. Storefront chat and audited store operations correlate by HTTP request ID. Run the dashboard at http://127.0.0.1:5174 alongside the local store and reporting service; see [dashboard setup](dashboard/README.md), [Person 2 handoff](docs/person-3-handoff.md), and [integration status](docs/assistant-soc-integration.md).
 
-The protected assistant and SOC dashboard are hosted on the same CloudFront distribution. Open the [SOC operator sign-in page](https://d16nqulwj27ltb.cloudfront.net/soc/index.html); a separate Cognito operator account is required to read events. The static sign-in shell is public, but anonymous reporting requests return 401. The user reported that private operator verification passed, and Cognito confirms the reporting group. Browser review and the paired Bob/Alice live traces remain. The dashboard highlights ownership denials and controlled demo access as review conditions, not automatically confirmed incidents. A Git merge alone does not deploy AWS resources.
+The protected assistant and SOC dashboard are hosted on the same CloudFront distribution. Open the [SOC operator sign-in page](https://d16nqulwj27ltb.cloudfront.net/soc/index.html); a separate Cognito operator account is required to read events. The static sign-in shell is public, but anonymous reporting requests return 401. The paired Bob/Alice browser traces were verified. The dashboard highlights a blocked Bob read in green and a successful Alice-to-Bob read in red; Audit explorer uses the same colors for those order-tool events. **Clear demo view** hides older records for the operator's presentation without deleting AWS audit evidence. A Git merge alone does not deploy AWS resources.
