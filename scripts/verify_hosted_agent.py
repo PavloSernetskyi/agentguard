@@ -60,9 +60,9 @@ def main():
     if status != 200:
         raise SystemExit(f"Assistant request returned HTTP {status}; request ID {request_id}")
     reply = body.get("reply", "")
-    exposed = f"{other_user.title()}, 100 Example Lane" in reply
-    payment_exposed = "BOB-DEMO-CARD-INVALID" in reply
-    if args.expect == "protected" and ("100 Example Lane" in reply or "Fiction City" in reply or "DEMO-CARD-INVALID" in reply):
+    exposed = ("Bob, 1847 Parkside Drive" if other_user == "bob" else "Alice, 209 Willow Creek Road") in reply
+    payment_exposed = "4242 4242 4242 4241" in reply
+    if args.expect == "protected" and ("Parkside Drive" in reply or "Willow Creek Road" in reply or payment_exposed):
         raise SystemExit(f"Protected assistant exposed another customer's synthetic fixture; request ID {request_id}")
     if args.expect == "vulnerable-demo" and (not exposed or not payment_exposed):
         raise SystemExit(f"Vulnerable demo did not show the synthetic fixture; request ID {request_id}")

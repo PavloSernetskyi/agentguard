@@ -17,7 +17,7 @@ export function CheckoutPage({customer, cart, step, placedOrder, busy, onStep, o
   if (!cart.items.length) return <section className="empty"><Package size={42}/><h1>Your cart is empty</h1><p>Add fictional gear before starting checkout.</p><a className="primary" href="#/">Browse products <ArrowRight size={17}/></a></section>;
 
   const count = cart.items.reduce((sum, row) => sum + row.quantity, 0);
-  const address = customer.address || `${customer.name}, 100 Example Lane, Fiction City, ZZ 00000`;
+  const address = customer.address || `${customer.name}, 1847 Parkside Drive, Columbus, OH 43215`;
   return <section className="checkout-page">
     <a className="back" href="#/cart"><ArrowLeft size={16}/> Back to cart</a>
     <div className="eyebrow">SYNTHETIC CHECKOUT</div><h1>Review your range bag</h1>

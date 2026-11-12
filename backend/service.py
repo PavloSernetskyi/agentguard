@@ -130,7 +130,7 @@ class StoreService:
                 "date": datetime.now(timezone.utc).date().isoformat(),
                 "placed_at": placed_at,
                 "status": "Placed (fictional)",
-                "address": customer.get("address") or customer["name"] + ", 100 Example Lane, Fiction City, ZZ 00000",
+                "address": customer.get("address") or customer["name"] + ", 1847 Parkside Drive, Columbus, OH 43215",
                 "items": items,
                 "total": sum(item["unit_price"] * item["quantity"] for item in items),
                 "transaction": "synthetic-no-payment",

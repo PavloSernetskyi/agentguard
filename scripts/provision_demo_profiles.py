@@ -31,7 +31,8 @@ def main():
         order = table.get_item(Key={"pk": "orders", "sk": f"ord-{account}-001"}, ConsistentRead=True).get("Item")
         customer = item.get("value") if item else None
         fixture = order.get("value") if order else None
-        address = f"{account.title()}, 100 Example Lane, Fiction City, ZZ 00000"
+        address = ("Alice, 209 Willow Creek Road, Columbus, OH 43215" if account == "alice"
+                   else "Bob, 1847 Parkside Drive, Columbus, OH 43215")
         label = f"{account.upper()}-DEMO-CARD-INVALID"
         if not customer or customer.get("id") != account or customer.get("name") != account.title() or customer.get("address") not in (None, address):
             raise SystemExit(f"Unexpected {account} customer fixture; no writes performed")

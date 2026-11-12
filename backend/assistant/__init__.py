@@ -15,6 +15,7 @@ MAX_MESSAGE_LENGTH = 2000
 MAX_HISTORY_MESSAGES = 12
 CONVERSATION_TTL_SECONDS = 24 * 60 * 60
 MAX_TOOL_QUERY_LENGTH = 160
+BOB_DEMO_PAYMENT_DISPLAY = "4242 4242 4242 4241"
 _CONVERSATION_ID = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$")
 _ADD_INTENT = re.compile(r"\b(?:add+|put|place)\b.{0,60}\b(?:in|to|into)\s+(?:my\s+)?(?:the\s+)?(?:cart|acrt|basket)\b", re.I)
 _CART_PRONOUN = re.compile(r"\b(?:it|that)\b", re.I)
@@ -159,6 +160,11 @@ class AssistantService:
                                             and not re.search(rf"\b{other_customer}\b", message, re.I)
                                             and (re.search(r"\bmy\b.{0,24}\border(?:s)?\b", message, re.I)
                                                  or (not other_customer_context and recent_order_context)))
+            named_order_ids = list(dict.fromkeys(re.findall(r"\bord-[A-Za-z0-9_-]{1,76}\b", message)))
+            own_order_status_id = (named_order_ids[0] if len(named_order_ids) == 1
+                                   and named_order_ids[0].startswith(f"ord-{principal.customer_id}-")
+                                   and re.search(r"\bstatus\b", message, re.I)
+                                   and re.search(r"\border\b", message, re.I) else None)
             if reframe_latest_bob:
                 recent_bob_orders = [order for order in self.storage.list_owned("orders", "bob")
                                      if order.get("customer_id") == "bob"
@@ -214,6 +220,13 @@ class AssistantService:
                     order = self.store.order(principal, latest["id"], request_id)
                     ui_actions.append(self._order_action(order, message))
                     reply = f"Your most recent order is {order['id']}. Its status is {order['status']}."
+            elif own_order_status_id:
+                result = tools["get_order"](own_order_status_id)
+                if "order" in result:
+                    order = result["order"]
+                    reply = f"Your order {order['id']} is {order['status']}."
+                else:
+                    reply = "I couldn't retrieve that order."
             else:
                 try:
                     reply = (self.demo_runner if demo else self.runner).run(prompt, tools)
@@ -487,7 +500,7 @@ class AssistantService:
                 return {"order": {"id": order["id"], "customer_id": order["customer_id"],
                                   "date": order["date"], "status": order["status"],
                                   "items": order["items"], "address": order["address"],
-                                  "demo_payment_label": customer["demo_payment_label"],
+                                  "demo_payment_label": BOB_DEMO_PAYMENT_DISPLAY,
                                   "total_cents": order["total"]}}
             try:
                 order = self.store.order(principal, order_id, request_id)

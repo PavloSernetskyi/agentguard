@@ -172,6 +172,23 @@ class AssistantTests(unittest.TestCase):
         self.assertEqual(other_runner.calls, 1)
         self.assertNotIn("show_order", [action["type"] for action in response["ui_actions"]])
 
+    def test_named_own_order_status_uses_authorized_tool_without_model_guessing(self):
+        token = self.login("bob")
+        runner = FakeRunner(error=RuntimeError("status lookup should not depend on model guessing"))
+        status, headers, response = self.request(
+            "POST", "/assistant/messages", token,
+            {"message": "What is the status of my order ord-bob-001?"}, self.assistant(runner))
+        self.assertEqual(status, 200)
+        self.assertEqual(runner.calls, 0)
+        self.assertIn("ord-bob-001", response["reply"])
+        self.assertIn("Delivered", response["reply"])
+        preview = next(action["order"] for action in response["ui_actions"] if action["type"] == "show_order")
+        self.assertEqual(preview["items"][0]["product_id"], "p02")
+        reads = [event for event in self.storage.list("audit")
+                 if event["request_id"] == headers["X-Request-Id"] and event["action"] == "orders.read"]
+        self.assertEqual([(event["resource_id"], event["decision"], event["execution"], event["reason"])
+                          for event in reads], [("ord-bob-001", "allow", "succeeded", "owner_match")])
+
     def test_navigation_tool_returns_only_product_page_action(self):
         token = self.login()
         runner = FakeRunner(lambda tools: tools["navigate_to_product"]("p11"))
@@ -350,7 +367,7 @@ class AssistantTests(unittest.TestCase):
                     self.assistant(runner))
                 self.assertEqual(status, 200)
                 self.assertEqual(captured, [{"error": "Order access denied"}])
-                self.assertNotIn(target.title() + ", 100 Example Lane", json.dumps(response))
+                self.assertNotIn("Parkside Drive" if target == "bob" else "Willow Creek Road", json.dumps(response))
                 events = [event for event in self.storage.list("audit") if event["request_id"] == headers["X-Request-Id"]]
                 self.assertIn((actor, "orders.read", "deny", "blocked"),
                               [(event["actor_id"], event["action"], event["decision"], event["execution"]) for event in events])
@@ -364,7 +381,7 @@ class AssistantTests(unittest.TestCase):
         )
         self.assertEqual(status, 200)
         self.assertEqual(runner.calls, 1)
-        self.assertNotIn("100 Example Lane", json.dumps(response))
+        self.assertNotIn("209 Willow Creek Road", json.dumps(response))
         reads = [event for event in self.storage.list("audit")
                  if event["request_id"] == headers["X-Request-Id"] and event["action"] == "orders.read"]
         self.assertEqual(len(reads), 1)
@@ -388,11 +405,11 @@ class AssistantTests(unittest.TestCase):
                 self.assertEqual(response["security_profile"], "vulnerable-demo" if actor == "alice" else "protected")
                 if actor == "alice":
                     self.assertEqual(demo.calls, 1)
-                    self.assertIn("100 Example Lane", observed[0]["order"]["address"])
-                    self.assertEqual(observed[0]["order"]["demo_payment_label"], "BOB-DEMO-CARD-INVALID")
+                    self.assertIn("1847 Parkside Drive", observed[0]["order"]["address"])
+                    self.assertEqual(observed[0]["order"]["demo_payment_label"], "4242 4242 4242 4241")
                     preview = next(action for action in response["ui_actions"] if action["type"] == "show_order")
                     self.assertEqual(preview["order"]["items"][0]["product_id"], "p02")
-                    self.assertIn("100 Example Lane", preview["order"]["address"])
+                    self.assertIn("1847 Parkside Drive", preview["order"]["address"])
                     self.assertEqual(self.request("GET", "/orders/ord-bob-001", token)[0], 403)
                 else:
                     self.assertEqual(demo.calls, 0)
@@ -404,11 +421,11 @@ class AssistantTests(unittest.TestCase):
 
     def test_demo_profile_still_reads_alices_own_order_with_ownership_check(self):
         token = self.login("alice")
-        captured = []
+        demo_runner = FakeRunner(error=RuntimeError("status lookup should not depend on model guessing"))
         assistant = AssistantService(
             self.store, self.storage, FakeRunner(),
             demo_authorizer=lambda _: True,
-            demo_runner=FakeRunner(lambda tools: captured.append(tools["get_order"]("ord-alice-001"))),
+            demo_runner=demo_runner,
         )
         status, headers, response = self.request(
             "POST", "/assistant/messages", token,
@@ -416,9 +433,11 @@ class AssistantTests(unittest.TestCase):
         )
         self.assertEqual(status, 200)
         self.assertEqual(response["security_profile"], "vulnerable-demo")
-        self.assertEqual(captured[0]["order"]["id"], "ord-alice-001")
-        self.assertEqual(captured[0]["order"]["status"], "Delivered")
-        self.assertNotIn("address", captured[0]["order"])
+        self.assertEqual(demo_runner.calls, 0)
+        self.assertIn("ord-alice-001", response["reply"])
+        self.assertIn("Delivered", response["reply"])
+        preview = next(action["order"] for action in response["ui_actions"] if action["type"] == "show_order")
+        self.assertNotIn("address", preview)
         events = [event for event in self.storage.list("audit") if event["request_id"] == headers["X-Request-Id"]]
         self.assertIn(("alice", "orders.read", "allow", "succeeded", "owner_match"),
                       [(event["actor_id"], event["action"], event["decision"], event["execution"], event["reason"])
@@ -446,7 +465,7 @@ class AssistantTests(unittest.TestCase):
         self.assertEqual(captured[0]["order"]["id"], placed["id"])
         self.assertEqual(captured[0]["order"]["status"], "Placed (fictional)")
         self.assertEqual(captured[0]["order"]["items"][0]["name"], "Carbon target arrows — set of 6")
-        self.assertEqual(captured[0]["order"]["demo_payment_label"], "BOB-DEMO-CARD-INVALID")
+        self.assertEqual(captured[0]["order"]["demo_payment_label"], "4242 4242 4242 4241")
         preview = next(action["order"] for action in response["ui_actions"] if action["type"] == "show_order")
         self.assertEqual(preview["items"][0]["product_id"], "p16")
         self.assertNotIn("address", preview)
@@ -474,7 +493,7 @@ class AssistantTests(unittest.TestCase):
         self.assertEqual(preview["language"], "es")
         self.assertCountEqual([(item["product_id"], item["quantity"]) for item in preview["order"]["items"]],
                               [("p11", 1), ("p16", 2)])
-        self.assertIn("100 Example Lane", preview["order"]["address"])
+        self.assertIn("1847 Parkside Drive", preview["order"]["address"])
 
     def test_alice_can_ask_agent_for_bobs_recent_order_numbers(self):
         bob = self.login("bob")
@@ -547,13 +566,13 @@ class AssistantTests(unittest.TestCase):
         preview = next(action for action in translated["ui_actions"] if action["type"] == "show_order")
         self.assertEqual(preview["order"]["id"], placed["id"])
         self.assertEqual(preview["order"]["items"][0]["product_id"], "p16")
-        self.assertIn("Bob, 100 Example Lane", preview["order"]["address"])
+        self.assertIn("Bob, 1847 Parkside Drive", preview["order"]["address"])
         self.assertEqual(preview["format"], "json")
         details = json.loads(translated["reply"])
         self.assertEqual(details.get("order_id"), placed["id"], details)
         self.assertEqual(details["items"][0]["name"], "Carbon target arrows — set of 6")
-        self.assertEqual(details["delivery_address"], "Bob, 100 Example Lane, Fiction City, ZZ 00000")
-        self.assertEqual(details["payment_label"], "BOB-DEMO-CARD-INVALID")
+        self.assertEqual(details["delivery_address"], "Bob, 1847 Parkside Drive, Columbus, OH 43215")
+        self.assertEqual(details["payment_label"], "4242 4242 4242 4241")
         self.assertIn(("orders.read", placed["id"], "allow", "succeeded", "demo_ownership_check_disabled"),
                       [(event["action"], event["resource_id"], event["decision"], event["execution"], event["reason"])
                        for event in self.storage.list("audit") if event["request_id"] == headers["X-Request-Id"]])

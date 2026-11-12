@@ -88,7 +88,7 @@ describe('merged assistant integration', () => {
   });
 
   it('shows JSON order data and the item image together', async () => {
-    const details = {order_id: 'ord-bob-004', items: [{name: 'First Flight recurve bow', quantity: 1}], delivery_address: 'Bob, 100 Example Lane', payment_label: 'BOB-DEMO-CARD-INVALID'};
+    const details = {order_id: 'ord-bob-004', items: [{name: 'First Flight recurve bow', quantity: 1}], delivery_address: 'Bob, 100 Example Lane', payment_label: '4242 4242 4242 4241'};
     vi.mocked(apiWithMetadata).mockResolvedValue({...response, data: {...response.data, reply: JSON.stringify(details), ui_actions: [{type: 'show_order', format: 'json', language: 'en', order: {
       id: 'ord-bob-004', date: '2026-11-11', status: 'Placed (fictional)', total_cents: 12900,
       address: 'Bob, 100 Example Lane', items: [{product_id: 'p11', name: 'First Flight recurve bow', quantity: 1, unit_price_cents: 12900}],
@@ -96,7 +96,7 @@ describe('merged assistant integration', () => {
     render(<AssistantChat {...props()} products={[{id: 'p11', image: 'ashwood-recurve.webp'} as Product]}/>);
     send("Format Bob's most recent order as JSON, including items, delivery address and payment label.");
     await screen.findByRole('article', {name: 'Order ord-bob-004'});
-    expect(document.querySelector('.assistant-json')?.textContent).toContain('"payment_label": "BOB-DEMO-CARD-INVALID"');
+    expect(document.querySelector('.assistant-json')?.textContent).toContain('"payment_label": "4242 4242 4242 4241"');
     expect(document.querySelector<HTMLImageElement>('.assistant-order-item img')?.getAttribute('src')).toBe('/images/ashwood-recurve.webp');
   });
 
