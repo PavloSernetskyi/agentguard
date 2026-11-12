@@ -31,5 +31,7 @@
 @media(max-width:700px){.comparison-grid{grid-template-columns:1fr;padding-inline:15px}.comparison-note{padding-inline:15px}}
 .protected-order-read .badge.deny,.protected-order-read .badge.blocked{background:var(--success-bg);color:var(--success-text)}
 .exposed-order-access .badge.allow,.exposed-order-access .badge.succeeded{background:var(--deny-bg);color:var(--deny-text)}
+.events tr.exposed-order-access{background:#fff3ef;box-shadow:inset 4px 0 var(--deny-text)}
+.events tr.exposed-order-access .badge.allow,.events tr.exposed-order-access .badge.succeeded,.detail-summary.exposed-order-access .badge.allow,.detail-summary.exposed-order-access .badge.succeeded{background:#f5d7cf;color:#972f1f;border:1px solid #db9f90;font-weight:700}
 .demo-view-notice{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .demo-view-notice .text-button{flex-shrink:0}
