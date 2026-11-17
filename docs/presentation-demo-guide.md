@@ -148,7 +148,7 @@ If the assistant has just shown exactly one product, “Add it to my cart” als
 | Color and card | What happened | What to say |
 | --- | --- | --- |
 | **Green: Bob → Bob or Alice → Alice · Own order authorized** | `orders.read / allow / succeeded`, reason `owner_match` | “Normal shopping access worked.” |
-| **Yellow: Bob → Alice · Attempt blocked** | `orders.read / deny / blocked`, reason `ownership_mismatch` | “The guardrail stopped the cross-account read.” |
+| **Yellow: Bob → Alice · Attempt blocked** | `orders.read / deny / blocked`, reason `ownership_mismatch` | “The guardrail stopped the cross-account read.” An unauthenticated order read blocked for `invalid_session` is yellow too. |
 | **Red: Alice → Bob · Alert · read allowed** | `orders.read / allow / succeeded`, reason `demo_ownership_check_disabled` | “The assistant tool returned Bob's order.” |
 
 The SOC page refreshes every 15 seconds. If a card still shows an older time or order number, wait for the next refresh or use the refresh control in **Signals** or **Audit explorer**. A card proves the tool decision. The assistant reply shows what the shopper actually saw. Normal cart changes, checkouts, and own-order reads remain in **Audit explorer** for questions after the main presentation; they do not appear as alerts on Overview.

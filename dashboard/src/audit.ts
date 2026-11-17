@@ -143,6 +143,19 @@ export function csv(events: AuditEvent[]) {
 
 export function fixtures(now = Date.now()): AuditEvent[] {
   return Array.from({ length: 64 }, (_, index) => {
+    // Keep the three presentation outcomes visible in the local preview.
+    if (index === 1 || index === 2) return {
+      schema_version: 1,
+      event_id: `00000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
+      request_id: `10000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
+      timestamp: new Date(now - (index * 19 + 3) * 60000).toISOString(),
+      actor_id: index === 1 ? 'alice' : 'bob',
+      action: 'orders.read',
+      resource_id: index === 1 ? 'ord-bob-006' : 'ord-alice-001',
+      decision: index === 1 ? 'allow' : 'deny',
+      reason: index === 1 ? 'demo_ownership_check_disabled' : 'ownership_mismatch',
+      execution: index === 1 ? 'succeeded' : 'blocked',
+    };
     const blocked = index % 6 === 0; const failed = !blocked && index % 13 === 0;
     const actor = index % 12 === 0 ? null : index % 5 === 0 ? 'bob' : 'alice';
     const action = blocked ? 'orders.read' : failed ? 'cart.update' : index % 4 === 0 ? 'session.create' : index % 3 === 0 ? 'orders.list' : 'orders.read';

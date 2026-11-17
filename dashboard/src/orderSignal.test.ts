@@ -9,6 +9,7 @@ test('order signals distinguish owned, blocked, and exposed reads', () => {
   assert.equal(orderSignal(base), 'own-order-read');
   assert.equal(orderSignal({ ...base, actor_id: 'alice', resource_id: 'ord-alice-001' }), 'own-order-read');
   assert.equal(orderSignal({ ...base, resource_id: 'ord-alice-001', decision: 'deny', reason: 'ownership_mismatch', execution: 'blocked' }), 'blocked-order-read');
+  assert.equal(orderSignal({ ...base, actor_id: null, resource_id: 'ord-alice-001', decision: 'deny', reason: 'invalid_session', execution: 'blocked' }), 'blocked-order-read');
   assert.equal(orderSignal({ ...base, actor_id: 'alice', resource_id: 'ord-bob-006', reason: 'demo_ownership_check_disabled' }), 'exposed-order-access');
   assert.equal(orderSignal({ ...base, action: 'assistant.message' }), null);
   assert.equal(orderSignal({ ...base, actor_id: 'alice', resource_id: 'ord-bob-006' }), null);

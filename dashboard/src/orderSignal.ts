@@ -8,7 +8,8 @@ export function orderSignal(event: AuditEvent): OrderSignal {
   if (event.actor_id === 'alice' && event.resource_id.startsWith('ord-bob-')
     && event.reason === 'demo_ownership_check_disabled'
     && event.decision === 'allow' && event.execution === 'succeeded') return 'exposed-order-access';
-  if (isOwnershipDenial(event) && event.execution === 'blocked') return 'blocked-order-read';
+  if (event.decision === 'deny' && event.execution === 'blocked'
+    && (isOwnershipDenial(event) || event.reason === 'invalid_session')) return 'blocked-order-read';
   if (event.actor_id && event.resource_id.startsWith(`ord-${event.actor_id}-`)
     && event.reason === 'owner_match'
     && event.decision === 'allow' && event.execution === 'succeeded') return 'own-order-read';
@@ -17,6 +18,6 @@ export function orderSignal(event: AuditEvent): OrderSignal {
 
 export const orderSignalLabel: Record<Exclude<OrderSignal, null>, string> = {
   'own-order-read': 'Own order · authorized',
-  'blocked-order-read': 'Cross-account attempt · blocked',
+  'blocked-order-read': 'Unauthorized order attempt · blocked',
   'exposed-order-access': 'Cross-account read · allowed',
 };
