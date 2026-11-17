@@ -24,12 +24,15 @@
   --brand-highlight-soft: #f5dfb6;
   --success-bg: #e6f2e9;
   --success-text: #296346;
+  --warning-bg: #fff3cf;
+  --warning-text: #785400;
+  --warning-border: #d8b24e;
   --deny-bg: #faeae4;
   --deny-text: #983e30;
   --failed-bg: #fcf1d9;
   --failed-text: #7c5b1b;
   --chart-success: #62866b;
-  --chart-blocked: #b96851;
+  --chart-blocked: #c7a13e;
   --chart-failed: #c49b50;
   --notice-bg: #fbf4e4;
   --notice-border: #e3d3a9;

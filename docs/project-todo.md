@@ -1,6 +1,6 @@
 # AgentGuard remaining work: ordered checklist
 
-**Presentation script:** follow the [three-person Presentation Demo Guide](presentation-demo-guide.md) on the live store and [SOC dashboard](https://d16nqulwj27ltb.cloudfront.net/soc/index.html). Person 3 clicks **Clear demo view** before Bob starts, shows Bob's green blocked card after his attempt, then Alice's red allowed-read card after her JSON request. No manual request-ID filter is needed. Do not put passwords in team notes. Alice's classroom profile expires after December 12, 2026, Pacific time.
+**Presentation script:** follow the [three-person Presentation Demo Guide](presentation-demo-guide.md) on the live store and [SOC dashboard](https://d16nqulwj27ltb.cloudfront.net/soc/index.html). Person 3 clicks **Clear demo view** before Bob starts, shows green own-order reads, Bob's yellow blocked card after his attempt, then Alice's red allowed-read card after her JSON request. No manual request-ID filter is needed. Do not put passwords in team notes. Alice's classroom profile expires after December 12, 2026, Pacific time.
 
 This is the execution checklist for the final Archery Pro Shopping demonstration. The store, assistant, Alice-only classroom profile, and SOC dashboard are hosted in AWS Ohio (`us-east-2`) at https://d16nqulwj27ltb.cloudfront.net. The Bob/Alice security scenes and paired SOC traces were verified in the hosted browser; resilience, operator workflow and submission checks remain below. All accounts, orders, addresses and test evidence are synthetic.
 
@@ -45,12 +45,12 @@ This is the execution checklist for the final Archery Pro Shopping demonstration
 - [x] Deploy a separate read-only reporting Lambda and IAM role. The store Lambda stays audit-write-only. The reviewed 2026-11-05 SOC plan applied with 23 additions, 3 updates and no deletions.
 - [x] Complete managed operator sign-in and hosted verification. Cognito confirms `soc-operator` belongs to `agentguard-soc-operators`. The static sign-in page is public; anonymous feed and health requests returned 401. The paired Alice/Bob traces were later verified in the private hosted dashboard.
 - [x] Correlate `assistant.profile`, `orders.read`, and `assistant.message` v1 events by request ID without placing prompts, addresses, cookies or keys into audit events. Display authorization decision separately from execution. Verify visible exposure separately from audit evidence.
-- [x] Verify operator sign-in, live Overview, Audit explorer and the paired Bob/Alice order-tool traces. Bob's blocked read appears green; Alice's successful cross-account read appears red in the comparison card and Audit explorer. **View audit event** opens the correlated request without manual filter entry.
+- [x] Verify operator sign-in, live Overview, Audit explorer and the paired Bob/Alice order-tool traces. Own-order reads appear green; Bob's blocked read appears yellow; Alice's successful cross-account read appears red in the comparison card and Audit explorer. **View audit event** opens the correlated request without manual filter entry.
 - [ ] Complete remaining SOC interaction checks: confirm a fresh event appears on the 15-second visible-tab poll, paginate through a larger result set, and recheck request-ID lookup after a new presentation reset.
 
 ## 5. Final demo and submission
 
-- [x] Record the audience story, exact Bob/Alice prompts, order steps, SOC click path, security terms and conclusions in the [Presentation Demo Guide](presentation-demo-guide.md). The hosted Alice path and green/red dashboard comparison were rehearsed.
+- [x] Record the audience story, exact Bob/Alice prompts, order steps, SOC click path, security terms and conclusions in the [Presentation Demo Guide](presentation-demo-guide.md). The hosted Alice path and three audit outcomes were rehearsed.
 - [x] Ship the collapsible right-side assistant panel, product images in recommendations and order cards, and a **New chat** control. Verify the hosted layout and Alice's JSON order card.
 - [x] Run the full Python, store and dashboard suites and production builds after the final release: 81 Python tests, 17 store tests, 12 dashboard tests, and both builds passed on November 11, 2026. Hosted Bob/Alice security outcomes were rechecked.
 - [ ] Have all three teammates perform the complete presentation in order and capture each person's speaking handoff.

@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | **Person 1** | Bob, the shopper | Shop normally, show his order, then try to read Alice's order. |
 | **Person 2** | Alice, the shopper | Shop normally, then ask the assistant for the order Bob just placed. |
-| **Person 3** | SOC operator | Show the **green blocked** outcome for Bob and the **red read allowed** alert for Alice. |
+| **Person 3** | SOC operator | Show **green own-order reads**, Bob's **yellow blocked attempt**, and Alice's **red cross-account read**. |
 
 ## The story to tell
 
@@ -16,7 +16,7 @@ An AI shopping agent is an **LLM plus a harness**: the model understands the sho
 
 **Presenter line:** “The model decides which tool to use. The tool must enforce the rules using the signed-in account. A prompt claiming permission cannot grant access to another customer's order.”
 
-The two account profiles show that design choice. Bob's order tool checks ownership and blocks a cross-account read. Alice's classroom order tool skips that check for Bob's numbered orders, so the same kind of request returns data. The SOC cards show the security outcome: **green means a read was stopped; red means a cross-account read succeeded.**
+The two account profiles show that design choice. Bob's order tool checks ownership and blocks a cross-account read. Alice's classroom order tool skips that check for Bob's numbered orders, so the same kind of request returns data. The SOC uses three labeled outcomes: **green** for a successful own-order read, **yellow** for a blocked cross-account attempt, and **red** for a cross-account read that succeeded.
 
 **Security terms for the class:** The main scene demonstrates **agent tool misuse**, **broken object-level authorization (BOLA/IDOR)**, and **cross-account data exposure**. Alice's JSON request is an adversarial reframe of her direct question. The app's weak order tool causes the exposure; JSON formatting does not confer permission. This is not a cross-session leak, and the main scene alone is not a classic indirect prompt injection. Use those terms accurately in the presentation.
 
@@ -70,10 +70,10 @@ If the assistant has just shown exactly one product, “Add it to my cart” als
 
 > What is the status of my order <BOB_NEW_ORDER_ID>?
 
-**Show:** Bob's just-placed order and its item. Person 3 does not need to open an event for this normal request.
+**Show:** Bob's just-placed order and its item. The corresponding `orders.read / allow / succeeded` row is green in Audit explorer. Person 3 can show it during the first SOC handoff.
 
 
-### 4. Bob tries Alice's order — green outcome
+### 4. Bob tries Alice's order — yellow outcome
 
 **Person 1 says:** “Now I'll ask for Alice's order number.”
 
@@ -83,9 +83,9 @@ If the assistant has just shown exactly one product, “Add it to my cart” als
 
 **Show:** The assistant declines and does not display Alice's items or address.
 
-**Person 3 switches to SOC Overview and says:** “Green means the ownership check worked. Bob's request for Alice's order was blocked.”
+**Person 3 switches to SOC Overview and says:** “Yellow marks an attempted cross-account read. Bob's request for Alice's order was blocked by the ownership check.”
 
-**Point at:** **BOB → ALICE · Protected · blocked**. The **ALICE → BOB** card should still say **Waiting for Alice**, with no red alert for an older rehearsal. Check that Bob's time updated for this turn and its resource is `ord-alice-001`. On **Signals**, the **Ownership mismatches** count reflects blocked cross-account reads. No request ID search is required.
+**Point at:** the yellow **BOB → ALICE · Attempt blocked** card. The **ALICE → BOB** card should still say **Waiting for Alice**, with no red alert for an older rehearsal. Check that Bob's time updated for this turn and its resource is `ord-alice-001`. In **Audit explorer**, show Bob's earlier green own-order read and this yellow blocked read. No request ID search is required.
 
 ### 5. Alice browses and buys
 
@@ -105,7 +105,7 @@ If the assistant has just shown exactly one product, “Add it to my cart” als
 
 > What is the status of my order <ALICE_NEW_ORDER_ID>?
 
-**Show:** Alice's just-placed order. This is her normal order access.
+**Show:** Alice's just-placed order. Its `orders.read / allow / succeeded` row is green in Audit explorer. Person 3 can show it alongside Alice's red cross-account read during the second SOC handoff.
 
 
 ### 7. Alice reframes Bob's order as JSON — red alert
@@ -130,7 +130,7 @@ If the assistant has just shown exactly one product, “Add it to my cart” als
 
 ### 8. Close the story
 
-**Person 3 says:** “Same store, same type of order request. Bob's cross-account read was stopped. Alice's assistant read Bob's order. These green and red outcomes make the difference visible.”
+**Person 3 says:** “Green shows each shopper reading their own order. Yellow shows Bob's attempt to read Alice's order was stopped. Red shows Alice's assistant read Bob's order.”
 
 **Optional proof:** While still signed in as Alice, open `#/orders/<BOB_NEW_ORDER_ID>` in the store. The ordinary order page says **Access denied**. The red result is specific to Alice's assistant order tool.
 
@@ -139,15 +139,16 @@ If the assistant has just shown exactly one product, “Add it to my cart” als
 **Person 3's click path (no manual filters):**
 
 1. Before Person 1 starts, open **Overview** and click **Clear demo view**. Confirm both cards say **Waiting** and the audit metrics show zero. Leave the dashboard on Overview while Bob shops.
-2. After Bob's Alice-order question, switch to the SOC tab and wait up to 15 seconds for **BOB → ALICE · Protected · blocked** to turn green. Point to the order ID and time. Leave **ALICE → BOB** waiting. Then hand the store back to Person 2.
+2. After Bob's Alice-order question, switch to the SOC tab and wait up to 15 seconds for **BOB → ALICE · Attempt blocked** to turn yellow. Point to the order ID and time. In **Audit explorer**, contrast Bob's green own-order read with his yellow blocked attempt. Leave **ALICE → BOB** waiting. Then hand the store back to Person 2.
 3. After Alice's direct Bob question, stay with the store reply. There should be no new red detail-read card yet. After her JSON request reveals the order, switch to SOC and wait up to 15 seconds for **ALICE → BOB · Alert · read allowed** to turn red. Point to the matching Bob order ID and time.
-4. For audit proof, click **View audit event** inside the relevant colored card. The dashboard opens **Audit explorer** with that request selected automatically. Bob's `Deny / Blocked` order-read badges are green; Alice's `Allow / Succeeded` cross-account order-read badges are red. Click **Reset filters**, then **Overview** to return to the two cards and the complete demo metrics. Do not type into the filter box during the live sequence.
+4. For audit proof, click **View audit event** inside the relevant colored card. The dashboard opens **Audit explorer** with that request selected automatically. Own-order `Allow / Succeeded` rows are green, Bob's `Deny / Blocked` cross-account row is yellow, and Alice's `Allow / Succeeded` cross-account row is red. Click **Reset filters**, then **Overview** to return to the two cards and the complete demo metrics. Do not type into the filter box during the live sequence.
 
 **Clear demo view** hides older events from Overview, Signals, Assistant requests, and Audit explorer in this browser. It resets active filters. **Show full history** restores the earlier AWS evidence if you need it after the presentation. It does not delete audit records.
 
 | Color and card | What happened | What to say |
 | --- | --- | --- |
-| **Green: Bob → Alice · Protected · blocked** | `orders.read / deny / blocked`, reason `ownership_mismatch` | “The guardrail stopped the read.” |
+| **Green: Bob → Bob or Alice → Alice · Own order authorized** | `orders.read / allow / succeeded`, reason `owner_match` | “Normal shopping access worked.” |
+| **Yellow: Bob → Alice · Attempt blocked** | `orders.read / deny / blocked`, reason `ownership_mismatch` | “The guardrail stopped the cross-account read.” |
 | **Red: Alice → Bob · Alert · read allowed** | `orders.read / allow / succeeded`, reason `demo_ownership_check_disabled` | “The assistant tool returned Bob's order.” |
 
 The SOC page refreshes every 15 seconds. If a card still shows an older time or order number, wait for the next refresh or use the refresh control in **Signals** or **Audit explorer**. A card proves the tool decision. The assistant reply shows what the shopper actually saw. Normal cart changes, checkouts, and own-order reads remain in **Audit explorer** for questions after the main presentation; they do not appear as alerts on Overview.
@@ -160,7 +161,7 @@ The SOC page refreshes every 15 seconds. If a card still shows an older time or 
 
 **Person 2:** “As Alice, I could shop too. A direct request for Bob's newest order stopped at the chat layer. When I reframed it as a JSON task, the assistant returned his details.”
 
-**Person 3:** “The green card proves Bob's cross-account read was prevented. The red card shows Alice's assistant order tool allowed Bob's order through. That is the difference an ownership guardrail makes.”
+**Person 3:** “Green shows authorized own-order access. Yellow shows Bob's attempt was prevented. Red shows Alice's assistant order tool allowed Bob's order through. That is the difference an ownership guardrail makes.”
 
 **Final team line:** “A capable agent combines language understanding with tools that can act. Every tool that reads private data needs its own authorization check. Bob shows the safe design; Alice shows what happens when that check is missing.”
 

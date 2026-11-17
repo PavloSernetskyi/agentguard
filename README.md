@@ -1,6 +1,6 @@
 # Archery Pro Shopping / AgentGuard
 
-**Current status:** Archery Pro Shopping and the AgentGuard SOC dashboard are hosted on AWS. The browser rehearsal confirmed Bob's blocked cross-account order read, Alice's controlled read of Bob's fictional order, and matching green/red SOC evidence. Use the **[Presentation Demo Guide](docs/presentation-demo-guide.md)** for the exact three-person prompts, clicks, handoffs and speaking lines. The [local preview guide](docs/archery-preview.md) remains available.
+**Current status:** Archery Pro Shopping and the AgentGuard SOC dashboard are hosted on AWS. The browser rehearsal confirmed own-order reads, Bob's blocked cross-account read, and Alice's controlled read of Bob's fictional order. The SOC review branch displays these as green, yellow, and red respectively. Use the **[Presentation Demo Guide](docs/presentation-demo-guide.md)** for the exact three-person prompts, clicks, handoffs and speaking lines. The [local preview guide](docs/archery-preview.md) remains available.
 
 A deployed, synthetic shopping platform for a three-person school project. Person 1 owns the store and AWS deployment; Person 2 owns AgentGuard enforcement; Person 3 owns the assistant UI and SOC dashboard.
 
@@ -21,7 +21,7 @@ For current acceptance status and unfinished submission work, use the [project c
 | --- | --- | --- | --- |
 | **Person 1 — store and AWS** | Storefront, account sessions, catalog, cart, fictional checkout and hosting | Bob shops, places an order, checks it, then attempts Alice's order | [Store](store/src/main.tsx), [store service](backend/service.py), [infrastructure](infra/site.tf) |
 | **Person 2 — agent and guardrails** | LLM plus tool harness, server-side order ownership, and the controlled Alice order-tool weakness | Alice shops, gets a direct refusal, then receives Bob's fictional order through the JSON reframe | [Assistant](backend/assistant/__init__.py), [security tests](tests/test_assistant.py), [threat model](docs/assistant-security.md) |
-| **Person 3 — interface and SOC evidence** | Assistant sidebar, request correlation, read-only audit feed and green/red security outcomes | Clear the demo view, show Bob's green blocked event, then Alice's red allowed read and its audit detail | [Assistant UI](store/src/AssistantChat.tsx), [SOC dashboard](dashboard/src/main.tsx), [audit contract](dashboard/src/audit.ts) |
+| **Person 3 — interface and SOC evidence** | Assistant sidebar, request correlation, read-only audit feed and three labeled security outcomes | Clear the demo view, show green own-order reads, Bob's yellow blocked attempt, then Alice's red allowed read and its audit detail | [Assistant UI](store/src/AssistantChat.tsx), [SOC dashboard](dashboard/src/main.tsx), [audit contract](dashboard/src/audit.ts) |
 
 These are the team roles and presentation responsibilities. Use the [step-by-step guide](docs/presentation-demo-guide.md) for each person's exact lines and screen handoffs.
 
@@ -61,7 +61,7 @@ AWS MCP helped with initial provisioning and verification; it is a developer too
 - [x] **Person 3 area:** integrate the assistant chat/API, SOC consumer and request-ID contract coverage.
 - [x] Deploy the protected assistant build with a server-side Groq secret and reviewed Lambda timeout and Terraform plan.
 - [x] Verify Bob's protected Alice-order lookup is blocked and audited. Alice's controlled order-tool path returned Bob's fictional order and was audited as allowed; her ordinary order page still denies that read.
-- [x] Rehearse the hosted Bob/Alice shopping and security sequence, including the two SOC handoffs and matching green/red evidence.
+- [x] Rehearse the hosted Bob/Alice shopping and security sequence, including the two SOC handoffs and matching own-order, blocked, and exposed-read evidence.
 - [x] Deploy the SOC dashboard to AWS with managed operator access, a bounded read-only audit feed, and a reversible **Clear demo view** for the presentation.
 - [x] Write the exact three-person [presentation guide](docs/presentation-demo-guide.md), including prompts, clicks, security terms and closing lines.
 - [ ] Finish a separate resilience pass for slow responses, provider failures, session expiry and narrow-screen keyboard/focus behavior.
@@ -78,7 +78,7 @@ The protected assistant and SOC dashboard are deployed and merged to `master`. A
 | 1. Local store | Complete | Store, sessions, carts, owned orders and audit baseline |
 | 2. AWS deployment + real assistant | Complete | Hosted store and Groq/Strands agent are live; Bob's protected order read is audited |
 | 3. Controlled security demo | Live scene verified | Alice's classroom order-tool read returned Bob's fictional order; the ordinary order page remains protected |
-| 4. SOC dashboard + final demonstration | Dashboard verified; team presentation pending | Read-only audit feed, green blocked and red exposed-order signals, and a repeatable [presentation guide](docs/presentation-demo-guide.md) |
+| 4. SOC dashboard + final demonstration | Dashboard verified; team presentation pending | Read-only audit feed, green own-order, yellow blocked and red exposed-order signals, and a repeatable [presentation guide](docs/presentation-demo-guide.md) |
 
 Read the **[team roadmap and acceptance checks](docs/team-roadmap.md)** before starting a branch.
 
