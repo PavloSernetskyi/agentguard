@@ -1,6 +1,6 @@
 # Archery Pro Shopping / AgentGuard
 
-**Current status:** Archery Pro Shopping and the AgentGuard SOC dashboard are hosted on AWS. The browser rehearsal confirmed own-order reads, Bob's blocked cross-account read, and Alice's controlled read of Bob's fictional order. The SOC review branch displays these as green, yellow, and red respectively. Use the **[Presentation Demo Guide](docs/presentation-demo-guide.md)** for the exact three-person prompts, clicks, handoffs and speaking lines. The [local preview guide](docs/archery-preview.md) remains available.
+**Current status:** Archery Pro Shopping and the AgentGuard SOC dashboard are hosted on AWS. The browser rehearsal confirmed own-order reads, Bob's blocked cross-account read, and Alice's controlled read of Bob's fictional order. The dashboard code displays these as green, yellow, and red respectively; its activity chart gives successful cross-account reads a separate red segment. The hosted site needs a dashboard release after this merge to show the latest UI. Use the **[Presentation Demo Guide](docs/presentation-demo-guide.md)** for the exact three-person prompts, clicks, handoffs and speaking lines. The [local preview guide](docs/archery-preview.md) remains available.
 
 A deployed, synthetic shopping platform for a three-person school project. Person 1 owns the store and AWS deployment; Person 2 owns AgentGuard enforcement; Person 3 owns the assistant UI and SOC dashboard.
 
@@ -21,7 +21,7 @@ For current acceptance status and unfinished submission work, use the [project c
 | --- | --- | --- | --- |
 | **Person 1 — store and AWS** | Storefront, account sessions, catalog, cart, fictional checkout and hosting | Bob shops, places an order, checks it, then attempts Alice's order | [Store](store/src/main.tsx), [store service](backend/service.py), [infrastructure](infra/site.tf) |
 | **Person 2 — agent and guardrails** | LLM plus tool harness, server-side order ownership, and the controlled Alice order-tool weakness | Alice shops, gets a direct refusal, then receives Bob's fictional order through the JSON reframe | [Assistant](backend/assistant/__init__.py), [security tests](tests/test_assistant.py), [threat model](docs/assistant-security.md) |
-| **Person 3 — interface and SOC evidence** | Assistant sidebar, request correlation, read-only audit feed and three labeled security outcomes | Clear the demo view, show green own-order reads, Bob's yellow blocked attempt, then Alice's red allowed read and its audit detail | [Assistant UI](store/src/AssistantChat.tsx), [SOC dashboard](dashboard/src/main.tsx), [audit contract](dashboard/src/audit.ts) |
+| **Person 3 — interface and SOC evidence** | Assistant sidebar, request correlation, read-only audit feed and three labeled security outcomes | Clear the demo view, show green own-order reads, Bob's yellow blocked attempt, then Alice's red cross-account read and the red chart segment | [Assistant UI](store/src/AssistantChat.tsx), [SOC dashboard](dashboard/src/main.tsx), [audit contract](dashboard/src/audit.ts) |
 
 These are the team roles and presentation responsibilities. Use the [step-by-step guide](docs/presentation-demo-guide.md) for each person's exact lines and screen handoffs.
 

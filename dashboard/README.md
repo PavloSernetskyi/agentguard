@@ -10,11 +10,11 @@ Person 3 owns this standalone React/TypeScript dashboard. This branch integrates
 
 ## First release
 
-- Overview with selected-event counts, authorization denial rate, execution success/failure rates, activity chart and denial reasons.
+- Overview with selected-event counts, authorization denial rate, execution success/failure rates, and an activity chart that separates routine success (green), blocked requests (yellow), successful cross-account order reads (red), and failed executions.
 - Decision × execution matrix with drill-down; timeline, actor/action/time/decision/execution filters, search, pagination and correlated request details.
 - Signals derived from existing audit reasons, explicitly described as observations rather than confirmed incidents.
 - JSON/NDJSON import, plain DynamoDB `value` payload import, strict v1 event validation, ID deduplication, data-quality warnings and filtered CSV/event JSON export.
-- Clearly labeled fixtures for UI development, separate from imported and local live evidence.
+- Clearly labeled Bob/Alice fixtures for UI development, including a green own-order read, yellow blocked attempt, and red cross-account read; separate from imported and local live evidence. Live evidence may also include unauthenticated requests when a session is missing or expired.
 - Read-only, operator-token-protected local reporting server. No shopper account can read the feed.
 - The original local build required no cloud resources or inference dependencies. The hosted release above adds an operator reporting path; no browser persistence of imported evidence is used.
 
