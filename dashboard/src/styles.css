@@ -43,3 +43,4 @@
 .events tr.exposed-order-access .badge.allow,.events tr.exposed-order-access .badge.succeeded,.detail-summary.exposed-order-access .badge.allow,.detail-summary.exposed-order-access .badge.succeeded{background:#f5d7cf;color:#972f1f;border:1px solid #db9f90;font-weight:700}
 .demo-view-notice{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .demo-view-notice .text-button{flex-shrink:0}
+.exposed-color,.exposed-bar{background:var(--chart-exposed)}

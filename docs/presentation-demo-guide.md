@@ -126,7 +126,7 @@ If the assistant has just shown exactly one product, “Add it to my cart” als
 
 **Person 3 switches to SOC Overview and says:** “Red means the order read went through. Alice's assistant returned Bob's order even though it belongs to Bob. Asking for JSON was the creative hook, but the real failure is that the order tool did not check ownership.”
 
-**Point at:** **ALICE → BOB · Alert · read allowed**. Confirm the card's resource equals `<BOB_NEW_ORDER_ID>` and its time updated. If the instructor wants the underlying evidence, click **View audit event** on the red card and show `orders.read / Allow / Succeeded`, reason `demo_ownership_check_disabled`.
+**Point at:** **ALICE → BOB · Alert · cross-account read**. Confirm the card's resource equals `<BOB_NEW_ORDER_ID>` and its time updated. If the instructor wants the underlying evidence, click **View audit event** on the red card and show `orders.read / Allow / Succeeded`, reason `demo_ownership_check_disabled`.
 
 ### 8. Close the story
 
@@ -140,7 +140,7 @@ If the assistant has just shown exactly one product, “Add it to my cart” als
 
 1. Before Person 1 starts, open **Overview** and click **Clear demo view**. Confirm both cards say **Waiting** and the audit metrics show zero. Leave the dashboard on Overview while Bob shops.
 2. After Bob's Alice-order question, switch to the SOC tab and wait up to 15 seconds for **BOB → ALICE · Attempt blocked** to turn yellow. Point to the order ID and time. In **Audit explorer**, contrast Bob's green own-order read with his yellow blocked attempt. Leave **ALICE → BOB** waiting. Then hand the store back to Person 2.
-3. After Alice's direct Bob question, stay with the store reply. There should be no new red detail-read card yet. After her JSON request reveals the order, switch to SOC and wait up to 15 seconds for **ALICE → BOB · Alert · read allowed** to turn red. Point to the matching Bob order ID and time.
+3. After Alice's direct Bob question, stay with the store reply. There should be no new red detail-read card yet. After her JSON request reveals the order, switch to SOC and wait up to 15 seconds for **ALICE → BOB · Alert · cross-account read** to turn red. Point to the matching Bob order ID and time.
 4. For audit proof, click **View audit event** inside the relevant colored card. The dashboard opens **Audit explorer** with that request selected automatically. Own-order `Allow / Succeeded` rows are green, Bob's `Deny / Blocked` cross-account row is yellow, and Alice's `Allow / Succeeded` cross-account row is red. Click **Reset filters**, then **Overview** to return to the two cards and the complete demo metrics. Do not type into the filter box during the live sequence.
 
 **Clear demo view** hides older events from Overview, Signals, Assistant requests, and Audit explorer in this browser. It resets active filters. **Show full history** restores the earlier AWS evidence if you need it after the presentation. It does not delete audit records.
@@ -149,7 +149,7 @@ If the assistant has just shown exactly one product, “Add it to my cart” als
 | --- | --- | --- |
 | **Green: Bob → Bob or Alice → Alice · Own order authorized** | `orders.read / allow / succeeded`, reason `owner_match` | “Normal shopping access worked.” |
 | **Yellow: Bob → Alice · Attempt blocked** | `orders.read / deny / blocked`, reason `ownership_mismatch` | “The guardrail stopped the cross-account read.” An unauthenticated order read blocked for `invalid_session` is yellow too. |
-| **Red: Alice → Bob · Alert · read allowed** | `orders.read / allow / succeeded`, reason `demo_ownership_check_disabled` | “The assistant tool returned Bob's order.” |
+| **Red: Alice → Bob · Alert · cross-account read** | `orders.read / allow / succeeded`, reason `demo_ownership_check_disabled` | “The assistant tool returned Bob's order.” |
 
 The SOC page refreshes every 15 seconds. If a card still shows an older time or order number, wait for the next refresh or use the refresh control in **Signals** or **Audit explorer**. A card proves the tool decision. The assistant reply shows what the shopper actually saw. Normal cart changes, checkouts, and own-order reads remain in **Audit explorer** for questions after the main presentation; they do not appear as alerts on Overview.
 

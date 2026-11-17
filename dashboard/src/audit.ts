@@ -10,6 +10,9 @@ const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const authenticationReasons = ['invalid_session', 'invalid_credentials', 'identity_provider_unavailable'];
 export const isAuthenticationDenial = (event: AuditEvent) => event.decision === 'deny' && authenticationReasons.includes(event.reason);
 export const isOwnershipDenial = (event: AuditEvent) => event.decision === 'deny' && ['ownership_mismatch', 'conversation_ownership_mismatch'].includes(event.reason);
+export const isExposedOrderRead = (event: AuditEvent) => event.actor_id === 'alice' && event.action === 'orders.read'
+  && event.resource_id.startsWith('ord-bob-') && event.reason === 'demo_ownership_check_disabled'
+  && event.decision === 'allow' && event.execution === 'succeeded';
 
 export type AssistantRequest = {requestId: string; root: AuditEvent; events: AuditEvent[]; operations: AuditEvent[]};
 // A v1 request ID is the correlation boundary; it is not a conversation or tool-call ID.
@@ -128,7 +131,9 @@ export function buckets(events: AuditEvent[], hours: number, now = Date.now()) {
   return Array.from({ length: 12 }, (_, index) => {
     const start = now - span + index * width;
     const rows = events.filter(e => Date.parse(e.timestamp) >= start && (index === 11 ? Date.parse(e.timestamp) <= now : Date.parse(e.timestamp) < start + width));
-    return { start, total: rows.length, succeeded: rows.filter(e => e.execution === 'succeeded').length, blocked: rows.filter(e => e.execution === 'blocked').length, failed: rows.filter(e => e.execution === 'failed').length };
+    return { start, total: rows.length, succeeded: rows.filter(e => e.execution === 'succeeded' && !isExposedOrderRead(e)).length,
+      exposed: rows.filter(isExposedOrderRead).length, blocked: rows.filter(e => e.execution === 'blocked').length,
+      failed: rows.filter(e => e.execution === 'failed').length };
   });
 }
 
@@ -157,14 +162,14 @@ export function fixtures(now = Date.now()): AuditEvent[] {
       execution: index === 1 ? 'succeeded' : 'blocked',
     };
     const blocked = index % 6 === 0; const failed = !blocked && index % 13 === 0;
-    const actor = index % 12 === 0 ? null : index % 5 === 0 ? 'bob' : 'alice';
+    const actor = index === 0 ? 'alice' : index % 5 === 0 ? 'bob' : 'alice';
     const action = blocked ? 'orders.read' : failed ? 'cart.update' : index % 4 === 0 ? 'session.create' : index % 3 === 0 ? 'orders.list' : 'orders.read';
     return { schema_version: 1, event_id: `00000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
       request_id: `10000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
       timestamp: new Date(now - (index * 19 + 3) * 60000).toISOString(), actor_id: actor,
       action,
-      resource_id: action === 'session.create' ? 'session' : action === 'cart.update' ? `cart:${actor}` : action === 'orders.list' ? 'orders' : blocked && actor ? `ord-${actor === 'alice' ? 'bob' : 'alice'}-001` : `ord-${actor ?? 'alice'}-001`, decision: blocked ? 'deny' : 'allow',
-      reason: blocked ? (actor ? 'ownership_mismatch' : 'invalid_session') : action === 'session.create' ? 'credentials_valid' : 'owner_match',
+      resource_id: action === 'session.create' ? 'session' : action === 'cart.update' ? `cart:${actor}` : action === 'orders.list' ? 'orders' : blocked ? `ord-${actor === 'alice' ? 'bob' : 'alice'}-001` : `ord-${actor}-001`, decision: blocked ? 'deny' : 'allow',
+      reason: blocked ? 'ownership_mismatch' : action === 'session.create' ? 'credentials_valid' : 'owner_match',
       execution: blocked ? 'blocked' : failed ? 'failed' : 'succeeded' };
   });
 }

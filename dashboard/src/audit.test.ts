@@ -40,6 +40,13 @@ test('chart buckets do not double count boundary timestamps', () => {
   const series = buckets(rows, 24, now);
   assert.equal(series.reduce((sum, b) => sum + b.total, 0), 2);
 });
+test('chart separates an exposed order read from routine successes', () => {
+  const rows = [sample[1], sample[3], sample[2]].map(e => ({ ...e, timestamp: new Date(now - 1000).toISOString() }));
+  const series = buckets(rows, 24, now);
+  assert.equal(series.reduce((sum, b) => sum + b.total, 0), 3);
+  assert.equal(series.reduce((sum, b) => sum + b.exposed, 0), 1);
+  assert.equal(series.reduce((sum, b) => sum + b.succeeded + b.exposed + b.blocked + b.failed, 0), 3);
+});
 test('invalid calendar dates are rejected and reason aggregation handles arbitrary strings', () => {
   assert.equal(parseEvents([{ ...sample[0], timestamp: '2026-02-31T00:00:00Z' }]).rejected, 1);
   const result = summarize([{ ...sample[0], reason: '__proto__' }, { ...sample[0], reason: 'constructor' }]);
