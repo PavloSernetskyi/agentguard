@@ -27,7 +27,7 @@
 .comparison-card small{font-size:10px;color:var(--muted);overflow-wrap:anywhere}
 .comparison-card .text-button{margin-top:auto}
 .comparison-note{padding:14px 21px 18px;color:var(--muted);font-size:10px;line-height:1.5}
-.analytics-details{margin:0 0 22px}.analytics-details>summary{cursor:pointer;display:list-item;margin-bottom:16px;color:var(--muted);font-size:11px}.analytics-details:not([open])>summary{margin-bottom:0}
+.analytics-details{margin:0 0 22px}.analytics-details>h2{margin:0 0 16px}
 @media(max-width:700px){.comparison-grid{grid-template-columns:1fr;padding-inline:15px}.comparison-note{padding-inline:15px}}
 .events tr.own-order-read{background:#f0f8f1;box-shadow:inset 4px 0 var(--success-text)}
 .events tr.blocked-order-read{background:#fff9e8;box-shadow:inset 4px 0 var(--warning-border)}

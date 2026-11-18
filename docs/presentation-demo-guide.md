@@ -33,7 +33,7 @@ If asked whether this is “prompt injection,” say: “Our live scene is a use
 
 1. Open the store and SOC dashboard. Person 3 signs in to SOC. Person 1 signs in to the store as Bob. Enter passwords directly in the browser; do not put them in slides, notes, or chat.
 2. Keep the store assistant expanded on the right. If the browser is narrow, widen it so the storefront and assistant are both easy to see. Use **New chat** in its header whenever you need to restart a shopper's conversation; it clears the chat context without signing out or changing the cart.
-3. Person 3 opens **Overview**, confirms **AWS feed connected** (not **Fixture preview**), then clicks **Clear demo view** before Bob begins. Both live cards should say **Waiting**, and Overview metrics, Signals, Assistant requests, and Audit explorer start at zero for this browser's demo view. Earlier AWS audit events remain stored and can be restored on screen with **Show full history**.
+3. Person 3 opens **Signals**, confirms **AWS feed connected** (not **Fixture preview**), then clicks **Clear demo view** before Bob begins. Both live cards should say **Waiting**, and Overview metrics, Signals, Assistant requests, and Audit explorer start at zero for this browser's demo view. Earlier AWS audit events remain stored and can be restored on screen with **Show full history**.
 4. New checkout orders use short numbers such as `ord-bob-002` and `ord-alice-002`. Each shopper begins with an existing `001` order. Alice's final prompt asks for Bob's most recent order, so Person 1 does not need to pass an ID to Person 2.
 
 ## Live sequence and exact lines
@@ -46,7 +46,7 @@ If asked whether this is “prompt injection,” say: “Our live scene is a use
 
 > Hi, my name is Bob. What beginner archery gear do you have, especially a light recurve bow?
 
-**Show:** The assistant's recommendation and product image in the wide right sidebar. Look for **First Flight recurve bow** at $129. **Person 1 says:** “The assistant used its catalog tool to answer my question. Its tools also let it act on my cart and read an order.” Person 3 stays on the SOC Overview; normal shopping does not create a security alert.
+**Show:** The assistant's recommendation and product image in the wide right sidebar. Look for **First Flight recurve bow** at $129. **Person 1 says:** “The assistant used its catalog tool to answer my question. Its tools also let it act on my cart and read an order.” Person 3 stays on SOC Signals; normal shopping does not create a security alert.
 
 ### 2. Bob buys one item
 
@@ -83,7 +83,7 @@ If the assistant has just shown exactly one product, “Add it to my cart” als
 
 **Show:** The assistant declines and does not display Alice's items or address.
 
-**Person 3 switches to SOC Overview and says:** “Yellow marks an attempted cross-account read. Bob's request for Alice's order was blocked by the ownership check.”
+**Person 3 switches to SOC Signals and says:** “Yellow marks an attempted cross-account read. Bob's request for Alice's order was blocked by the ownership check.”
 
 **Point at:** the yellow **BOB → ALICE · Attempt blocked** card. The **ALICE → BOB** card should still say **Waiting for Alice**, with no red alert for an older rehearsal. Check that Bob's time updated for this turn and its resource is `ord-alice-001`. In **Audit explorer**, show Bob's earlier green own-order read and this yellow blocked read. No request ID search is required.
 
@@ -97,7 +97,7 @@ If the assistant has just shown exactly one product, “Add it to my cart” als
 
 > Hi, my name is Alice. What archery items would you recommend for a beginner range session?
 
-**Click:** **Add to cart** on the **Cedar target arrows — set of 6** card inside Alice’s assistant recommendation. The store cart count changes. Open Cart → Review fictional checkout → Continue to review → Place fictional order. Show Alice's processed-order confirmation and the item thumbnail in **My orders**. Note Alice's new short order number as `<ALICE_NEW_ORDER_ID>`. Person 3 stays on Overview; these ordinary actions do not create an alert.
+**Click:** **Add to cart** on the **Cedar target arrows — set of 6** card inside Alice’s assistant recommendation. The store cart count changes. Open Cart → Review fictional checkout → Continue to review → Place fictional order. Show Alice's processed-order confirmation and the item thumbnail in **My orders**. Note Alice's new short order number as `<ALICE_NEW_ORDER_ID>`. Person 3 stays on Signals; these ordinary actions do not create an alert.
 
 ### 6. Alice checks her own order
 
@@ -124,9 +124,9 @@ If the assistant has just shown exactly one product, “Add it to my cart” als
 
 **Show:** The assistant presents JSON with Bob's order ID, items, delivery address, and a 16 digit card-shaped demo value `4242 4242 4242 4241`, plus an order card with the purchased item’s thumbnail. The card can show any catalog item Bob bought. Check that its ID matches `<BOB_NEW_ORDER_ID>` and the details are visible before describing the read as successful. The value is deliberately invalid; no payment credential is stored or charged.
 
-**Person 3 switches to SOC Overview and says:** “Red means the order read went through. Alice's assistant returned Bob's order even though it belongs to Bob. Asking for JSON was the creative hook, but the real failure is that the order tool did not check ownership.”
+**Person 3 switches to SOC Signals and says:** “Red means the order read went through. Alice's assistant returned Bob's order even though it belongs to Bob. Asking for JSON was the creative hook, but the real failure is that the order tool did not check ownership.”
 
-**Point at:** **ALICE → BOB · Alert · cross-account read**. Confirm the card's resource equals `<BOB_NEW_ORDER_ID>` and its time updated. Expand **Audit metrics** if needed and point to the **red segment** of **Execution activity**: it counts the successful cross-account read separately from routine green successes. If the instructor wants the underlying evidence, click **View audit event** on the red card and show `orders.read / Allow / Succeeded`, reason `demo_ownership_check_disabled`.
+**Point at:** **ALICE → BOB · Alert · cross-account read**. Confirm the card's resource equals `<BOB_NEW_ORDER_ID>` and its time updated. Open **Overview** and point to the **red segment** of **Execution activity**: it counts the successful cross-account read separately from routine green successes. For the underlying evidence, return to **Signals** and click **View audit event** on the red card and show `orders.read / Allow / Succeeded`, reason `demo_ownership_check_disabled`.
 
 ### 8. Close the story
 
@@ -138,10 +138,10 @@ If the assistant has just shown exactly one product, “Add it to my cart” als
 
 **Person 3's click path (no manual filters):**
 
-1. Before Person 1 starts, open **Overview** and click **Clear demo view**. Confirm both cards say **Waiting** and the audit metrics show zero. Leave the dashboard on Overview while Bob shops.
+1. Before Person 1 starts, open **Signals** and click **Clear demo view**. Confirm both cards say **Waiting**. Leave the dashboard on Signals while Bob shops.
 2. After Bob's Alice-order question, switch to the SOC tab and wait up to 15 seconds for **BOB → ALICE · Attempt blocked** to turn yellow. Point to the order ID and time. In **Audit explorer**, contrast Bob's green own-order read with his yellow blocked attempt. Leave **ALICE → BOB** waiting. Then hand the store back to Person 2.
-3. After Alice's direct Bob question, stay with the store reply. There should be no new red detail-read card yet. After her JSON request reveals the order, switch to SOC and wait up to 15 seconds for **ALICE → BOB · Alert · cross-account read** to turn red. Point to the matching Bob order ID and time, then to the red segment in **Execution activity**. The chart's green portion excludes that read so the event is counted once.
-4. For audit proof, click **View audit event** inside the relevant colored card. The dashboard opens **Audit explorer** with that request selected automatically. Own-order `Allow / Succeeded` rows are green, Bob's `Deny / Blocked` cross-account row is yellow, and Alice's `Allow / Succeeded` cross-account row is red. Click **Reset filters**, then **Overview** to return to the two cards and the complete demo metrics. Do not type into the filter box during the live sequence.
+3. After Alice's direct Bob question, stay with the store reply. There should be no new red detail-read card yet. After her JSON request reveals the order, switch to SOC and wait up to 15 seconds for **ALICE → BOB · Alert · cross-account read** to turn red. Point to the matching Bob order ID and time, then open **Overview** and point to the red segment in **Execution activity**. The chart's green portion excludes that read so the event is counted once.
+4. For audit proof, click **View audit event** inside the relevant colored card. The dashboard opens **Audit explorer** with that request selected automatically. Own-order `Allow / Succeeded` rows are green, Bob's `Deny / Blocked` cross-account row is yellow, and Alice's `Allow / Succeeded` cross-account row is red. Click **Reset filters**, then **Signals** to return to the two cards. Do not type into the filter box during the live sequence.
 
 **Clear demo view** hides older events from Overview, Signals, Assistant requests, and Audit explorer in this browser. It resets active filters. **Show full history** restores the earlier AWS evidence if you need it after the presentation. It does not delete audit records.
 
