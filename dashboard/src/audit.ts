@@ -3,8 +3,8 @@ export type AuditEvent = {
   actor_id: string | null; action: string; resource_id: string;
   decision: 'allow' | 'deny'; reason: string; execution: 'succeeded' | 'blocked' | 'failed';
 };
-export type Filters = { search: string; actor: string; action: string; decision: string; execution: string; hours: number; signal: string };
-export const emptyFilters: Filters = { search: '', actor: '', action: '', decision: '', execution: '', hours: 24, signal: '' };
+export type Filters = { search: string; actor: string; action: string; decision: string; execution: string; outcome: string; hours: number; signal: string };
+export const emptyFilters: Filters = { search: '', actor: '', action: '', decision: '', execution: '', outcome: '', hours: 24, signal: '' };
 const fields = ['schema_version', 'event_id', 'request_id', 'timestamp', 'actor_id', 'action', 'resource_id', 'decision', 'reason', 'execution'];
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const authenticationReasons = ['invalid_session', 'invalid_credentials', 'identity_provider_unavailable'];
@@ -14,7 +14,17 @@ export const isExposedOrderRead = (event: AuditEvent) => event.actor_id === 'ali
   && event.resource_id.startsWith('ord-bob-') && event.reason === 'demo_ownership_check_disabled'
   && event.decision === 'allow' && event.execution === 'succeeded';
 
+export type Outcome = 'succeeded' | 'breach' | 'blocked' | 'failed';
+export const eventOutcome = (event: AuditEvent): Outcome => isExposedOrderRead(event) ? 'breach' : event.execution;
+export const windowLabel = (hours: number) => hours === 0 ? 'All history' : hours === 1 ? '60m window' : hours === 168 ? '7d window' : `${hours}h window`;
+// v1 identifies the controlled Alice -> Bob order fixture. Do not infer other owners.
+export function breachedAccounts(events: AuditEvent[]) {
+  const count = events.filter(isExposedOrderRead).length;
+  return count ? [{account: 'bob', count}] : [];
+}
+
 export type AssistantRequest = {requestId: string; root: AuditEvent; events: AuditEvent[]; operations: AuditEvent[]};
+export const requestOutcome = (request: AssistantRequest): Outcome => request.events.some(isExposedOrderRead) ? 'breach' : request.root.execution;
 // A v1 request ID is the correlation boundary; it is not a conversation or tool-call ID.
 export function assistantRequests(selected: AuditEvent[], loaded: AuditEvent[] = selected): AssistantRequest[] {
   const roots = new Map<string, AuditEvent>();
@@ -106,6 +116,7 @@ export function filterEvents(events: AuditEvent[], filters: Filters, now = Date.
     && (!filters.action || event.action === filters.action)
     && (!filters.decision || event.decision === filters.decision)
     && (!filters.execution || event.execution === filters.execution)
+    && (!filters.outcome || eventOutcome(event) === filters.outcome)
     && (!needle || [event.event_id, event.request_id, event.actor_id ?? 'Unauthenticated', event.action, event.resource_id, event.reason].some(value => value.toLowerCase().includes(needle))));
 }
 

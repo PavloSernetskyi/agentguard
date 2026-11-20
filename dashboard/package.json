@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "tsc --noEmit && vite build",
+    "build": "node scripts/build-mode.mjs cloud",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "node --experimental-strip-types --test src/*.test.ts"
+    "test": "node --experimental-strip-types --test src/*.test.ts",
+    "build:cloud": "node scripts/build-mode.mjs cloud",
+    "build:local": "node scripts/build-mode.mjs local"
   },
   "dependencies": {
     "@fontsource-variable/dm-sans": "^5.3.0",

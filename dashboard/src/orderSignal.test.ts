@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { orderSignal } from './orderSignal.ts';
+import { orderSignal, eventRowClass } from './orderSignal.ts';
 import type { AuditEvent } from './audit.ts';
 
 const base: AuditEvent = { schema_version: 1, event_id: '1', request_id: '1', timestamp: '2026-11-17T20:00:00Z', actor_id: 'bob', action: 'orders.read', resource_id: 'ord-bob-001', decision: 'allow', reason: 'owner_match', execution: 'succeeded' };
@@ -13,4 +13,11 @@ test('order signals distinguish owned, blocked, and exposed reads', () => {
   assert.equal(orderSignal({ ...base, actor_id: 'alice', resource_id: 'ord-bob-006', reason: 'demo_ownership_check_disabled' }), 'exposed-order-access');
   assert.equal(orderSignal({ ...base, action: 'assistant.message' }), null);
   assert.equal(orderSignal({ ...base, actor_id: 'alice', resource_id: 'ord-bob-006' }), null);
+});
+
+test('failed cart and assistant actions get the error row treatment without changing order classifications', () => {
+  assert.equal(eventRowClass({...base, action: 'cart.update', resource_id: 'cart:bob', execution: 'failed'}), 'event-error');
+  assert.equal(eventRowClass({...base, action: 'assistant.message', execution: 'failed'}), 'event-error');
+  assert.equal(eventRowClass(base), 'own-order-read');
+  assert.equal(eventRowClass({...base, action: 'cart.read'}), undefined);
 });

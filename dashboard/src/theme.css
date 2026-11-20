@@ -29,12 +29,12 @@
   --warning-border: #d8b24e;
   --deny-bg: #faeae4;
   --deny-text: #983e30;
-  --failed-bg: #fcf1d9;
-  --failed-text: #7c5b1b;
-  --chart-success: #62866b;
-  --chart-blocked: #c7a13e;
+  --failed-bg: #eee9fb;
+  --failed-text: #573590;
+  --chart-success: #39775a;
+  --chart-blocked: #d3a526;
   --chart-exposed: #ae3f2d;
-  --chart-failed: #c49b50;
+  --chart-failed: #7655b2;
   --notice-bg: #fbf4e4;
   --notice-border: #e3d3a9;
   --notice-text: #765c28;

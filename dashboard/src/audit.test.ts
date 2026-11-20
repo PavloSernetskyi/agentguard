@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { assistantRequests, investigationLink, isOwnershipDenial, requestFromSearch } from './audit.ts';
+import { assistantRequests, investigationLink, isOwnershipDenial, requestFromSearch, requestOutcome, isExposedOrderRead, breachedAccounts, windowLabel } from './audit.ts';
 import { buckets, csv, emptyFilters, filterEvents, fixtures, parseEvents, readImport, summarize } from './audit.ts';
 
 const now = Date.parse('2026-10-28T12:00:00Z');
@@ -81,4 +81,38 @@ test('investigation links carry only a valid request ID, and conversation denial
   assert.equal(new URL(link).searchParams.get('request_id'), id);
   assert.equal(new URL(link).hash, '');
   assert.ok(isOwnershipDenial({...sample[0], decision: 'deny', reason: 'conversation_ownership_mismatch'}));
+});
+
+test('presentation outcomes partition events and keep breaches out of succeeded', () => {
+  const categories = ['succeeded', 'breach', 'blocked', 'failed'];
+  const groups = categories.map(outcome => filterEvents(sample, {...emptyFilters, outcome}, now));
+  assert.deepEqual(groups.map(group => group.length), [47, 1, 12, 4]);
+  assert.equal(new Set(groups.flat().map(event => event.event_id)).size, sample.length);
+  assert.equal(groups[0].some(isExposedOrderRead), false);
+  assert.equal(groups[1][0].event_id, sample[1].event_id);
+  assert.equal(filterEvents(sample, {...emptyFilters, outcome: 'breach', decision: 'deny'}, now).length, 0);
+});
+
+test('assistant request outcome includes a breached tool read even when its reply succeeded', () => {
+  const root = {...sample[3], action: 'assistant.message', request_id: sample[1].request_id};
+  const trace = assistantRequests([root], [root, sample[1]])[0];
+  assert.equal(trace.root.execution, 'succeeded');
+  assert.equal(requestOutcome(trace), 'breach');
+  assert.equal(requestOutcome(assistantRequests([root], [root])[0]), 'succeeded');
+});
+
+test('60 minute selection includes its boundary and chart covers the same selected events', () => {
+  const selected = filterEvents(sample, {...emptyFilters, hours: 1}, now);
+  assert.equal(selected.length, 4);
+  const series = buckets(selected, 1, now);
+  assert.equal(series.reduce((total, bucket) => total + bucket.total, 0), 4);
+  assert.equal(series.reduce((total, bucket) => total + bucket.exposed, 0), 1);
+  assert.equal(windowLabel(1), '60m window');
+  assert.equal(windowLabel(168), '7d window');
+  assert.equal(windowLabel(0), 'All history');
+});
+
+test('breach account grouping counts the victim rather than the requesting actor', () => {
+  assert.deepEqual(breachedAccounts(sample), [{account: 'bob', count: 1}]);
+  assert.deepEqual(breachedAccounts(sample.filter(event => !isExposedOrderRead(event))), []);
 });

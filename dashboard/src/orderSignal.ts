@@ -15,7 +15,12 @@ export function orderSignal(event: AuditEvent): OrderSignal {
 }
 
 export const orderSignalLabel: Record<Exclude<OrderSignal, null>, string> = {
-  'own-order-read': 'Own order · authorized',
-  'blocked-order-read': 'Unauthorized order attempt · blocked',
-  'exposed-order-access': 'Cross-account read · allowed',
+  'own-order-read': 'Authorized access',
+  'blocked-order-read': 'Blocked access',
+  'exposed-order-access': 'Data breach',
 };
+
+// Failures apply to any action, including cart and assistant events.
+export function eventRowClass(event: AuditEvent): string | undefined {
+  return event.execution === 'failed' ? 'event-error' : orderSignal(event) ?? undefined;
+}

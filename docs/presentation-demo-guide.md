@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | **Person 1** | Bob, the shopper | Shop normally, show his order, then try to read Alice's order. |
 | **Person 2** | Alice, the shopper | Shop normally, then ask the assistant for the order Bob just placed. |
-| **Person 3** | SOC operator | Show **green own-order reads**, Bob's **yellow blocked attempt**, and Alice's **red cross-account read**. |
+| **Person 3** | SOC operator | Show **green own-order reads**, Bob's **yellow blocked attempt**, and Alice's **red data breach (demo)**. |
 
 ## The story to tell
 
@@ -182,3 +182,12 @@ The SOC page refreshes every 15 seconds. If a card still shows an older time or 
 - If the assistant gives an imprecise answer or a temporary error, start a fresh conversation and repeat Alice's two prompts in order. Do not claim Alice saw Bob's details unless the reply actually shows them.
 - If Bob’s cart request takes too long or errors, click the matching recommendation card’s **Add to cart** button and continue. Check the cart count first so the item is not added twice.
 - Alice's classroom access is scheduled through **December 12, 2026, 11:59 pm Pacific**. Only her signed-in demo profile has this order-tool behavior; the normal order page still checks ownership.
+
+## Dashboard wording
+
+The presentation uses **Authorized access** (green), **Blocked access** (yellow), **Data breach** (red, controlled demo), and **Error** (purple stripes). “Data breach” refers to the synthetic Alice/Bob demonstration. The recorded tool read and the assistant’s visible reply remain separate evidence; show both during the demo. The raw audit fields are unchanged in event details and exports.
+
+Overview and Audit explorer use one Time / Person / Outcome filter set. Advanced filters in Audit explorer contains Action and Decision. Import is in Data sources; Refresh appears once while connected; Clear demo view appears once on Signals for a live feed. Signals shows the whole demo view rather than inheriting hidden timeline filters.
+
+
+The latest summary cards show count / selected total and a colored percentage. Succeeded excludes breach reads; Data breach has its own Outcome choice. The account count means accounts present in the loaded events. Event details include related request events; the bottom actions only copy the request link or export JSON. Importing a file pauses the original feed without writing to it; Return to live feed resumes it.
