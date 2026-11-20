@@ -274,3 +274,19 @@ select {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after, dialog::backdrop { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+.presentation-actions { padding-top: 18px; }
+.presentation-setup .body-copy { padding-bottom: 8px; }
+
+/* Short context bars stay visible without dominating the presentation. */
+.source-banner.compact-source { padding: 8px 12px; margin-bottom: 12px; gap: 10px; }
+.compact-source > div { gap: 10px; width: 100%; }
+.compact-source .source-copy { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
+.compact-source strong { font-size: .875rem; }
+.compact-source small { display: inline; font-size: .75rem; margin: 0; }
+.notice.compact-demo { padding: 4px 12px; margin-bottom: 16px; gap: 4px 16px; font-size: .875rem; line-height: 1.5; }
+.compact-demo .text-button { padding: 4px 0; min-height: 36px; font-size: .875rem; }
+@media (max-width: 600px) {
+  .notice.compact-demo { padding-block: 8px; }
+  .compact-demo .text-button { min-height: 44px; }
+}

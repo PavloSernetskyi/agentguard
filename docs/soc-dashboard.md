@@ -58,7 +58,7 @@ Assistant requests are distinct HTTP request IDs with assistant.message root eve
 
 ## Presentation controls and labels
 
-The main views use a single Time / Person / Outcome filter set. Audit explorer has an animated Advanced filters panel for Action and Decision. Its timeline shows one Outcome column; opening an event preserves the original decision and execution evidence. Signals uses the whole demo view, with one live Clear demo view action. Import belongs to Data sources and live Refresh belongs to the header.
+The main views use a single Time / Person / Outcome filter set. Audit explorer has an animated Advanced filters panel for Action and Decision. Its timeline shows one Outcome column; opening an event preserves the original decision and execution evidence. Signals uses the whole demo view. The single live Clear demo view action is in Presentation setup at the bottom of Data sources. Import belongs to Data sources and live Refresh belongs to the header.
 
 Presentation labels are Authorized access, Blocked access, Data breach (the controlled synthetic demo), and Error. The activity chart uses green, yellow, red and striped purple respectively. Error styling is distinct from blocked access. Raw v1 data and exports are unchanged.
 
@@ -70,3 +70,5 @@ Overview cards show count / selected events plus a colored percentage. Completio
 The time choices are Last 60 minutes, Last 24 hours, Last 7 days and All history, with matching chart badges. The compact right-side panels group denial reasons and breach counts by the known victim account. Audit v1 currently identifies only the controlled Alice-to-Bob order fixture; Bob is the known victim. Other owner mappings require explicit producer evidence rather than guessing from an actor ID.
 
 Imports pause polling, retain the original source in memory and offer Return to live feed. They never upload or merge events into the reporting service. Reload returns a cloud build to operator sign-in/the original feed. Cloud credentials remain HttpOnly cookies; local tokens are masked, memory-only and absent from Git. Default production builds target the original same-origin AWS reporting path. `build:cloud` explicitly selects it; `build:local` produces a local fixture/reporting preview.
+
+For presentation clarity, compact source and demo-view banners remain on every page. The demo notice gives the hidden count and Show full history; its full start timestamp is in the text tooltip. Reset and connection settings remain in Data sources.

@@ -33,7 +33,7 @@ If asked whether this is “prompt injection,” say: “Our live scene is a use
 
 1. Open the store and SOC dashboard. Person 3 signs in to SOC. Person 1 signs in to the store as Bob. Enter passwords directly in the browser; do not put them in slides, notes, or chat.
 2. Keep the store assistant expanded on the right. If the browser is narrow, widen it so the storefront and assistant are both easy to see. Use **New chat** in its header whenever you need to restart a shopper's conversation; it clears the chat context without signing out or changing the cart.
-3. Person 3 opens **Signals**, confirms **AWS feed connected** (not **Fixture preview**), then clicks **Clear demo view** before Bob begins. Both live cards should say **Waiting**, and Overview metrics, Signals, Assistant requests, and Audit explorer start at zero for this browser's demo view. Earlier AWS audit events remain stored and can be restored on screen with **Show full history**.
+3. Person 3 opens **Data sources**, confirms **AWS feed connected**, then clicks **Clear demo view** in **Presentation setup** at the bottom before Bob begins. Open **Signals** afterward. Both live cards should say **Waiting**, and Overview metrics, Signals, Assistant requests, and Audit explorer start at zero for this browser's demo view. Earlier AWS audit events remain stored and can be restored on screen with **Show full history**.
 4. New checkout orders use short numbers such as `ord-bob-002` and `ord-alice-002`. Each shopper begins with an existing `001` order. Alice's final prompt asks for Bob's most recent order, so Person 1 does not need to pass an ID to Person 2.
 
 ## Live sequence and exact lines
@@ -138,7 +138,7 @@ If the assistant has just shown exactly one product, “Add it to my cart” als
 
 **Person 3's click path (no manual filters):**
 
-1. Before Person 1 starts, open **Signals** and click **Clear demo view**. Confirm both cards say **Waiting**. Leave the dashboard on Signals while Bob shops.
+1. Before Person 1 starts, open **Data sources**, scroll to **Presentation setup**, and click **Clear demo view**. Then open **Signals**. Confirm both cards say **Waiting**. Leave the dashboard on Signals while Bob shops.
 2. After Bob's Alice-order question, switch to the SOC tab and wait up to 15 seconds for **BOB → ALICE · Attempt blocked** to turn yellow. Point to the order ID and time. In **Audit explorer**, contrast Bob's green own-order read with his yellow blocked attempt. Leave **ALICE → BOB** waiting. Then hand the store back to Person 2.
 3. After Alice's direct Bob question, stay with the store reply. There should be no new red detail-read card yet. After her JSON request reveals the order, switch to SOC and wait up to 15 seconds for **ALICE → BOB · Alert · cross-account read** to turn red. Point to the matching Bob order ID and time, then open **Overview** and point to the red segment in **Execution activity**. The chart's green portion excludes that read so the event is counted once.
 4. For audit proof, click **View audit event** inside the relevant colored card. The dashboard opens **Audit explorer** with that request selected automatically. Own-order `Allow / Succeeded` rows are green, Bob's `Deny / Blocked` cross-account row is yellow, and Alice's `Allow / Succeeded` cross-account row is red. Click **Reset filters**, then **Signals** to return to the two cards. Do not type into the filter box during the live sequence.
@@ -187,7 +187,7 @@ The SOC page refreshes every 15 seconds. If a card still shows an older time or 
 
 The presentation uses **Authorized access** (green), **Blocked access** (yellow), **Data breach** (red, controlled demo), and **Error** (purple stripes). “Data breach” refers to the synthetic Alice/Bob demonstration. The recorded tool read and the assistant’s visible reply remain separate evidence; show both during the demo. The raw audit fields are unchanged in event details and exports.
 
-Overview and Audit explorer use one Time / Person / Outcome filter set. Advanced filters in Audit explorer contains Action and Decision. Import is in Data sources; Refresh appears once while connected; Clear demo view appears once on Signals for a live feed. Signals shows the whole demo view rather than inheriting hidden timeline filters.
+Overview and Audit explorer use one Time / Person / Outcome filter set. Advanced filters in Audit explorer contains Action and Decision. Import is in Data sources; Refresh appears once while connected; Clear demo view appears once in Presentation setup at the bottom of Data sources for a live feed. Signals shows the whole demo view rather than inheriting hidden timeline filters.
 
 
 The latest summary cards show count / selected total and a colored percentage. Succeeded excludes breach reads; Data breach has its own Outcome choice. The account count means accounts present in the loaded events. Event details include related request events; the bottom actions only copy the request link or export JSON. Importing a file pauses the original feed without writing to it; Return to live feed resumes it.
